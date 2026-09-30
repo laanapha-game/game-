@@ -23,10 +23,11 @@ const SRC = 'assets/incoming/Scene_2_Sprite';
 // xRange: [x0, x1] limit the search horizontally.
 // region: [y0, y1] band of the source to search, for sheets with several rows.
 // split: 'even' = frames sit in equal slots (use when effects touch the neighbour frame).
+//        'bright' = find frames from bright pixels, widen to midpoints (dark bg with haze).
 const JOBS = [
   // TODO(open item 5): two chaser designs are in the Drive folder; this uses the bald
   // purple one (sprite_chasingghost_2). For the other, use 'sprite_chasingghost_1.png' with bg: 'flood'.
-  { out: 'chaser.png', src: 'sprite_chasingghost_2.png', bg: 'flood', frames: 7, ref: { median: 'h', px: 60 }, align: 'bottom' },
+  { out: 'chaser.png', src: 'sprite_chasingghost_2.png', bg: 'flood', frames: 7, split: 'bright', ref: { median: 'h', px: 60 }, align: 'bottom' },
   { out: 'jar.png', src: 'sprite_jar_stall2.png', bg: 'flood', frames: 7, split: 'even', ref: { frame: 0, dim: 'h', px: 30 }, align: 'bottom' },
   { out: 'angel_jayimpacts.png', src: 'sprite_jayimpacts_character_no_greennew.png', orig: 'sprite_jayimpacts_character.png', bg: 'alpha', frames: 9, split: 'even', ref: { median: 'h', px: 64 }, align: 'bottom' },
   { out: 'angel_halo.png', src: 'sprite_jayimpact_fx_no_green.png', orig: 'sprite_jayimpact_fx.png', bg: 'alpha', region: [0, 400], pick: [0], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
@@ -47,6 +48,7 @@ const JOBS = [
 ];
 
 const ALPHA_MIN = 128;
+const FLOOD_TOL = 6; // summed RGB distance from the corner colour
 
 function removeBackground(px, w, h, mode) {
   const at = (x, y) => (y * w + x) * 4;
@@ -61,7 +63,9 @@ function removeBackground(px, w, h, mode) {
   // Flood from the border through pixels close to the corner colour.
   const c = at(0, 0);
   const bg = [px[c], px[c + 1], px[c + 2]];
-  const near = (i) => px[i + 3] < ALPHA_MIN || Math.abs(px[i] - bg[0]) + Math.abs(px[i + 1] - bg[1]) + Math.abs(px[i + 2] - bg[2]) < 60;
+  // Tight tolerance: the black backgrounds are exactly 0-3, and the art's own
+  // near-black outlines and shading touch them, so a loose match eats the art.
+  const near = (i) => px[i + 3] < ALPHA_MIN || Math.abs(px[i] - bg[0]) + Math.abs(px[i + 1] - bg[1]) + Math.abs(px[i + 2] - bg[2]) < FLOOD_TOL;
   const seen = new Uint8Array(w * h);
   const stack = [];
   for (let x = 0; x < w; x++) stack.push(x, (h - 1) * w + x);
@@ -100,6 +104,22 @@ function evenFrames(px, w, [y0, y1], n) {
   const all = bbox(px, w, 0, w, y0, y1);
   const slot = all.w / n;
   return Array.from({ length: n }, (_, i) => bbox(px, w, Math.round(all.x + i * slot), Math.round(all.x + (i + 1) * slot), y0, y1));
+}
+
+/**
+ * For dark backgrounds whose near-black haze joins frames: find frames from the
+ * bright pixels only, then widen each to the midpoint between neighbours so dark
+ * outlines and tails are kept whole.
+ */
+function brightFrames(px, w, [y0, y1], n) {
+  const bright = Buffer.from(px);
+  for (let i = 0; i < bright.length; i += 4) if (bright[i] + bright[i + 1] + bright[i + 2] < 60) bright[i + 3] = 0;
+  const cores = findFrames(bright, w, [y0, y1], n);
+  return cores.map((f, i) => {
+    const left = i === 0 ? 0 : Math.floor((cores[i - 1].x + cores[i - 1].w + f.x) / 2);
+    const right = i === cores.length - 1 ? w : Math.floor((f.x + f.w + cores[i + 1].x) / 2);
+    return bbox(px, w, left, right, y0, y1);
+  });
 }
 
 /** Horizontal runs of opaque columns inside [y0, y1), merged down to `frames`. */
@@ -145,7 +165,7 @@ async function detect(job, file, bg) {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (x < x0 || x >= x1) px[(y * w + x) * 4 + 3] = 0;
   }
   const band = [job.region?.[0] ?? 0, Math.min(job.region?.[1] ?? h, h)];
-  let frames = job.split === 'even' ? evenFrames(px, w, band, job.frames) : findFrames(px, w, band, job.pick ? null : job.frames);
+  let frames = job.split === 'even' ? evenFrames(px, w, band, job.frames) : job.split === 'bright' ? brightFrames(px, w, band, job.frames) : findFrames(px, w, band, job.pick ? null : job.frames);
   if (job.pick) frames = job.pick.map((i) => frames[i]).filter(Boolean);
   return { w, h, frames };
 }
@@ -173,7 +193,7 @@ async function run(job) {
   }
   const region = job.region ?? [0, h];
   const band = [region[0], Math.min(region[1], h)];
-  let frames = job.split === 'even' ? evenFrames(px, w, band, job.frames) : findFrames(px, w, band, job.pick ? null : job.frames);
+  let frames = job.split === 'even' ? evenFrames(px, w, band, job.frames) : job.split === 'bright' ? brightFrames(px, w, band, job.frames) : findFrames(px, w, band, job.pick ? null : job.frames);
   if (job.pick) frames = job.pick.map((i) => frames[i]).filter(Boolean);
   if (frames.length !== job.frames) throw new Error(`${job.out}: found ${frames.length} frames, expected ${job.frames}`);
 
