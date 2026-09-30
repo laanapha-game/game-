@@ -228,7 +228,7 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 
 1. Interfaces with scene 1 developer (section 3) and framework match.
 2. Serithai licence for web embedding.
-3. Name tags for all stall ghosts (placeholders กระหัง, ผีในไห, ผีซุ้ม 3/4/5).
+3. Name tags for stalls 1 and 2 (placeholders กระหัง, ผีในไห). Stalls 3-5: ผีนางรำสุดสวย, ซอมบี้แห่ง Cozy ราชพฤกษ์ 6, ผีกุมารตัวน้อย.
 4. Which chaser design (sprite_chasingghost_1 or _2).
 5. alley_far is missing; props need resizing to the table sizes (or the table updated); alley_near seam.
 6. Pick time limit (none assumed), jar swap counts, walk speed and all tap constants are starting values.

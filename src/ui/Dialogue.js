@@ -50,7 +50,7 @@ export class Dialogue {
     const w = Math.max(24, inkW + UI.nametag.padX * 2);
     sizeNineSlice(this.tag, w, UI.nametag.h);
     // Integer position: canvas padding offsets, glyphs roughly centred in the tag.
-    this.tagText.setPosition(this.tag.x + UI.nametag.padX - TEXT_PAD_Y, this.tag.y - TEXT_PAD_Y - 1);
+    this.tagText.setPosition(this.tag.x + UI.nametag.padX - TEXT_PAD_Y, this.tag.y - TEXT_PAD_Y);
   }
 
   /** Splits script pages into box-sized pages of wrapped lines. */

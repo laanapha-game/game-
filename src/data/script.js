@@ -43,9 +43,9 @@ export const NAMES = {
   angel: 'Jayimpacts',
   stall1: 'กระหัง', // TODO copy
   stall2: 'ผีในไห', // TODO copy
-  stall3: 'ผีซุ้ม 3', // TODO(open item 3): ghost type for stall 3
-  stall4: 'ผีซุ้ม 4', // TODO(open item 3)
-  stall5: 'ผีซุ้ม 5', // TODO(open item 3)
+  stall3: 'ผีนางรำสุดสวย',
+  stall4: 'ซอมบี้แห่ง Cozy ราชพฤกษ์ 6',
+  stall5: 'ผีกุมารตัวน้อย',
 };
 export const UI_TEXT = {
   tap: 'TAP!', // TODO copy
