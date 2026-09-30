@@ -31,7 +31,7 @@ async function open(vp, query = '') {
 }
 
 const state = (page) => page.evaluate(() => window.__scene2GameOver ? 'GAME_OVER_SCREEN' : window.__scene2Won ? 'SCENE3' : window.__scene2.state);
-const tapCenter = (page, vp) => page.mouse.click(vp.width / 2, vp.height / 2);
+const tapCenter = (page, vp) => page.touchscreen.tap(vp.width / 2, vp.height / 2);
 async function tapUntil(page, vp, pred, { every = 60, timeout = 60000 } = {}) {
   const end = Date.now() + timeout;
   while (Date.now() < end) {
@@ -101,8 +101,10 @@ if (args.includes('--win')) {
     return { x: j.x, y: j.y - 20 };
   });
   const p = await toPage(page, jar.x, jar.y);
-  await page.mouse.click(p.x, p.y);
-  await page.waitForFunction(() => window.__scene2.state === 'S3');
+  await page.touchscreen.tap(p.x, p.y);
+  await page.waitForFunction(() => window.__scene2.state === 'S3', null, { timeout: 5000 }).catch(async () => {
+    throw new Error(`jar pick failed, state ${await state(page)}`);
+  });
   await page.waitForTimeout(1200);
   await shot(page, 's3_letter');
   for (const target of ['S4', 'S5', 'S6']) {
@@ -117,7 +119,7 @@ if (args.includes('--win')) {
       }
       await shot(page, `${target}_choices`);
       const b = await toPage(page, 90, 104);
-      await page.mouse.click(b.x, b.y);
+      await page.touchscreen.tap(b.x, b.y);
     }
   }
   await tapUntil(page, vp, (s) => s === 'S7', { every: 200, timeout: 30000 });

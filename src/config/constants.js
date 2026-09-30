@@ -50,7 +50,7 @@ export const RUN_SPEED_PX_S = 48; // ASSUMPTION: world scroll speed during auto-
 export const FAR_PARALLAX = 0.5; // ASSUMPTION: far layer scroll factor
 export const SPRINT_DISTANCE_PX = 360; // ASSUMPTION: scroll covered by a full sprint meter
 export const CHASER_X_BY_STAGE = [200, 188, 178, 170, 164]; // ASSUMPTION: centre x, stage 0 = > 90 s left
-export const CHASER_HOVER_Y = GROUND_Y - 36; // ASSUMPTION: floating ghost, centre y
+export const CHASER_HOVER_Y = GROUND_Y - 48; // ASSUMPTION: floating ghost, centre y (frames are 87 px tall)
 export const JAR_XS = [36, 76]; // ~40 px apart, on the table left of the bird
 export const JAR_TABLE_Y = GROUND_Y - 22; // jar bottom sits on the table top
 export const SHAKE_INTENSITY = 0.006; // ~1 px at 180 px wide

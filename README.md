@@ -30,18 +30,30 @@ Nothing is drawn as fake art. Any sprite that is missing from `src/assets/art/` 
 magenta **SPRITE NEEDED** box of the right frame size, labelled with its file name. The console
 lists the missing ones on load, and sheets whose sizes don't match the manifest are printed as a table.
 
-Already made (shown in chat). They still need exporting as transparent horizontal strips into `src/assets/art/`.
+### In the game now
+
+`tools/prep-sprites.mjs` builds these from the sheets in `art-src/`. It removes the background, finds the frames,
+scales them with nearest-neighbour and writes equal-cell strips (`npm run sprites`):
+
+- `chaser.png`: bald purple ghost, 7 frames of 61x87 (float x6, open mouth), faces right, flipped in code.
+  **Two designs were shared.** To use the sheet ghost instead, point the job at `chaser_sheet_ghost.png`.
+- `jar.png`: 7 frames of 28x50 (closed, shake x2, ghost x2, letter x2)
+- `angel_halo.png` (16x13), `angel_glint.png` (3 x 8x8), `angel_poof.png` (4 x 32x28)
+
+To add a sheet, put it in `art-src/` and add a job in `tools/prep-sprites.mjs`.
+
+### Already made, not yet in the repo
+
+These were shared in chat but are not on disk here. Add the sheets to `art-src/` (or export strips straight into `src/assets/art/`).
+They are marked `existing: true`, so their real frame size is read and recorded instead of treated as an error:
 They are marked `existing: true`, so their real frame size is read and recorded instead of treated as an error:
 
-- `chaser.png`: 7 frames (float x6, open mouth), faces right, flipped in code. **Two designs exist: which one is it?**
-- `jar.png`: 7 frames (closed, shake x2, ghost x2, letter x2)
 - `krahang.png`: 8 frames (jump-on 3, cling 2, flung 3), faces right, flipped in code
-- `angel_halo.png`, `angel_glint.png` (3), `angel_poof.png` (4)
 - `letter_icon.png`, `letter_panel.png`
 - Bird (from scene 1): `bird_side.png` (10 frames, faces right), `bird_front.png` (6), plus
   `icon_bird.png`, `ground_shadow.png` and `fx_feather.png` (3) from the extras row. The combined bird sheet has to be cut into these strips.
 
-Still needed:
+### Still needed
 
 - `angel_jayimpacts.png`: 9-frame animation strip (idle 4, talk 2, signature 1, wave 2). The art shown is a 3-view turnaround.
 - `stall_ghost_3/4/5.png` (ghost types TODO), `booth.png`

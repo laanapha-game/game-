@@ -273,12 +273,16 @@ export class TrickOrTreatScene extends Phaser.Scene {
     // Pick (no time limit, ASSUMPTION). Large hit areas that never overlap.
     const minHit = minHitLogical(this.game, C.MIN_TOUCH_CSS_PX);
     const spacing = Math.abs(C.JAR_XS[1] - C.JAR_XS[0]);
-    const hw = Math.min(spacing, Math.max(32, minHit));
-    const hh = Math.max(40, minHit);
+    const hw = minHit;
+    const hh = minHit;
     const picked = await this.guard(
       new Promise((resolve) => {
         jars.forEach((j) => {
-          j.setInteractive(new Phaser.Geom.Rectangle((32 - hw) / 2, (40 - hh) / 2, hw, hh), Phaser.Geom.Rectangle.Contains);
+          const fw = j.frame.width;
+          const fh = j.frame.height;
+          const w = Math.min(spacing, Math.max(fw, hw));
+          const h = Math.max(fh, hh);
+          j.setInteractive(new Phaser.Geom.Rectangle((fw - w) / 2, (fh - h) / 2, w, h), Phaser.Geom.Rectangle.Contains);
           j.once('pointerdown', () => resolve(j));
         });
       }),
