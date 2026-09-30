@@ -212,7 +212,7 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 | alley_far.png | 360 x 320 | 1 | Opaque, tiles. SPRITE NEEDED |
 | props (assets/props) | shophouse 90x130 x4, tin fence 90x70 x2, pole 16x150, spirit house 24x48, motorbike 44x30, food cart 48x40, laundry line 90x30, lantern string 90x20, plant 16x20, cat 16x16, road strip 90x80 | 15 | Placed by assets/bg/alley_layout.json (data only). backgroud_elements_native_scale: 15 props found, but pole, spirit house, motorbike, food cart, plant, cat are > 25% off these sizes, so props are skipped |
 | bg_alley_exit, bg_street, bg_light_end | 360 x 320 | 1 | SPRITE NEEDED |
-| UI 9-slices, ui_arrow, ui_tap_button, meters, timer, icon_chaser, fx_* | as before | | SPRITE NEEDED |
+| UI 9-slices, ui_arrow, ui_tap_button, meters, timer, icon_chaser, fx_sparkle/splat/sweat/tap_ripple/dust | as before | | Generated at 1x in the palette by `python3 tools/gen_ui_fx.py` (assets/ui/); replace any of them with hand-drawn art of the same size |
 
 ## 10. Test checklist
 

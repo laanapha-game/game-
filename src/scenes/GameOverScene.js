@@ -24,7 +24,7 @@ export class GameOverScene extends Phaser.Scene {
     const btn = addNineSlice(this, cx, 240, 'choice_button_9slice', FRAMES.choice.normal, w, h, 6);
     this.add.text(cx, 240, UI_TEXT.home, textStyle(C.FONT_BODY_PX, C.CSS.yellow)).setOrigin(0.5);
     const hit = Math.max(h, minHitLogical(this.game, C.MIN_TOUCH_CSS_PX));
-    btn.setInteractive(new Phaser.Geom.Rectangle(0, ((h - hit) / 2) * C.RENDER_SCALE, w * C.RENDER_SCALE, hit * C.RENDER_SCALE), Phaser.Geom.Rectangle.Contains);
+    btn.setInteractive(new Phaser.Geom.Rectangle(0, ((h - hit) / 2) * btn.texK, w * btn.texK, hit * btn.texK), Phaser.Geom.Rectangle.Contains);
     btn.once('pointerdown', () => {
       btn.setFrame(FRAMES.choice.pressed);
       this.time.delayedCall(150, () => onGameOver?.());

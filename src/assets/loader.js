@@ -8,7 +8,7 @@ import { RENDER_SCALE as R } from '../config/constants.js';
 // src/assets/art/*.png  : RENDER_SCALE x design size (tools/prep-sprites.mjs)
 // assets/{bg,props,stalls}/*.png : 1x design size (Python pipelines in tools/)
 const REAL_ART = import.meta.glob('./art/*.png', { eager: true, query: '?url', import: 'default' });
-const NATIVE_ART = import.meta.glob('../../assets/{bg,props,stalls}/*.png', { eager: true, query: '?url', import: 'default' });
+const NATIVE_ART = import.meta.glob('../../assets/{bg,props,stalls,ui}/*.png', { eager: true, query: '?url', import: 'default' });
 const LAYOUTS = import.meta.glob('../../assets/bg/alley_layout.json', { eager: true, import: 'default' });
 
 const nativeKey = (path) => path.replace('../../assets/', '').replace(/\.png$/, ''); // 'props/cat'
@@ -26,7 +26,7 @@ export function queueRealArt(scene) {
   }
   // Native bg layers and props, keyed by path ('bg/alley_far', 'props/cat').
   for (const [path, url] of Object.entries(NATIVE_ART)) {
-    if (!path.includes('/stalls/')) scene.load.image(nativeKey(path), url);
+    if (!path.includes('/stalls/') && !path.includes('/ui/')) scene.load.image(nativeKey(path), url);
   }
 }
 

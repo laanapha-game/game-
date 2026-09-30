@@ -13,6 +13,7 @@ npm run test:e2e     # needs `npm run dev`; add -- --win for the full run to sce
 npm run check:dialogue  # needs `npm run dev`; every dialogue page must fit its box
 npm run sprites      # character sheets from assets/incoming -> src/assets/art
 python3 tools/bg_pipeline.py && python3 tools/stall_pipeline.py  # backgrounds, props, stalls (Pillow + numpy)
+python3 tools/gen_ui_fx.py   # small UI and FX sprites (assets/ui/, 1x)
 npm run build
 ```
 
@@ -67,9 +68,6 @@ Still needed:
 - `stall_ghost_3/4/5.png` (ghost types TODO)
 - Stalls A/B/C and `alley_near` now come from the native Drive exports via the Python pipelines
 - Backgrounds: `bg_tap`, `bg_jars`, `bg_alley_far`, `bg_alley_near`, `bg_alley_exit`, `bg_street`, `bg_light_end` (`fx_whiteout` is optional)
-- UI: `chatbox_9slice`, `nametag_9slice`, `choice_button_9slice`, `ui_arrow`, `ui_tap_button`,
-  `ui_meter_frame`, `ui_meter_fill`, `ui_timer_frame`, `icon_chaser`
-- FX: `fx_sparkle`, `fx_splat`, `fx_sweat`, `fx_tap_ripple`, `fx_dust`
 
 Draw new art at 3x the design size in the manifest (for example a 64 x 64 booth is a 192 x 192 PNG),
 or add a job to `tools/prep-sprites.mjs`.

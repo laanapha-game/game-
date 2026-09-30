@@ -3,7 +3,6 @@ import Phaser from 'phaser';
 import { UI, RANDOMISE_CHOICE_ORDER, MIN_TOUCH_CSS_PX } from '../config/constants.js';
 import { FRAMES } from '../assets/manifest.js';
 import { minHitLogical, addNineSlice } from '../display/integerScale.js';
-import { RENDER_SCALE as R } from '../config/constants.js';
 import { wrap, addLines, setLines } from './text.js';
 
 const DEPTH = 110;
@@ -31,7 +30,8 @@ export class Choices {
         setLines(texts, lines, { top: y, height: c.h, lineHeight: c.lineHeight });
         bgTexts.push({ rect: { x: c.x, y, w: c.w, h: c.h }, texts, lines });
         const hitH = Math.max(c.h, Math.min(minHit, c.h + c.gap));
-        bg.setInteractive(new Phaser.Geom.Rectangle(0, ((c.h - hitH) / 2) * R, c.w * R, hitH * R), Phaser.Geom.Rectangle.Contains);
+        const k = bg.texK;
+        bg.setInteractive(new Phaser.Geom.Rectangle(0, ((c.h - hitH) / 2) * k, c.w * k, hitH * k), Phaser.Geom.Rectangle.Contains);
         bg.on('pointerdown', () => {
           if (this.locked) return;
           this.locked = true;

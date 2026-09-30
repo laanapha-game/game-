@@ -77,16 +77,22 @@ export function setupScene(scene) {
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.events.off(Phaser.Scenes.Events.ADDED_TO_SCENE, onAdded));
 }
 
-/** NineSlice sized in design units (texture corners are RENDER_SCALE x). */
+/** Texture px per design px for a texture key (RENDER_SCALE for 3x art, 1 for native assets). */
+export function texScaleOf(scene, key) {
+  return scene.registry.get('texScale')?.get(key) ?? RENDER_SCALE;
+}
+
+/** NineSlice sized in design units, whatever the texture's scale. */
 export function addNineSlice(scene, x, y, key, frame, w, h, corner) {
-  const R = RENDER_SCALE;
-  const n = scene.add.nineslice(x, y, key, frame, w * R, h * R, corner * R, corner * R, corner * R, corner * R);
-  return n.setScale(1 / R);
+  const k = texScaleOf(scene, key);
+  const n = scene.add.nineslice(x, y, key, frame, w * k, h * k, corner * k, corner * k, corner * k, corner * k);
+  n.texK = k;
+  return n.setScale(1 / k);
 }
 
 /** Resize a NineSlice made by addNineSlice, in design units. */
 export function sizeNineSlice(n, w, h) {
-  n.setSize(w * RENDER_SCALE, h * RENDER_SCALE);
+  n.setSize(w * n.texK, h * n.texK);
 }
 
 /** Design px needed for a touch target of `minCss` CSS px. */
