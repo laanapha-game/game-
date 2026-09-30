@@ -111,7 +111,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     mk('jar_shake', 'jar', FRAMES.jar.shake, 12);
     mk('jar_ghost', 'jar', FRAMES.jar.ghost, 8);
     mk('jar_letter', 'jar', FRAMES.jar.letter, 6);
-    for (const n of [3, 4, 5]) mk(`stall_ghost_${n}_idle`, `stall_ghost_${n}`, FRAMES.stallGhost.idle, 3);
+    for (const n of [3, 4, 5]) mk(`stall_ghost_${n}_idle`, `stall_ghost_${n}`, FRAMES.stallGhost[n].frames, FRAMES.stallGhost[n].rate);
   }
 
   // ---------- async helpers (never resolve after the run has ended) ----------
@@ -478,10 +478,12 @@ export class TrickOrTreatScene extends Phaser.Scene {
       let ghost;
       if (n === 1) ghost = this.add.sprite(x, ghostBottom, 'krahang', FRAMES.krahang.jumpOn[0]).setOrigin(0.5, 1);
       else if (n === 2) ghost = this.add.sprite(x, C.JAR_TABLE_Y, 'jar', FRAMES.jar.closed).setOrigin(0.5, 1);
-      else ghost = this.add.sprite(x, ghostBottom, `stall_ghost_${n}`, 0).setOrigin(0.5, 1).play(`stall_ghost_${n}_idle`);
+      // Stalls 3-5: the ghost stands on the ground next to the stall's right side, facing the camera.
+      else ghost = this.add.sprite(x + C.STALL_GHOST_OFFSET_X, C.GROUND_Y, `stall_ghost_${n}`, 0).setOrigin(0.5, 1).play(`stall_ghost_${n}_idle`);
       const front = this.add.image(x, C.GROUND_Y, `stall_${kind}_front`).setOrigin(0.5, 1);
       // The jar sits ON the counter, so it goes above the front.
-      this.world.add(n === 2 ? [booth, front, ghost] : [booth, ghost, front]);
+      // Stall 2's jar sits on the counter and stalls 3-5 ghosts stand in front, so both go above the front.
+      this.world.add(n === 1 ? [booth, ghost, front] : [booth, front, ghost]);
       return { booth, ghost, front };
     });
     // Minigame dim layer: inside the world, above stalls and scenery. Jars are added

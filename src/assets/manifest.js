@@ -37,10 +37,10 @@ export const MANIFEST = [
   // From the bird sheet extras: the Krahang riding the bird (cling pose for S1), faces right.
   { key: 'bird_krahang_cling', file: 'bird_krahang_cling.png', frameWidth: 42, frameHeight: 32, frames: 1, facing: 'right', existing: true },
   { key: 'chaser', file: 'chaser.png', frameWidth: 64, frameHeight: 64, frames: 7, facing: 'right', existing: true },
-  // TODO(open item 3): which ghost types staff stalls 3 to 5.
-  { key: 'stall_ghost_3', file: 'stall_ghost_3.png', frameWidth: 32, frameHeight: 48, frames: 2 },
-  { key: 'stall_ghost_4', file: 'stall_ghost_4.png', frameWidth: 32, frameHeight: 48, frames: 2 },
-  { key: 'stall_ghost_5', file: 'stall_ghost_5.png', frameWidth: 32, frameHeight: 48, frames: 2 },
+  // Stall ghosts (Drive): dancing ghost (stall 3), zombie (stall 4), baby ghost (stall 5).
+  { key: 'stall_ghost_3', file: 'stall_ghost_3.png', frameWidth: 28, frameHeight: 46, frames: 6, existing: true },
+  { key: 'stall_ghost_4', file: 'stall_ghost_4.png', frameWidth: 31, frameHeight: 40, frames: 4, existing: true },
+  { key: 'stall_ghost_5', file: 'stall_ghost_5.png', frameWidth: 24, frameHeight: 38, frames: 2, existing: true },
 
   // Props
   // Existing jar sheet (seen in chat): closed, shake x2, ghost x2, letter x2.
@@ -98,7 +98,8 @@ export const FRAMES = {
   angel: { idle: [0, 1, 2, 3], talk: [4, 5], signature: [6], wave: [7, 8] },
   krahang: { jumpOn: [0, 1, 2], cling: [3, 4], flung: [5, 6, 7] },
   chaser: { float: [0, 1, 2, 3, 4, 5], openMouth: 6 },
-  stallGhost: { idle: [0, 1] },
+  // Idle loop per stall ghost: frames and frame rate.
+  stallGhost: { 3: { frames: [0, 1, 2, 3, 4, 5], rate: 5 }, 4: { frames: [0, 1, 2, 3], rate: 4 }, 5: { frames: [0, 1], rate: 3 } },
   jar: { closed: 0, shake: [1, 2], ghost: [3, 4], letter: [5, 6] },
   choice: { normal: 0, pressed: 1 },
   arrow: [0, 1],

@@ -101,7 +101,7 @@ Scene 2 must run standalone with a placeholder bird so it can be built before sc
 - Layout numbers are ASSUMPTIONS, tune visually. Ground line at y = 240 in every background. Bird 32 px tall, stalls 64 px, chaser about 87 px (existing art).
 - Top area (y 8 to 160): timer bar (y 8 to 16), chatbox (y 24 to 84), reply buttons (y 88 to 166).
 - Bottom area (below y 240): foreground road and the tap meter (about y 270). Tapping works anywhere on screen.
-- Stalls 1 to 5 use stall art A, B, A, B, C. Draw order: stall, ghost/staff, stall_front (rows y >= 40), so the ghost stands behind the counter with head and shoulders above y = 40. The stall 2 jar sits on the counter.
+- Stalls 1 to 5 use stall art A, B, A, B, C. Draw order: stall, (stall 1 Krahang behind the counter), stall_front, then the stall 2 jar on the counter or the stall 3-5 ghost standing on the ground to the stall's right. Stalls stop at x 44.
 - Atmosphere: drifting fog over the ground band and a black gradient from the top and bottom edges, leaving the centre third of the screen (y 107-213) at normal lighting (fx_fog, fx_vignette). During the stall 1 and 2 minigames the scene fades dark (MINIGAME_DIM_*) with the characters lit above it, and fades back when the minigame ends.
 - Background follows the real route (ASSUMPTION for the split): inside the soi until stall 4, then the soi exit and the street with a 7-Eleven-style shop for stall 5 and the sprint, then the white light entrance.
 - The chaser is behind the player on the RIGHT and faces left, closes in by position at the CHASER_STAGE_REMAINING_S thresholds; below 15 s it switches to the open-mouth frame and the screen shakes.
@@ -205,7 +205,7 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 | angel_halo / glint / poof | 16 x 13, 8 x 8, 32 x 28 | 1, 3, 4 | From sprite_jayimpact_fx (no green) |
 | krahang.png | ~29 x 33 | 8 | jump-on 3, cling 2, flung 3; faces right, flipped in code |
 | chaser.png | ~61 x 87 | 7 | float 6, open mouth 1; faces right. TODO: which of the two designs |
-| stall_ghost_3/4/5.png | 32 x 48 | 2 each | Ghost types TODO. SPRITE NEEDED |
+| stall_ghost_3/4/5.png | ~28x46, 31x40, 24x38 | 6, 4, 2 | Dancing ghost (stall 3), zombie (stall 4, checkerboard removed), baby ghost (stall 5). Stand on the ground to the right of their stall, facing the camera |
 | jar.png | ~28 x 50 | 7 | closed, shake 2, ghost 2, letter 2 |
 | letter_icon.png, letter_panel.png | 16 x 13, 140 x 92 | 1 | Panel text is drawn in code |
 | stall_A/B/C.png, stall_X_front.png | 64 x 64, 64 x 24 | 1 | From sprite_stall_2_3_4_192x64 (A yellow, B magenta, C black/yellow); counter at y 40; front = rows y >= 40 |
@@ -228,7 +228,7 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 
 1. Interfaces with scene 1 developer (section 3) and framework match.
 2. Serithai licence for web embedding.
-3. Which three ghost types staff stalls 3, 4 and 5; stall 1/2 name tags (placeholders กระหัง, ผีในไห).
+3. Name tags for all stall ghosts (placeholders กระหัง, ผีในไห, ผีซุ้ม 3/4/5).
 4. Which chaser design (sprite_chasingghost_1 or _2).
 5. alley_far is missing; props need resizing to the table sizes (or the table updated); alley_near seam.
 6. Pick time limit (none assumed), jar swap counts, walk speed and all tap constants are starting values.

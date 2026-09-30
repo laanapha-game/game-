@@ -16,6 +16,7 @@ const SRC = 'assets/incoming/Scene_2_Sprite';
 
 // bg: 'alpha' = the sheet is already transparent (the "no green" exports; no chroma key),
 //     'green' = chroma key everywhere (safe, the art has no pure green),
+//     'checker' = a fake transparency checkerboard baked into the pixels,
 //     'flood' = remove only background connected to the image border
 //               (for black or white backgrounds, keeps black eyes and mouths).
 // ref: which size the scale is taken from (in design px; output is RENDER_SCALE x), so
@@ -24,6 +25,8 @@ const SRC = 'assets/incoming/Scene_2_Sprite';
 // region: [y0, y1] band of the source to search, for sheets with several rows.
 // split: 'even' = frames sit in equal slots (use when effects touch the neighbour frame).
 //        'bright' = find frames from bright pixels, widen to midpoints (dark bg with haze).
+//        'components' = one connected shape per frame (+ its small bits), masked so an
+//        overlapping neighbour is never copied in.
 const JOBS = [
   // TODO(open item 5): two chaser designs are in the Drive folder; this uses the bald
   // purple one (sprite_chasingghost_2). For the other, use 'sprite_chasingghost_1.png' with bg: 'flood'.
@@ -37,8 +40,12 @@ const JOBS = [
   { out: 'letter_icon.png', src: 'sprite_letter_stall2.png', bg: 'flood', pick: [0], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
   { out: 'letter_panel.png', src: 'sprite_letter_stall2.png', bg: 'flood', pick: [1], frames: 1, ref: { frame: 0, dim: 'w', px: 140 }, align: 'center' },
   // Bird (scene 1's placeholder sheet). Flood fill so the green legs survive.
-  { out: 'bird_side.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [40, 250], frames: 10, split: 'even', ref: { median: 'h', px: 28 }, align: 'bottom' },
-  { out: 'bird_front.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [440, 680], frames: 6, split: 'even', ref: { median: 'h', px: 28 }, align: 'bottom' },
+  { out: 'bird_side.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [40, 250], frames: 10, split: 'components', ref: { median: 'h', px: 28 }, align: 'bottom' },
+  { out: 'bird_front.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [440, 680], frames: 6, split: 'components', ref: { median: 'h', px: 28 }, align: 'bottom' },
+  // Stall ghosts (stand on the ground to the right of their stall, facing the camera).
+  { out: 'stall_ghost_3.png', src: 'sprite_dancing_ghost_stall3.png', bg: 'alpha', frames: 6, split: 'components', ref: { median: 'h', px: 46 }, align: 'bottom' },
+  { out: 'stall_ghost_4.png', src: 'sprite_zombie_stall4.png', bg: 'checker', frames: 4, split: 'components', ref: { median: 'h', px: 40 }, align: 'bottom' },
+  { out: 'stall_ghost_5.png', src: 'sprite_baby_ghost_stall5.png', bg: 'alpha', frames: 2, split: 'components', ref: { median: 'h', px: 38 }, align: 'bottom' },
   // Krahang riding the bird, from the bird sheet extras. Used for the cling part of S1,
   // at the same scale as bird_side so it lines up with the bird.
   { out: 'bird_krahang_cling.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [690, 1000], xRange: [0, 450], frames: 1, ref: { factor: 0.1187 }, align: 'bottom' },
@@ -53,6 +60,18 @@ const FLOOD_TOL = 6; // summed RGB distance from the corner colour
 function removeBackground(px, w, h, mode) {
   const at = (x, y) => (y * w + x) * 4;
   if (mode === 'alpha') return;
+  if (mode === 'checker') {
+    // A fake transparency checkerboard baked into the pixels (light, unsaturated
+    // squares). Flood from the border through light grey/white; the art's dark
+    // outline stops it.
+    const light = (i) => {
+      const mx = Math.max(px[i], px[i + 1], px[i + 2]);
+      const mn = Math.min(px[i], px[i + 1], px[i + 2]);
+      return px[i + 3] < ALPHA_MIN || (mn > 170 && mx - mn < 24);
+    };
+    floodClear(px, w, h, light);
+    return;
+  }
   if (mode === 'green') {
     for (let i = 0; i < px.length; i += 4) {
       const [r, g, b] = [px[i], px[i + 1], px[i + 2]];
@@ -62,10 +81,12 @@ function removeBackground(px, w, h, mode) {
   }
   // Flood from the border through pixels close to the corner colour.
   const c = at(0, 0);
-  const bg = [px[c], px[c + 1], px[c + 2]];
-  // Tight tolerance: the black backgrounds are exactly 0-3, and the art's own
-  // near-black outlines and shading touch them, so a loose match eats the art.
-  const near = (i) => px[i + 3] < ALPHA_MIN || Math.abs(px[i] - bg[0]) + Math.abs(px[i + 1] - bg[1]) + Math.abs(px[i + 2] - bg[2]) < FLOOD_TOL;
+  const bg0 = [px[c], px[c + 1], px[c + 2]];
+  floodClear(px, w, h, (i) => px[i + 3] < ALPHA_MIN || Math.abs(px[i] - bg0[0]) + Math.abs(px[i + 1] - bg0[1]) + Math.abs(px[i + 2] - bg0[2]) < FLOOD_TOL);
+}
+
+/** Clears (alpha 0) every pixel connected to the image border for which near(i) holds. */
+function floodClear(px, w, h, near) {
   const seen = new Uint8Array(w * h);
   const stack = [];
   for (let x = 0; x < w; x++) stack.push(x, (h - 1) * w + x);
@@ -121,6 +142,70 @@ function brightFrames(px, w, [y0, y1], n) {
     return bbox(px, w, left, right, y0, y1);
   });
 }
+
+/**
+ * Frames from connected shapes: the n biggest shapes are the frames, every other
+ * shape (sparkles, "!" marks, sweat drops) joins the nearest frame. Each frame
+ * gets a mask, so a neighbour whose box overlaps is never copied in.
+ */
+function componentFrames(px, w, [y0, y1], n) {
+  const label = new Int32Array(w * h_(px, w)).fill(-1);
+  const comps = [];
+  for (let y = y0; y < y1; y++)
+    for (let x = 0; x < w; x++) {
+      const p = y * w + x;
+      if (label[p] >= 0 || px[p * 4 + 3] < ALPHA_MIN) continue;
+      const id = comps.length;
+      const c = { id, n: 0, x0: x, x1: x, y0: y, y1: y, sx: 0 };
+      const stack = [p];
+      label[p] = id;
+      while (stack.length) {
+        const q = stack.pop();
+        const qx = q % w;
+        const qy = (q - qx) / w;
+        c.n++;
+        c.sx += qx;
+        c.x0 = Math.min(c.x0, qx);
+        c.x1 = Math.max(c.x1, qx);
+        c.y0 = Math.min(c.y0, qy);
+        c.y1 = Math.max(c.y1, qy);
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const nx = qx + dx;
+            const ny = qy + dy;
+            if (nx < 0 || nx >= w || ny < y0 || ny >= y1) continue;
+            const r = ny * w + nx;
+            if (label[r] < 0 && px[r * 4 + 3] >= ALPHA_MIN) {
+              label[r] = id;
+              stack.push(r);
+            }
+          }
+      }
+      comps.push(c);
+    }
+  const cores = [...comps].sort((a, b) => b.n - a.n).slice(0, n).sort((a, b) => a.x0 - b.x0);
+  const owner = new Map();
+  for (const c of comps) {
+    const cx = c.sx / c.n;
+    let best = cores[0];
+    for (const k of cores) {
+      const d = cx < k.x0 ? k.x0 - cx : cx > k.x1 ? cx - k.x1 : 0;
+      const bd = cx < best.x0 ? best.x0 - cx : cx > best.x1 ? cx - best.x1 : 0;
+      if (d < bd) best = k;
+    }
+    owner.set(c.id, best.id);
+  }
+  return cores.map((k) => {
+    const members = new Set(comps.filter((c) => owner.get(c.id) === k.id).map((c) => c.id));
+    const mine = comps.filter((c) => members.has(c.id));
+    const x0 = Math.min(...mine.map((c) => c.x0));
+    const x1 = Math.max(...mine.map((c) => c.x1));
+    const fy0 = Math.min(...mine.map((c) => c.y0));
+    const fy1 = Math.max(...mine.map((c) => c.y1));
+    return { x: x0, y: fy0, w: x1 - x0 + 1, h: fy1 - fy0 + 1, label, members };
+  });
+}
+const h_ = (px, w) => px.length / 4 / w;
 
 /** Horizontal runs of opaque columns inside [y0, y1), merged down to `frames`. */
 function findFrames(px, w, [y0, y1], expected) {
@@ -193,7 +278,7 @@ async function run(job) {
   }
   const region = job.region ?? [0, h];
   const band = [region[0], Math.min(region[1], h)];
-  let frames = job.split === 'even' ? evenFrames(px, w, band, job.frames) : job.split === 'bright' ? brightFrames(px, w, band, job.frames) : findFrames(px, w, band, job.pick ? null : job.frames);
+  let frames = job.split === 'even' ? evenFrames(px, w, band, job.frames) : job.split === 'bright' ? brightFrames(px, w, band, job.frames) : job.split === 'components' ? componentFrames(px, w, band, job.frames) : findFrames(px, w, band, job.pick ? null : job.frames);
   if (job.pick) frames = job.pick.map((i) => frames[i]).filter(Boolean);
   if (frames.length !== job.frames) throw new Error(`${job.out}: found ${frames.length} frames, expected ${job.frames}`);
 
@@ -206,7 +291,18 @@ async function run(job) {
     const f = frames[i];
     const fw = Math.max(1, Math.round(f.w * s));
     const fh = Math.max(1, Math.round(f.h * s));
-    const buf = await src.clone().extract({ left: f.x, top: f.y, width: f.w, height: f.h }).resize(fw, fh, { kernel: 'nearest' }).raw().toBuffer();
+    let input = src;
+    if (f.members) {
+      // Only this frame's own shapes: pixels of an overlapping neighbour are cleared.
+      const own = Buffer.from(px);
+      for (let y = f.y; y < f.y + f.h; y++)
+        for (let x = f.x; x < f.x + f.w; x++) {
+          const p = y * w + x;
+          if (!f.members.has(f.label[p])) own[p * 4 + 3] = 0;
+        }
+      input = sharp(own, { raw: { width: w, height: h, channels: 4 } });
+    }
+    const buf = await input.clone().extract({ left: f.x, top: f.y, width: f.w, height: f.h }).resize(fw, fh, { kernel: 'nearest' }).raw().toBuffer();
     // Hard alpha so the pixel grid stays clean.
     for (let p = 3; p < buf.length; p += 4) buf[p] = buf[p] >= ALPHA_MIN ? 255 : 0;
     const left = i * cellW + Math.floor((cellW - fw) / 2);

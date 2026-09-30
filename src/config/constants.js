@@ -48,7 +48,7 @@ export const SHAKE_LAST_S = 15;
 // ---- Layout (spec 7.4, all ASSUMPTIONS, tune visually) ----
 export const GROUND_Y = 240; // same in every background
 export const BIRD_X = 118;
-export const STALL_STOP_X = 52; // stall centre when the world stops
+export const STALL_STOP_X = 44; // stall centre when the world stops (spec ~52; 44 leaves room for the ghost beside it)
 export const RUN_SPEED_PX_S = 48; // ASSUMPTION: world scroll speed during auto-run
 export const WALK_SPEED_PX_S = 24; // ASSUMPTION: slower walk before stalls 1 and 2 (no timer, no fail)
 export const WALK_SEGMENT_S = 6;
@@ -69,6 +69,7 @@ export const MINIGAME_DIM_OUT_MS = 900;
 export const STALL_H = 64;
 export const STALL_COUNTER_Y = 40;
 export const STALL_KIND = { 1: 'A', 2: 'B', 3: 'A', 4: 'B', 5: 'C' }; // A yellow, B magenta, C black/yellow
+export const STALL_GHOST_OFFSET_X = 42; // stalls 3-5: ghost centre this far right of the stall centre (stall is 64 wide)
 export const GHOST_SINK = 12; // ghost bottom this far below the counter top: head and shoulders show above it
 export const FAR_PARALLAX = 0.5; // ASSUMPTION: far layer scroll factor
 export const SPRINT_DISTANCE_PX = 360; // ASSUMPTION: scroll covered by a full sprint meter
@@ -76,7 +77,7 @@ export const CHASER_X_BY_STAGE = [200, 188, 178, 170, 164]; // ASSUMPTION: centr
 export const CHASER_HOVER_Y = GROUND_Y - 48; // ASSUMPTION: floating ghost, centre y (frames are 87 px tall)
 // Where the bird's centre sits inside the flipped Krahang-riding-bird frame (0..1).
 export const CLING_COMBO_ORIGIN_X = 0.35; // ASSUMPTION, tune visually
-export const JAR_XS = [32, 72]; // ~40 px apart, on stall 2's counter (stall centre x 52)
+export const JAR_XS = [STALL_STOP_X - 20, STALL_STOP_X + 20]; // 40 px apart, on stall 2's counter
 export const JAR_TABLE_Y = GROUND_Y - 24 + 2; // jar bottom sits on stall 2's counter top
 export const SHAKE_INTENSITY = 0.006; // ~1 px at 180 px wide
 
