@@ -151,6 +151,9 @@ def main():
     os.makedirs(OUT_BG, exist_ok=True)
     far = layer('alley_far', opaque=True)
     near = layer('alley_near', opaque=False)
+    # Route pieces (sky transparent). bg_street must be a 7-Eleven-STYLE shop: no real logo.
+    for name in ('bg_alley_exit', 'bg_street', 'bg_light_end'):
+        layer(name, opaque=False)
     p = props()
     if p is None:
         say('layout: no props -> alley_layout.json not written')

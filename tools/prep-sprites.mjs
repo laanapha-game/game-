@@ -37,7 +37,7 @@ const JOBS = [
   { out: 'letter_icon.png', src: 'sprite_letter_stall2.png', bg: 'flood', pick: [0], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
   { out: 'letter_panel.png', src: 'sprite_letter_stall2.png', bg: 'flood', pick: [1], frames: 1, ref: { frame: 0, dim: 'w', px: 140 }, align: 'center' },
   // Bird (scene 1's placeholder sheet). Flood fill so the green legs survive.
-  { out: 'bird_side.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [40, 250], frames: 10, ref: { median: 'h', px: 28 }, align: 'bottom' },
+  { out: 'bird_side.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [40, 250], frames: 10, split: 'even', ref: { median: 'h', px: 28 }, align: 'bottom' },
   { out: 'bird_front.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [440, 680], frames: 6, split: 'even', ref: { median: 'h', px: 28 }, align: 'bottom' },
   // Krahang riding the bird, from the bird sheet extras. Used for the cling part of S1,
   // at the same scale as bird_side so it lines up with the bird.

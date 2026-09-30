@@ -428,9 +428,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
     const near = nativeLayer(this, 'bg/alley_near') ?? 'bg_alley_near';
     const pieces = [];
     for (let x = exitLeft + W; x < C.GAME_W; x += W) pieces.push([near, x]);
-    pieces.push(['bg_alley_exit', exitLeft]);
-    for (let right = exitLeft; right > lightLeft + W; right -= W) pieces.push(['bg_street', right - W]);
-    pieces.push(['bg_light_end', lightLeft]);
+    const piece = (name) => nativeLayer(this, `bg/${name}`) ?? name; // pipeline output, else marker
+    pieces.push([piece('bg_alley_exit'), exitLeft]);
+    for (let right = exitLeft; right > lightLeft + W; right -= W) pieces.push([piece('bg_street'), right - W]);
+    pieces.push([piece('bg_light_end'), lightLeft]);
     for (const [key, x] of pieces) this.world.add(this.add.image(x, 0, key).setOrigin(0));
 
     // Props from assets/bg/alley_layout.json (tiled every 720 px over the soi part).
