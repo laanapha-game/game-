@@ -25,14 +25,16 @@ OUT_PROPS = os.path.join(ROOT, 'assets/props')
 LAYER_SIZE = (360, 320)
 GROUND_Y = 240
 # Drive exports that stand in for the expected names.
-ALIASES = {'alley_near': ['backgroud_urban.png'], 'props_alley': ['backgroud_elements.png'], 'alley_far': []}
+ALIASES = {'alley_near': ['alley_near_360x320.png', 'backgroud_urban.png'],
+           'props_alley': ['backgroud_elements_native_scale.png', 'backgroud_elements.png'], 'alley_far': []}
 
 # Expected props in reading order (left to right, top to bottom) with target sizes.
+# Row 3 of the sheet has the plant's left edge before the lantern string's.
 PROPS = [
     ('shophouse_1', 90, 130), ('shophouse_2', 90, 130), ('shophouse_3', 90, 130), ('shophouse_4', 90, 130),
     ('tin_fence_1', 90, 70), ('tin_fence_2', 90, 70), ('pole', 16, 150), ('spirit_house', 24, 48),
-    ('motorbike', 44, 30), ('food_cart', 48, 40), ('laundry_line', 90, 30), ('lantern_string', 90, 20),
-    ('plant', 16, 20), ('cat', 16, 16), ('road_strip', 90, 80),
+    ('motorbike', 44, 30), ('food_cart', 48, 40), ('laundry_line', 90, 30), ('plant', 16, 20),
+    ('lantern_string', 90, 20), ('cat', 16, 16), ('road_strip', 90, 80),
 ]
 HANGING = {'laundry_line', 'lantern_string'}
 report = []
@@ -90,7 +92,10 @@ def props():
         say('props_alley: MISSING, props skipped')
         return None
     a = load_rgba(path)
-    boxes = blobs(a, min_px=200, gap=3)
+    # Native-scale sheets: no dilation (a 1 px gap already separates props).
+    # Upscaled sheets need a small gap so anti-aliased specks join their prop.
+    gap = 0 if max(a.shape[:2]) < 600 else 3
+    boxes = blobs(a, min_px=20 if gap == 0 else 200, gap=gap)
     say(f'props_alley: {os.path.basename(path)} {a.shape[1]}x{a.shape[0]}, {len(boxes)} blobs (expected {len(PROPS)})')
     if len(boxes) != len(PROPS):
         say('props: count mismatch -> props skipped')
@@ -101,7 +106,7 @@ def props():
             bad.append(f'{name} {w}x{h} (want {ew}x{eh})')
     if bad:
         ratios = sorted(w / ew for (n, ew, eh), (x, y, w, h) in zip(PROPS, boxes))
-        say(f'props: {len(bad)}/15 more than 25% off size, e.g. {"; ".join(bad[:3])}; '
+        say(f'props: {len(bad)}/15 more than 25% off size: {"; ".join(bad)}; '
             f'median ratio {ratios[len(ratios) // 2]:.2f}x (not an exact multiple) -> props skipped')
         return None
     os.makedirs(OUT_PROPS, exist_ok=True)

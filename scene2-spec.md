@@ -207,9 +207,10 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 | stall_ghost_3/4/5.png | 32 x 48 | 2 each | Ghost types TODO. SPRITE NEEDED |
 | jar.png | ~28 x 50 | 7 | closed, shake 2, ghost 2, letter 2 |
 | letter_icon.png, letter_panel.png | 16 x 13, 140 x 92 | 1 | Panel text is drawn in code |
-| stall_A/B/C.png, stall_X_front.png | 64 x 64, 64 x 24 | 1 | A yellow, B magenta, C black/yellow; front = rows y >= 40. SPRITE NEEDED until a 64x64 (or exact multiple) export exists |
-| alley_far.png, alley_near.png | 360 x 320 | 1 | Ground y = 240; far opaque, near transparent above rooflines; left/right edges tile. SPRITE NEEDED |
-| props (assets/props) | shophouse 90x130 x4, tin fence 90x70 x2, pole 16x150, spirit house 24x48, motorbike 44x30, food cart 48x40, laundry line 90x30, lantern string 90x20, plant 16x20, cat 16x16, road strip 90x80 | 15 | Placed by assets/bg/alley_layout.json (data only). SPRITE NEEDED |
+| stall_A/B/C.png, stall_X_front.png | 64 x 64, 64 x 24 | 1 | From sprite_stall_2_3_4_192x64 (A yellow, B magenta, C black/yellow); counter at y 40; front = rows y >= 40 |
+| alley_near.png | 360 x 320 | 1 | From alley_near_360x320, palette-snapped; transparent above rooflines; ground y = 240. Seam: 396 px differ (fix in Aseprite) |
+| alley_far.png | 360 x 320 | 1 | Opaque, tiles. SPRITE NEEDED |
+| props (assets/props) | shophouse 90x130 x4, tin fence 90x70 x2, pole 16x150, spirit house 24x48, motorbike 44x30, food cart 48x40, laundry line 90x30, lantern string 90x20, plant 16x20, cat 16x16, road strip 90x80 | 15 | Placed by assets/bg/alley_layout.json (data only). backgroud_elements_native_scale: 15 props found, but pole, spirit house, motorbike, food cart, plant, cat are > 25% off these sizes, so props are skipped |
 | bg_alley_exit, bg_street, bg_light_end | 360 x 320 | 1 | SPRITE NEEDED |
 | UI 9-slices, ui_arrow, ui_tap_button, meters, timer, icon_chaser, fx_* | as before | | SPRITE NEEDED |
 
@@ -228,5 +229,5 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 2. Serithai licence for web embedding.
 3. Which three ghost types staff stalls 3, 4 and 5; stall 1/2 name tags (placeholders กระหัง, ผีในไห).
 4. Which chaser design (sprite_chasingghost_1 or _2).
-5. Native-size exports for backgrounds, props and stalls (current Drive files are upscaled by a non-integer factor).
+5. alley_far is missing; props need resizing to the table sizes (or the table updated); alley_near seam.
 6. Pick time limit (none assumed), jar swap counts, walk speed and all tap constants are starting values.

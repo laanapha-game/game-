@@ -34,9 +34,13 @@ def sources():
     found = {k: load_rgba(p) for k, p in raw.items() if os.path.exists(p)}
     if found:
         return found, 'assets/raw'
-    for sheet in [os.path.join(RAW, 'stall_sheet.png'), os.path.join(INCOMING, 'sprite_stall_2_3_4.png')]:
+    for sheet in [os.path.join(RAW, 'stall_sheet.png'), os.path.join(INCOMING, 'sprite_stall_2_3_4_192x64.png'),
+                  os.path.join(INCOMING, 'sprite_stall_2_3_4.png')]:
         if os.path.exists(sheet):
             a = load_rgba(sheet)
+            if a.shape[:2] == (SIZE, SIZE * 3):  # native sheet: three 64x64 cells
+                say(f'{os.path.basename(sheet)}: 192x64, sliced into three 64x64 cells')
+                return {k: a[:, i * SIZE:(i + 1) * SIZE] for i, k in enumerate('ABC')}, os.path.basename(sheet)
             boxes = blobs(a, min_px=500, gap=3)
             say(f'{os.path.basename(sheet)}: {len(boxes)} stalls found {[(w, h) for x, y, w, h in boxes]}')
             return {k: a[y:y + h, x:x + w] for k, (x, y, w, h) in zip('ABC', boxes)}, os.path.basename(sheet)

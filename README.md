@@ -64,7 +64,8 @@ In the game now (sizes are design px):
 Any other sprite shows as a magenta **SPRITE NEEDED** box of the right size, labelled with its file name.
 Still needed:
 
-- `stall_ghost_3/4/5.png` (ghost types TODO), `booth.png`
+- `stall_ghost_3/4/5.png` (ghost types TODO)
+- Stalls A/B/C and `alley_near` now come from the native Drive exports via the Python pipelines
 - Backgrounds: `bg_tap`, `bg_jars`, `bg_alley_far`, `bg_alley_near`, `bg_alley_exit`, `bg_street`, `bg_light_end` (`fx_whiteout` is optional)
 - UI: `chatbox_9slice`, `nametag_9slice`, `choice_button_9slice`, `ui_arrow`, `ui_tap_button`,
   `ui_meter_frame`, `ui_meter_fill`, `ui_timer_frame`, `icon_chaser`
