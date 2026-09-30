@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import * as C from '../config/constants.js';
 import { UI_TEXT } from '../data/script.js';
 import { FRAMES } from '../assets/manifest.js';
-import { minHitLogical } from '../display/integerScale.js';
+import { minHitLogical, setupScene, addNineSlice } from '../display/integerScale.js';
 import { textStyle } from '../ui/text.js';
 
 export class GameOverScene extends Phaser.Scene {
@@ -12,6 +12,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create({ reason, onGameOver } = {}) {
+    setupScene(this);
     this.cameras.main.setBackgroundColor(C.CSS.black);
     if (import.meta.env.DEV) window.__scene2GameOver = { reason };
     const cx = C.GAME_W / 2;
@@ -20,10 +21,10 @@ export class GameOverScene extends Phaser.Scene {
 
     const w = 96;
     const h = 32;
-    const btn = this.add.nineslice(cx, 240, 'choice_button_9slice', FRAMES.choice.normal, w, h, 6, 6, 6, 6);
+    const btn = addNineSlice(this, cx, 240, 'choice_button_9slice', FRAMES.choice.normal, w, h, 6);
     this.add.text(cx, 240, UI_TEXT.home, textStyle(C.FONT_BODY_PX, C.CSS.yellow)).setOrigin(0.5);
     const hit = Math.max(h, minHitLogical(this.game, C.MIN_TOUCH_CSS_PX));
-    btn.setInteractive(new Phaser.Geom.Rectangle(0, (h - hit) / 2, w, hit), Phaser.Geom.Rectangle.Contains);
+    btn.setInteractive(new Phaser.Geom.Rectangle(0, ((h - hit) / 2) * C.RENDER_SCALE, w * C.RENDER_SCALE, hit * C.RENDER_SCALE), Phaser.Geom.Rectangle.Contains);
     btn.once('pointerdown', () => {
       btn.setFrame(FRAMES.choice.pressed);
       this.time.delayedCall(150, () => onGameOver?.());

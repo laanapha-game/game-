@@ -1,7 +1,7 @@
 // SPRITE NEEDED markers. No art is generated here on purpose: every sprite
 // that is not yet in src/assets/art/ is shown as a labelled box of the right
 // frame size, so the game runs and the missing sprites are obvious on screen.
-import { CSS, GROUND_Y } from '../config/constants.js';
+import { CSS, GROUND_Y, RENDER_SCALE as R } from '../config/constants.js';
 
 const BORDER = CSS.magenta;
 const FILL = 'rgba(40, 0, 40, 0.55)';
@@ -9,7 +9,7 @@ const LABEL = CSS.white;
 
 function label(ctx, lines, w, h) {
   // Tiny system font, only used to name the missing sprite.
-  const px = w >= 120 ? 8 : 6;
+  const px = w >= 120 ? 8 : 5;
   ctx.font = `${px}px monospace`;
   ctx.fillStyle = LABEL;
   ctx.textAlign = 'center';
@@ -54,9 +54,10 @@ export function drawPlaceholderStrip(ctx, entry) {
   for (let f = 0; f < entry.frames; f++) {
     ctx.save();
     ctx.beginPath();
-    ctx.rect(f * entry.frameWidth, 0, entry.frameWidth, entry.frameHeight);
+    ctx.rect(f * entry.frameWidth * R, 0, entry.frameWidth * R, entry.frameHeight * R);
     ctx.clip();
-    ctx.translate(f * entry.frameWidth, 0);
+    ctx.translate(f * entry.frameWidth * R, 0);
+    ctx.scale(R, R); // markers are drawn in design px
     drawMissingFrame(ctx, entry, f);
     ctx.restore();
   }

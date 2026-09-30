@@ -3,8 +3,11 @@
 // TODO = not decided by the owner; isolated here so it can be changed in one place.
 
 // ---- Logical resolution (spec 2) ----
-export const GAME_W = 180;
+export const GAME_W = 180; // design units: all layout below is in these
 export const GAME_H = 320;
+// Art is authored at RENDER_SCALE x design size and the canvas renders at device
+// resolution, so the game looks sharp while the layout stays 180 x 320.
+export const RENDER_SCALE = 3;
 export const LETTERBOX_COLOR = '#000000'; // ASSUMPTION: theme colour for the letterbox bars
 
 // ---- Palette (spec 2, hex estimated from screenshots; sample real values from source art) ----
@@ -51,6 +54,8 @@ export const FAR_PARALLAX = 0.5; // ASSUMPTION: far layer scroll factor
 export const SPRINT_DISTANCE_PX = 360; // ASSUMPTION: scroll covered by a full sprint meter
 export const CHASER_X_BY_STAGE = [200, 188, 178, 170, 164]; // ASSUMPTION: centre x, stage 0 = > 90 s left
 export const CHASER_HOVER_Y = GROUND_Y - 48; // ASSUMPTION: floating ghost, centre y (frames are 87 px tall)
+// Where the bird's centre sits inside the flipped Krahang-riding-bird frame (0..1).
+export const CLING_COMBO_ORIGIN_X = 0.35; // ASSUMPTION, tune visually
 export const JAR_XS = [36, 76]; // ~40 px apart, on the table left of the bird
 export const JAR_TABLE_Y = GROUND_Y - 22; // jar bottom sits on the table top
 export const SHAKE_INTENSITY = 0.006; // ~1 px at 180 px wide
@@ -73,7 +78,6 @@ export const FONT_FAMILY = '"Noto Sans Thai", sans-serif';
 export const FONT_BODY_PX = 12;
 export const FONT_TITLE_PX = 16;
 export const LINE_HEIGHT_PX = 16; // spec: 16 to 20
-export const TEXT_RESOLUTION = 1; // 1 = drawn on the 180x320 grid, like the art
 
 // ---- Touch (spec 2) ----
 export const MIN_TOUCH_CSS_PX = 44;

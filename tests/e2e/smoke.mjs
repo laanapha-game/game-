@@ -70,9 +70,13 @@ for (const vp of VIEWPORTS) {
   await ctx.close();
 }
 
+// Gameplay runs use DPR 1: headless Chromium renders on the CPU, and a full
+// device-resolution canvas is too slow there to play at speed (real phones use the GPU).
+const PLAY_VP = { width: 390, height: 844, dpr: 1 };
+
 // 2. Fail path: let the tap game time out.
 {
-  const vp = VIEWPORTS[0];
+  const vp = PLAY_VP;
   const { ctx, page } = await open(vp);
   await tapUntil(page, vp, (s) => s === 'S1', { every: 150 });
   await page.waitForFunction(() => window.__scene2.tickS1);
@@ -86,7 +90,7 @@ for (const vp of VIEWPORTS) {
 
 // 3. Win path.
 if (args.includes('--win')) {
-  const vp = VIEWPORTS[1];
+  const vp = PLAY_VP;
   const { ctx, page, errors } = await open(vp, '?today=2026-10-12');
   await shot(page, 's0');
   await tapUntil(page, vp, (s) => s === 'S1', { every: 120 });

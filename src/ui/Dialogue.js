@@ -4,6 +4,7 @@
 import { UI, LINE_HEIGHT_PX, TYPEWRITER_CPS, FONT_BODY_PX, CSS } from '../config/constants.js';
 import { graphemes, paginate } from '../logic/textWrap.js';
 import { wrap, addLines, textStyle } from './text.js';
+import { addNineSlice, sizeNineSlice } from '../display/integerScale.js';
 
 const DEPTH = 100;
 const NAME_OVERLAP = 6; // first line sits below the name tag
@@ -16,8 +17,8 @@ export class Dialogue {
     this.textTop = b.y + b.pad + NAME_OVERLAP;
     this.maxLines = Math.max(1, Math.floor((b.h - b.pad * 2 - NAME_OVERLAP) / LINE_HEIGHT_PX));
 
-    this.box = scene.add.nineslice(b.x, b.y, 'chatbox_9slice', 0, b.w, b.h, 8, 8, 8, 8).setOrigin(0).setDepth(DEPTH);
-    this.tag = scene.add.nineslice(b.x + 4, b.y - 6, 'nametag_9slice', 0, 40, UI.nametag.h, 6, 6, 6, 6).setOrigin(0).setDepth(DEPTH + 1);
+    this.box = addNineSlice(scene, b.x, b.y, 'chatbox_9slice', 0, b.w, b.h, 8).setOrigin(0).setDepth(DEPTH);
+    this.tag = addNineSlice(scene, b.x + 4, b.y - 6, 'nametag_9slice', 0, 40, UI.nametag.h, 6).setOrigin(0).setDepth(DEPTH + 1);
     this.tagText = scene.add.text(0, 0, '', textStyle(FONT_BODY_PX, CSS.white)).setOrigin(0, 0.5).setDepth(DEPTH + 2);
     this.lines = addLines(scene, b.x + b.pad, this.textTop, this.maxLines, LINE_HEIGHT_PX, { depth: DEPTH + 1 });
     this.arrow = scene.add.sprite(b.x + b.w - 12, b.y + b.h - 11, 'ui_arrow', 0).setOrigin(0).setDepth(DEPTH + 2);
@@ -42,7 +43,7 @@ export class Dialogue {
     if (!name) return;
     this.tagText.setText(name);
     const w = Math.max(24, Math.ceil(this.tagText.width) + UI.nametag.padX * 2);
-    this.tag.setSize(w, UI.nametag.h);
+    sizeNineSlice(this.tag, w, UI.nametag.h);
     this.tagText.setPosition(this.tag.x + UI.nametag.padX, this.tag.y + UI.nametag.h / 2);
   }
 

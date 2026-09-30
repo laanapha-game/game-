@@ -3,6 +3,7 @@
 import Phaser from 'phaser';
 import * as C from '../config/constants.js';
 import { textStyle } from '../ui/text.js';
+import { setupScene } from '../display/integerScale.js';
 
 export class Scene3Stub extends Phaser.Scene {
   constructor() {
@@ -10,6 +11,7 @@ export class Scene3Stub extends Phaser.Scene {
   }
 
   create({ character } = {}) {
+    setupScene(this);
     this.cameras.main.setBackgroundColor(C.CSS.white);
     this.cameras.main.fadeIn(400, 255, 255, 255);
     if (import.meta.env.DEV) window.__scene2Won = { character };

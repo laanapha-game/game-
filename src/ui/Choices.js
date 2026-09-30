@@ -2,7 +2,8 @@
 import Phaser from 'phaser';
 import { UI, RANDOMISE_CHOICE_ORDER, MIN_TOUCH_CSS_PX } from '../config/constants.js';
 import { FRAMES } from '../assets/manifest.js';
-import { minHitLogical } from '../display/integerScale.js';
+import { minHitLogical, addNineSlice } from '../display/integerScale.js';
+import { RENDER_SCALE as R } from '../config/constants.js';
 import { wrap, addLines, setLines } from './text.js';
 
 const DEPTH = 110;
@@ -23,12 +24,12 @@ export class Choices {
     return new Promise((resolve) => {
       opts.forEach((opt, i) => {
         const y = c.y + i * (c.h + c.gap);
-        const bg = this.scene.add.nineslice(c.x, y, 'choice_button_9slice', FRAMES.choice.normal, c.w, c.h, 6, 6, 6, 6).setOrigin(0).setDepth(DEPTH);
+        const bg = addNineSlice(this.scene, c.x, y, 'choice_button_9slice', FRAMES.choice.normal, c.w, c.h, 6).setOrigin(0).setDepth(DEPTH);
         const lines = wrap(opt.text, c.w - 12).slice(0, 2);
         const texts = addLines(this.scene, c.x + c.w / 2, y, lines.length, LH, { align: 'center', depth: DEPTH + 1 });
         setLines(texts, lines, { top: y, height: c.h, lineHeight: LH });
         const hitH = Math.max(c.h, Math.min(minHit, c.h + c.gap));
-        bg.setInteractive(new Phaser.Geom.Rectangle(0, (c.h - hitH) / 2, c.w, hitH), Phaser.Geom.Rectangle.Contains);
+        bg.setInteractive(new Phaser.Geom.Rectangle(0, ((c.h - hitH) / 2) * R, c.w * R, hitH * R), Phaser.Geom.Rectangle.Contains);
         bg.on('pointerdown', () => {
           if (this.locked) return;
           this.locked = true;

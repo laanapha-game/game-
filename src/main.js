@@ -2,8 +2,8 @@
 // startScene2() for the full game to call with the real character data.
 import '@fontsource/noto-sans-thai/400.css'; // PLACEHOLDER font, see FONT_IS_PLACEHOLDER
 import Phaser from 'phaser';
-import { GAME_W, GAME_H, LETTERBOX_COLOR, FONT_FAMILY, FONT_BODY_PX } from './config/constants.js';
-import { installIntegerScale } from './display/integerScale.js';
+import { GAME_W, GAME_H, RENDER_SCALE, LETTERBOX_COLOR, FONT_FAMILY, FONT_BODY_PX } from './config/constants.js';
+import { installViewScale } from './display/integerScale.js';
 import { createPlaceholderCharacter, defaultCallbacks } from './interfaces.js';
 import { BootScene } from './scenes/BootScene.js';
 import { TrickOrTreatScene } from './scenes/TrickOrTreatScene.js';
@@ -51,11 +51,11 @@ export async function startScene2({ parent = 'game', character, onWin, onGameOve
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: parentEl,
-    width: GAME_W,
-    height: GAME_H,
+    width: GAME_W * RENDER_SCALE,
+    height: GAME_H * RENDER_SCALE,
     backgroundColor: LETTERBOX_COLOR,
-    pixelArt: true,
-    roundPixels: true,
+    // Crisp pixel art at whole-number zoom; even pixel edges when the zoom is fractional.
+    render: { smoothPixelArt: true, roundPixels: true },
     scale: { mode: Phaser.Scale.NONE, autoCenter: Phaser.Scale.NO_CENTER },
     input: { activePointers: 3 },
     scene: [BootScene, TrickOrTreatScene, GameOverScene, Scene3Stub],
@@ -65,7 +65,7 @@ export async function startScene2({ parent = 'game', character, onWin, onGameOve
     onWin: onWin ?? ((c, scene) => scene.scene.start('Scene3Stub', { character: c })),
     onGameOver: onGameOver ?? defaultCallbacks.onGameOver,
   });
-  game.events.once('ready', () => installIntegerScale(game));
+  game.events.once('ready', () => installViewScale(game));
   return game;
 }
 

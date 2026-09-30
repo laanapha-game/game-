@@ -17,9 +17,18 @@ export function graphemes(text) {
   return out;
 }
 
+// Latin runs such as "7-Eleven" or "hellobooku.com/laanapha2026" stay together
+// unless they are wider than the box on their own.
+const LATIN_RUN = /^[\x21-\x7E]+$/;
+
 function words(text) {
-  if (wordSeg) return Array.from(wordSeg.segment(text), (s) => s.segment);
-  return text.split(/(\s+)/).filter(Boolean);
+  const segs = wordSeg ? Array.from(wordSeg.segment(text), (s) => s.segment) : text.split(/(\s+)/).filter(Boolean);
+  const out = [];
+  for (const seg of segs) {
+    if (out.length && LATIN_RUN.test(seg) && LATIN_RUN.test(out[out.length - 1])) out[out.length - 1] += seg;
+    else out.push(seg);
+  }
+  return out;
 }
 
 /**

@@ -1,5 +1,5 @@
 // Push-away / sprint meter display (spec 7.1). Logic lives in src/logic/meter.js.
-import { UI } from '../config/constants.js';
+import { UI, RENDER_SCALE as R } from '../config/constants.js';
 
 export class MeterView {
   constructor(scene) {
@@ -11,7 +11,7 @@ export class MeterView {
   }
 
   set(v) {
-    this.fill.setCrop(0, 0, Math.round(UI.meter.w * v), UI.meter.h);
+    this.fill.setCrop(0, 0, Math.round(UI.meter.w * R * v), UI.meter.h * R);
   }
 
   press() {

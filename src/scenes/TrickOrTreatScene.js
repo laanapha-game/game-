@@ -14,7 +14,7 @@ import { ANGEL_PAGES, LETTER_TEXT, STALL4_PAGES, STALL5_PAGES, REPLY_POLITE, REP
 import { resolveToday, stall3Pages } from '../logic/ticket.js';
 import { TapMeter } from '../logic/meter.js';
 import { ChaseTimer, chaserStage } from '../logic/chaseTimer.js';
-import { minHitLogical } from '../display/integerScale.js';
+import { minHitLogical, setupScene, pointerPos } from '../display/integerScale.js';
 import { createPlaceholderCharacter } from '../interfaces.js';
 import { Dialogue } from '../ui/Dialogue.js';
 import { Choices } from '../ui/Choices.js';
@@ -58,6 +58,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
   create() {
     ensureFxAnims(this);
     this.makeAnims();
+    setupScene(this);
     this.input.enabled = true;
     this.cameras.main.setBackgroundColor(C.CSS.black);
     this.bg = this.add.image(0, 0, 'bg_tap').setOrigin(0).setDepth(0);
@@ -153,7 +154,8 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.bird.play('idle', 'side');
     const angelY = C.GROUND_Y - 8;
     const angel = this.add.sprite(52, angelY, 'angel_jayimpacts', 0).setOrigin(0.5, 1).setDepth(40).play('angel_idle');
-    const halo = this.add.image(52, angelY - 49, 'angel_halo').setDepth(41);
+    // The real angel sheet has the halo drawn in; the separate halo is only for marker art.
+    const halo = this.add.image(52, angelY - 49, 'angel_halo').setDepth(41).setVisible(!this.registry.get('realArt')?.has('angel_jayimpacts'));
     this.tweens.add({ targets: [angel, halo], y: '-=2', duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     const glints = this.time.addEvent({
       delay: 600,
@@ -185,7 +187,21 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.tweens.add({ targets: k, x: backX, duration: 600, ease: 'Linear' });
     await this.tweenP({ targets: k, y: C.GROUND_Y - 70, duration: 300, ease: 'Quad.easeOut', yoyo: false });
     await this.tweenP({ targets: k, y: backY, duration: 300, ease: 'Quad.easeIn' });
-    k.play('krahang_cling');
+    // While clinging, show the "Krahang riding the bird" sprite if it exists;
+    // otherwise the Krahang's own cling frames on top of the struggling bird.
+    const useCombo = this.registry.get('realArt')?.has('bird_krahang_cling');
+    let combo = null;
+    if (useCombo) {
+      k.setVisible(false).stop();
+      this.bird.sprite.setVisible(false);
+      combo = this.add
+        .sprite(C.BIRD_X, C.GROUND_Y, 'bird_krahang_cling', 0)
+        .setOrigin(C.CLING_COMBO_ORIGIN_X, 1)
+        .setFlipX(faces('bird_krahang_cling') === 'right')
+        .setDepth(55);
+    } else {
+      k.play('krahang_cling');
+    }
     this.bird.play('struggle');
 
     const meter = new TapMeter(C.TAP_GAME_GAIN, C.TAP_GAME_DECAY_PER_S);
@@ -201,8 +217,11 @@ export class TrickOrTreatScene extends Phaser.Scene {
           if (this.time.now >= endAt) return;
           meter.tap();
           view.press();
-          burst(this, 'fx_tap_ripple', p.x, p.y, { depth: 200 });
-          k.x = backX + (++taps % 2 ? 1 : -1);
+          const w = pointerPos(this, p);
+          burst(this, 'fx_tap_ripple', w.x, w.y, { depth: 200 });
+          const jiggle = ++taps % 2 ? 1 : -1;
+          if (combo) combo.x = C.BIRD_X + jiggle;
+          else k.x = backX + jiggle;
           if (meter.full) resolve('win');
         };
         this.tickS1 = (dt) => {
@@ -221,6 +240,11 @@ export class TrickOrTreatScene extends Phaser.Scene {
 
     // Fling the Krahang away to the right.
     view.set(1);
+    if (combo) {
+      combo.destroy();
+      this.bird.sprite.setVisible(true);
+      k.setPosition(backX, backY).setVisible(true);
+    }
     k.play('krahang_flung');
     for (let i = 0; i < 4; i++) burst(this, 'fx_feather', C.BIRD_X + 6, C.GROUND_Y - 16, { dx: Phaser.Math.Between(4, 24), dy: Phaser.Math.Between(-16, 8), ms: 500 });
     this.bird.play('relieved', 'front');
@@ -271,8 +295,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
     }
 
     // Pick (no time limit, ASSUMPTION). Large hit areas that never overlap.
-    const minHit = minHitLogical(this.game, C.MIN_TOUCH_CSS_PX);
-    const spacing = Math.abs(C.JAR_XS[1] - C.JAR_XS[0]);
+    const R = C.RENDER_SCALE;
+    const minHit = minHitLogical(this.game, C.MIN_TOUCH_CSS_PX) * R; // texture px
+    const spacing = Math.abs(C.JAR_XS[1] - C.JAR_XS[0]) * R;
     const hw = minHit;
     const hh = minHit;
     const picked = await this.guard(
@@ -345,7 +370,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
 
   /** Builds the scrolling route: soi, soi exit, street, white light (spec 7.4). */
   buildWorld() {
-    this.far = this.add.tileSprite(0, 0, C.GAME_W, C.GAME_H, 'bg_alley_far').setOrigin(0).setDepth(1);
+    this.far = this.add.tileSprite(0, 0, C.GAME_W * C.RENDER_SCALE, C.GAME_H * C.RENDER_SCALE, 'bg_alley_far').setOrigin(0).setDepth(1).setScale(1 / C.RENDER_SCALE);
     this.world = this.add.container(0, 0).setDepth(10);
     const W = 360;
     // Soi exit sits between stall 4 and stall 5 (ASSUMPTION for the split).
@@ -409,7 +434,8 @@ export class TrickOrTreatScene extends Phaser.Scene {
           if (this.timer.expired) return;
           this.meter.tap();
           view.press();
-          burst(this, 'fx_tap_ripple', p.x, p.y, { depth: 200 });
+          const w = pointerPos(this, p);
+          burst(this, 'fx_tap_ripple', w.x, w.y, { depth: 200 });
           if (this.meter.full) resolve();
         };
         this.tickS7 = (dt) => {
@@ -485,8 +511,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.tickS7?.(dt);
 
     if (this.world) {
-      this.world.x = Math.round(this.worldX);
-      this.far.tilePositionX = -Math.round(this.worldX * C.FAR_PARALLAX);
+      // Move in art-pixel steps (1 / RENDER_SCALE design px) for smooth scrolling.
+      const R = C.RENDER_SCALE;
+      this.world.x = Math.round(this.worldX * R) / R;
+      this.far.tilePositionX = -Math.round(this.worldX * C.FAR_PARALLAX * R);
     }
     if (this.running && time - (this.lastDust ?? 0) > 220) {
       this.lastDust = time;

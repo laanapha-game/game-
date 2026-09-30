@@ -91,3 +91,9 @@ test('anchors mirror when the side sheet is flipped', async () => {
   assert.deepEqual(anchorFor(c, 'side', 'eye', false), a);
   assert.deepEqual(anchorFor(c, 'side', 'eye', true), { x: 31 - a.x, y: a.y });
 });
+
+test('Latin runs such as 7-Eleven are not split', () => {
+  const measure = (s) => graphemes(s).length * 6;
+  const lines = wrapText('ตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภา', 90, measure);
+  assert.ok(lines.some((l) => l.includes('7-Eleven')), lines.join('|'));
+});

@@ -1,10 +1,16 @@
 // Text helpers. Each line is its own Text object so the line pitch is exact
 // on the pixel grid regardless of the font's metrics.
-import { FONT_FAMILY, FONT_BODY_PX, TEXT_RESOLUTION, CSS } from '../config/constants.js';
+import { FONT_FAMILY, FONT_BODY_PX, RENDER_SCALE, CSS } from '../config/constants.js';
 import { wrapText } from '../logic/textWrap.js';
 
 // Includes Thai stacked marks so Phaser measures enough height for them.
 const TEST_STRING = '|MÉqgปั้ฐู้ญ';
+
+// Text is rasterised at device resolution (set by the view scaler).
+let textResolution = RENDER_SCALE;
+export function setTextResolution(n) {
+  textResolution = Math.max(1, n);
+}
 
 let measureCtx = null;
 export function measurer(px = FONT_BODY_PX) {
@@ -20,7 +26,7 @@ export function wrap(text, width, px = FONT_BODY_PX) {
 }
 
 export function textStyle(px = FONT_BODY_PX, color = CSS.white) {
-  return { fontFamily: FONT_FAMILY, fontSize: `${px}px`, color, resolution: TEXT_RESOLUTION, testString: TEST_STRING };
+  return { fontFamily: FONT_FAMILY, fontSize: `${px}px`, color, resolution: textResolution, testString: TEST_STRING };
 }
 
 /**

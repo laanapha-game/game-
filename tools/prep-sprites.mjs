@@ -8,23 +8,39 @@
 // Add a job when a new sheet arrives. Sources live in art-src/.
 import sharp from 'sharp';
 import { mkdirSync } from 'node:fs';
+import { RENDER_SCALE } from '../src/config/constants.js';
 
 const OUT = 'src/assets/art';
 
 // bg: 'green' = chroma key everywhere (safe, the art has no pure green),
 //     'flood' = remove only background connected to the image border
 //               (for black or white backgrounds, keeps black eyes and mouths).
-// ref: which size the scale is taken from, so frames keep their relative sizes.
+// ref: which size the scale is taken from (in design px; output is RENDER_SCALE x), so
+//      frames keep their relative sizes.
+// xRange: [x0, x1] limit the search horizontally.
 // region: [y0, y1] band of the source to search, for sheets with several rows.
 // split: 'even' = frames sit in equal slots (use when effects touch the neighbour frame).
 const JOBS = [
-  // TODO(open item 5): two chaser designs were shared; this uses the bald purple one (sent twice).
-  // For the other design use src: 'chaser_sheet_ghost.png' (already transparent).
-  { out: 'chaser.png', src: 'chaser_bald.webp', bg: 'flood', frames: 7, ref: { median: 'h', px: 60 }, align: 'bottom' },
-  { out: 'jar.png', src: 'jar.webp', bg: 'flood', frames: 7, split: 'even', ref: { frame: 0, dim: 'h', px: 30 }, align: 'bottom' },
-  { out: 'angel_halo.png', src: 'angel_fx.webp', bg: 'green', region: [0, 400], pick: [0], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
-  { out: 'angel_glint.png', src: 'angel_fx.webp', bg: 'green', region: [0, 400], pick: [1, 2, 3], frames: 3, ref: { max: 'h', px: 8 }, align: 'center' },
-  { out: 'angel_poof.png', src: 'angel_fx.webp', bg: 'green', region: [400, 887], frames: 4, ref: { max: 'w', px: 32 }, align: 'center' },
+  // TODO(open item 5): two chaser designs are in the Drive folder; this uses the bald
+  // purple one (sprite_chasingghost_2). For the other, use 'sprite_chasingghost_1.png' with bg: 'flood'.
+  { out: 'chaser.png', src: 'sprite_chasingghost_2.png', bg: 'flood', frames: 7, ref: { median: 'h', px: 60 }, align: 'bottom' },
+  { out: 'jar.png', src: 'sprite_jar_stall2.png', bg: 'flood', frames: 7, split: 'even', ref: { frame: 0, dim: 'h', px: 30 }, align: 'bottom' },
+  { out: 'angel_jayimpacts.png', src: 'sprite_jayimpacts_character.png', bg: 'green', frames: 9, split: 'even', ref: { median: 'h', px: 64 }, align: 'bottom' },
+  { out: 'angel_halo.png', src: 'sprite_jayimpact_fx.png', bg: 'green', region: [0, 400], pick: [0], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
+  { out: 'angel_glint.png', src: 'sprite_jayimpact_fx.png', bg: 'green', region: [0, 400], pick: [1, 2, 3], frames: 3, ref: { max: 'h', px: 8 }, align: 'center' },
+  { out: 'angel_poof.png', src: 'sprite_jayimpact_fx.png', bg: 'green', region: [400, 887], frames: 4, ref: { max: 'w', px: 32 }, align: 'center' },
+  { out: 'krahang.png', src: 'sprite_krahang_stall1.png', bg: 'green', frames: 8, split: 'even', ref: { median: 'h', px: 30 }, align: 'center' },
+  { out: 'letter_icon.png', src: 'sprite_letter_stall2.png', bg: 'flood', pick: [0], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
+  { out: 'letter_panel.png', src: 'sprite_letter_stall2.png', bg: 'flood', pick: [1], frames: 1, ref: { frame: 0, dim: 'w', px: 140 }, align: 'center' },
+  // Bird (scene 1's placeholder sheet). Flood fill so the green legs survive.
+  { out: 'bird_side.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [40, 250], frames: 10, ref: { median: 'h', px: 28 }, align: 'bottom' },
+  { out: 'bird_front.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [440, 680], frames: 6, split: 'even', ref: { median: 'h', px: 28 }, align: 'bottom' },
+  // Krahang riding the bird, from the bird sheet extras. Used for the cling part of S1,
+  // at the same scale as bird_side so it lines up with the bird.
+  { out: 'bird_krahang_cling.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [690, 1000], xRange: [0, 450], frames: 1, ref: { factor: 0.1187 }, align: 'bottom' },
+  { out: 'icon_bird.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [700, 1000], xRange: [470, 640], frames: 1, ref: { frame: 0, dim: 'w', px: 12 }, align: 'center' },
+  { out: 'ground_shadow.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [700, 1000], xRange: [660, 900], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
+  { out: 'fx_feather.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [700, 1000], xRange: [920, 1536], frames: 3, split: 'even', ref: { max: 'w', px: 16 }, align: 'center' },
 ];
 
 const ALPHA_MIN = 128;
@@ -107,10 +123,12 @@ function findFrames(px, w, [y0, y1], expected) {
 }
 
 function scaleFor(ref, frames) {
-  if (ref.frame !== undefined) return ref.px / frames[ref.frame][ref.dim];
+  if (ref.factor) return ref.factor * RENDER_SCALE; // design px per source px
+  const target = ref.px * RENDER_SCALE;
+  if (ref.frame !== undefined) return target / frames[ref.frame][ref.dim];
   const vals = frames.map((f) => f[ref.median ?? ref.max]).sort((a, b) => a - b);
   const v = ref.median ? vals[Math.floor(vals.length / 2)] : vals[vals.length - 1];
-  return ref.px / v;
+  return target / v;
 }
 
 async function run(job) {
@@ -118,6 +136,10 @@ async function run(job) {
   const { width: w, height: h } = info;
   const px = Buffer.from(data);
   removeBackground(px, w, h, job.bg);
+  if (job.xRange) {
+    const [x0, x1] = job.xRange;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (x < x0 || x >= x1) px[(y * w + x) * 4 + 3] = 0;
+  }
   const region = job.region ?? [0, h];
   const band = [region[0], Math.min(region[1], h)];
   let frames = job.split === 'even' ? evenFrames(px, w, band, job.frames) : findFrames(px, w, band, job.pick ? null : job.frames);

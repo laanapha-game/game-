@@ -1,6 +1,6 @@
 # ลานนภา Halloween Fest: scene 2 (Trick or Treat run)
 
-A portrait mobile browser game (180 x 320, whole-number scaling) built with Phaser 4 and Vite.
+A portrait mobile browser game (180 x 320 layout, rendered at device resolution) built with Phaser 4 and Vite.
 This repo covers scene 2 only. It runs on its own with a placeholder bird.
 
 ```
@@ -24,43 +24,49 @@ npm run build
 | `src/assets/art/` | **Put the real PNGs here** (file names as in the manifest) |
 | `src/interfaces.js` | Character data contract, `onWin` / `onGameOver`, home route |
 
+## Resolution
+
+Layout stays in 180 x 320 design units (spec 2), but the game no longer renders at 180 x 320:
+
+- The canvas is the phone's real device resolution, and the camera zooms the design space to fill it.
+- Every texture is `RENDER_SCALE` (3) x its design size, so a 32 px bird is a 96 px sheet with 3x the detail.
+- Pixel art stays crisp (no smoothing). The zoom snaps to a whole number of device pixels when that
+  still fills 90% of the screen; otherwise Phaser's `smoothPixelArt` keeps pixel edges even.
+- Text is drawn at device resolution.
+
 ## Sprites
 
-Nothing is drawn as fake art. Any sprite that is missing from `src/assets/art/` shows up as a
-magenta **SPRITE NEEDED** box of the right frame size, labelled with its file name. The console
-lists the missing ones on load, and sheets whose sizes don't match the manifest are printed as a table.
+`npm run sprites` (`tools/prep-sprites.mjs`) builds game strips from the sheets in `art-src/`
+(downloaded from Drive `เกมลานนภา/Scene_2_Sprite`). It removes the background, finds the frames,
+scales them with nearest-neighbour to 3x design size, and writes them to `src/assets/art/`.
 
-### In the game now
+In the game now (sizes are design px):
 
-`tools/prep-sprites.mjs` builds these from the sheets in `art-src/`. It removes the background, finds the frames,
-scales them with nearest-neighbour and writes equal-cell strips (`npm run sprites`):
+| Strip | From | Notes |
+|---|---|---|
+| `angel_jayimpacts.png` | sprite_jayimpacts_character | 9 frames: idle 4, talk 2, signature, wai 2. Halo drawn in |
+| `angel_halo/glint/poof.png` | sprite_jayimpact_fx | |
+| `krahang.png` | sprite_krahang_stall1 | jump-on 3, cling 2, flung 3; faces right, flipped in code |
+| `bird_krahang_cling.png` | sprite_playerdemo (extras) | Krahang riding the bird, used while clinging in S1 |
+| `bird_side.png`, `bird_front.png` | sprite_playerdemo | 10 + 6 frames; side faces right, flipped in code |
+| `icon_bird`, `ground_shadow`, `fx_feather` | sprite_playerdemo (extras) | |
+| `jar.png` | sprite_jar_stall2 | 7 frames |
+| `letter_icon.png`, `letter_panel.png` | sprite_letter_stall2 | |
+| `chaser.png` | sprite_chasingghost_2 | bald purple ghost, 7 frames. **Confirm vs sprite_chasingghost_1** |
 
-- `chaser.png`: bald purple ghost, 7 frames of 61x87 (float x6, open mouth), faces right, flipped in code.
-  **Two designs were shared.** To use the sheet ghost instead, point the job at `chaser_sheet_ghost.png`.
-- `jar.png`: 7 frames of 28x50 (closed, shake x2, ghost x2, letter x2)
-- `angel_halo.png` (16x13), `angel_glint.png` (3 x 8x8), `angel_poof.png` (4 x 32x28)
+`sprite_jayimpacts_avatar` (the 3-view turnaround) is not used.
 
-To add a sheet, put it in `art-src/` and add a job in `tools/prep-sprites.mjs`.
+Any other sprite shows as a magenta **SPRITE NEEDED** box of the right size, labelled with its file name.
+Still needed:
 
-### Already made, not yet in the repo
-
-These were shared in chat but are not on disk here. Add the sheets to `art-src/` (or export strips straight into `src/assets/art/`).
-They are marked `existing: true`, so their real frame size is read and recorded instead of treated as an error:
-They are marked `existing: true`, so their real frame size is read and recorded instead of treated as an error:
-
-- `krahang.png`: 8 frames (jump-on 3, cling 2, flung 3), faces right, flipped in code
-- `letter_icon.png`, `letter_panel.png`
-- Bird (from scene 1): `bird_side.png` (10 frames, faces right), `bird_front.png` (6), plus
-  `icon_bird.png`, `ground_shadow.png` and `fx_feather.png` (3) from the extras row. The combined bird sheet has to be cut into these strips.
-
-### Still needed
-
-- `angel_jayimpacts.png`: 9-frame animation strip (idle 4, talk 2, signature 1, wave 2). The art shown is a 3-view turnaround.
 - `stall_ghost_3/4/5.png` (ghost types TODO), `booth.png`
 - Backgrounds: `bg_tap`, `bg_jars`, `bg_alley_far`, `bg_alley_near`, `bg_alley_exit`, `bg_street`, `bg_light_end` (`fx_whiteout` is optional)
 - UI: `chatbox_9slice`, `nametag_9slice`, `choice_button_9slice`, `ui_arrow`, `ui_tap_button`,
   `ui_meter_frame`, `ui_meter_fill`, `ui_timer_frame`, `icon_chaser`
 - FX: `fx_sparkle`, `fx_splat`, `fx_sweat`, `fx_tap_ripple`, `fx_dust`
+
+Draw new art at 3x the design size in the manifest (for example a 64 x 64 booth is a 192 x 192 PNG),
+or add a job to `tools/prep-sprites.mjs`.
 
 ## Open items and assumptions made
 

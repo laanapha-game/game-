@@ -1,5 +1,6 @@
-// Asset manifest (spec 9). Design targets: every sheet is a horizontal strip,
-// width = frames x frameWidth, height = frameHeight. Validated on load.
+// Asset manifest (spec 9). Sizes are in design px; the PNG is RENDER_SCALE x that.
+// Every sheet is a horizontal strip, width = frames x frameWidth, height = frameHeight.
+// Validated on load. Sheets from the Drive folder are built by tools/prep-sprites.mjs.
 //
 // Drop real PNGs (chroma key already removed) into src/assets/art/ using the
 // same file names. Anything missing is shown as a labelled "SPRITE NEEDED" box
@@ -17,9 +18,9 @@ export const MANIFEST = [
   { key: 'bird_side', file: 'bird_side.png', frameWidth: 32, frameHeight: 32, frames: 10, facing: 'right', existing: true },
   { key: 'bird_front', file: 'bird_front.png', frameWidth: 32, frameHeight: 32, frames: 6, existing: true },
   // bird_back.png is NOT NEEDED for the side-scroller and is not loaded.
-  // SPRITE NEEDED: the art seen in chat is a 3-view turnaround (front, side, back),
-  // not this 9-frame animation strip (idle 4, talk 2, signature 1, wave 2).
-  { key: 'angel_jayimpacts', file: 'angel_jayimpacts.png', frameWidth: 32, frameHeight: 48, frames: 9 },
+  // From Drive sprite_jayimpacts_character: idle 4, talk 2, signature 1, wave (wai) 2.
+  // The halo is drawn into these frames, so the separate halo is not shown with it.
+  { key: 'angel_jayimpacts', file: 'angel_jayimpacts.png', frameWidth: 32, frameHeight: 48, frames: 9, existing: true },
   // Existing (seen in chat): gear halo, 3 glints, 4 poof frames.
   { key: 'angel_halo', file: 'angel_halo.png', frameWidth: 16, frameHeight: 16, frames: 1, existing: true },
   { key: 'angel_glint', file: 'angel_glint.png', frameWidth: 8, frameHeight: 8, frames: 3, existing: true },
@@ -33,6 +34,8 @@ export const MANIFEST = [
   // read on load; 64x64 is only the size of the "sprite needed" marker.
   // TODO(open item 5): two chaser designs were shown (sheet ghost, bald purple face;
   // the bald one was sent twice). Confirm which one is chaser.png.
+  // From the bird sheet extras: the Krahang riding the bird (cling pose for S1), faces right.
+  { key: 'bird_krahang_cling', file: 'bird_krahang_cling.png', frameWidth: 42, frameHeight: 32, frames: 1, facing: 'right', existing: true },
   { key: 'chaser', file: 'chaser.png', frameWidth: 64, frameHeight: 64, frames: 7, facing: 'right', existing: true },
   // TODO(open item 3): which ghost types staff stalls 3 to 5.
   { key: 'stall_ghost_3', file: 'stall_ghost_3.png', frameWidth: 32, frameHeight: 48, frames: 2 },
@@ -97,13 +100,15 @@ export const FRAMES = {
 export const STALL_BOOTH_FRAME = { 3: 1, 4: 2, 5: 3 };
 
 /** Validate a loaded image against its manifest entry (spec 9). */
-export function validateEntry(entry, width, height) {
-  const expectedW = entry.frames * entry.frameWidth;
-  const ok = width === expectedW && height === entry.frameHeight;
+// Textures are RENDER_SCALE x the design frame size listed above.
+export function validateEntry(entry, width, height, scale = 1) {
+  const expectedW = entry.frames * entry.frameWidth * scale;
+  const expectedH = entry.frameHeight * scale;
+  const ok = width === expectedW && height === expectedH;
   return {
     key: entry.key,
     file: entry.file,
-    expected: `${expectedW}x${entry.frameHeight}`,
+    expected: `${expectedW}x${expectedH}`,
     actual: `${width}x${height}`,
     ok,
     existing: !!entry.existing,
