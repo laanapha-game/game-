@@ -14,6 +14,7 @@ npm run check:dialogue  # needs `npm run dev`; every dialogue page must fit its 
 npm run sprites      # character sheets from assets/incoming -> src/assets/art
 python3 tools/bg_pipeline.py && python3 tools/stall_pipeline.py  # backgrounds, props, stalls (Pillow + numpy)
 python3 tools/gen_ui_fx.py   # small UI and FX sprites (assets/ui/, 1x)
+python3 tools/reres_bg.py    # re-resolution upscaled route backgrounds -> assets/raw/ (then bg_pipeline)
 npm run build
 ```
 
