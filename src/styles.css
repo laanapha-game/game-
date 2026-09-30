@@ -25,3 +25,10 @@ body {
   image-rendering: crisp-edges;
   touch-action: manipulation;
 }
+
+/* Serithai Regular, Thai pixel font (all game text). */
+@font-face {
+  font-family: 'Serithai';
+  src: url('./assets/fonts/Serithai-Regular.otf') format('opentype');
+  font-display: block;
+}

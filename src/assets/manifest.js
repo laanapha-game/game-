@@ -48,11 +48,18 @@ export const MANIFEST = [
   // Existing (seen in chat): sealed envelope icon and torn parchment panel.
   { key: 'letter_icon', file: 'letter_icon.png', frameWidth: 16, frameHeight: 16, frames: 1, existing: true },
   { key: 'letter_panel', file: 'letter_panel.png', frameWidth: 140, frameHeight: 100, frames: 1, existing: true },
-  { key: 'booth', file: 'booth.png', frameWidth: 64, frameHeight: 64, frames: 5 },
 
-  // Backgrounds (ground line y = 240 in every one)
-  { key: 'bg_tap', file: 'bg_tap.png', frameWidth: 180, frameHeight: 320, frames: 1 },
-  { key: 'bg_jars', file: 'bg_jars.png', frameWidth: 180, frameHeight: 320, frames: 1 },
+  // Stalls from tools/stall_pipeline.py (assets/stalls/, 1x design size, `native`).
+  // stall_X = full 64x64, stall_X_front = rows y >= 40 (the counter), 64x24.
+  { key: 'stall_A', file: 'stall_A.png', native: 'stalls', frameWidth: 64, frameHeight: 64, frames: 1 },
+  { key: 'stall_A_front', file: 'stall_A_front.png', native: 'stalls', frameWidth: 64, frameHeight: 24, frames: 1 },
+  { key: 'stall_B', file: 'stall_B.png', native: 'stalls', frameWidth: 64, frameHeight: 64, frames: 1 },
+  { key: 'stall_B_front', file: 'stall_B_front.png', native: 'stalls', frameWidth: 64, frameHeight: 24, frames: 1 },
+  { key: 'stall_C', file: 'stall_C.png', native: 'stalls', frameWidth: 64, frameHeight: 64, frames: 1 },
+  { key: 'stall_C_front', file: 'stall_C_front.png', native: 'stalls', frameWidth: 64, frameHeight: 24, frames: 1 },
+
+  // Backgrounds (ground line y = 240 in every one). tools/bg_pipeline.py writes
+  // assets/bg/alley_far.png and alley_near.png (1x); when present they replace these.
   { key: 'bg_alley_far', file: 'bg_alley_far.png', frameWidth: 360, frameHeight: 320, frames: 1 },
   { key: 'bg_alley_near', file: 'bg_alley_near.png', frameWidth: 360, frameHeight: 320, frames: 1 },
   { key: 'bg_alley_exit', file: 'bg_alley_exit.png', frameWidth: 360, frameHeight: 320, frames: 1 },
@@ -90,14 +97,10 @@ export const FRAMES = {
   chaser: { float: [0, 1, 2, 3, 4, 5], openMouth: 6 },
   stallGhost: { idle: [0, 1] },
   jar: { closed: 0, shake: [1, 2], ghost: [3, 4], letter: [5, 6] },
-  booth: { base: 0, signs: [1, 2, 3, 4] },
   choice: { normal: 0, pressed: 1 },
   arrow: [0, 1],
   tapButton: { up: 0, down: 1 },
 };
-
-// Which booth sign recolour each stall uses. ASSUMPTION.
-export const STALL_BOOTH_FRAME = { 3: 1, 4: 2, 5: 3 };
 
 /** Validate a loaded image against its manifest entry (spec 9). */
 // Textures are RENDER_SCALE x the design frame size listed above.

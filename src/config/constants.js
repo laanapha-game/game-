@@ -50,34 +50,46 @@ export const GROUND_Y = 240; // same in every background
 export const BIRD_X = 118;
 export const STALL_STOP_X = 52; // stall centre when the world stops
 export const RUN_SPEED_PX_S = 48; // ASSUMPTION: world scroll speed during auto-run
+export const WALK_SPEED_PX_S = 24; // ASSUMPTION: slower walk before stalls 1 and 2 (no timer, no fail)
+export const WALK_SEGMENT_S = 6;
+export const PRE_GAME_SHAKE_MS = 500; // shake after stall 1/2 dialogue, then the minigame starts
+export const PRE_GAME_SHAKE_INTENSITY = 0.012;
+
+// Stalls (64 x 64 design px). Counter top at y = 40 inside the stall.
+export const STALL_H = 64;
+export const STALL_COUNTER_Y = 40;
+export const STALL_KIND = { 1: 'A', 2: 'B', 3: 'A', 4: 'B', 5: 'C' }; // A yellow, B magenta, C black/yellow
+export const GHOST_SINK = 12; // ghost bottom this far below the counter top: head and shoulders show above it
 export const FAR_PARALLAX = 0.5; // ASSUMPTION: far layer scroll factor
 export const SPRINT_DISTANCE_PX = 360; // ASSUMPTION: scroll covered by a full sprint meter
 export const CHASER_X_BY_STAGE = [200, 188, 178, 170, 164]; // ASSUMPTION: centre x, stage 0 = > 90 s left
 export const CHASER_HOVER_Y = GROUND_Y - 48; // ASSUMPTION: floating ghost, centre y (frames are 87 px tall)
 // Where the bird's centre sits inside the flipped Krahang-riding-bird frame (0..1).
 export const CLING_COMBO_ORIGIN_X = 0.35; // ASSUMPTION, tune visually
-export const JAR_XS = [36, 76]; // ~40 px apart, on the table left of the bird
-export const JAR_TABLE_Y = GROUND_Y - 22; // jar bottom sits on the table top
+export const JAR_XS = [32, 72]; // ~40 px apart, on stall 2's counter (stall centre x 52)
+export const JAR_TABLE_Y = GROUND_Y - 24 + 2; // jar bottom sits on stall 2's counter top
 export const SHAKE_INTENSITY = 0.006; // ~1 px at 180 px wide
 
 export const UI = {
   timerBar: { x: 30, y: 8, w: 120, h: 8 },
-  chatbox: { x: 8, y: 24, w: 164, h: 56, pad: 6 },
-  nametag: { h: 16, padX: 6 },
-  choices: { x: 8, y: 88, w: 164, h: 32, gap: 6 },
+  chatbox: { x: 8, y: 24, w: 164, h: 60, pad: 6, arrowW: 10 }, // text area sits below the name tag, arrow gets its own column
+  nametag: { h: 18, padX: 6 },
+  choices: { x: 8, y: 88, w: 164, h: 38, gap: 2, lineHeight: 16 }, // 2 lines of 12 px Thai incl. stacked marks
   meter: { x: 30, y: 270, w: 120, h: 10 },
   tapButton: { x: 90, y: 298 },
   letterPanel: { w: 140, h: 100, pad: 10 },
 };
 
 // ---- Text (spec 2) ----
-// TODO(open item 2): Thai pixel font not chosen, licence not checked. This is a PLACEHOLDER.
-// Noto Sans Thai (OFL, bundled via @fontsource) renders stacked vowels and tone marks.
-export const FONT_IS_PLACEHOLDER = true;
-export const FONT_FAMILY = '"Noto Sans Thai", sans-serif';
+// Serithai Regular, a Thai pixel font: 12 px body, drawn on the design grid
+// (resolution 1) with smoothing off, so it scales up as crisp pixels like the art.
+// TODO(open item 2): confirm the Serithai licence allows embedding in the web game.
+export const FONT_IS_PLACEHOLDER = false;
+export const FONT_FAMILY = '"Serithai", monospace';
 export const FONT_BODY_PX = 12;
 export const FONT_TITLE_PX = 16;
-export const LINE_HEIGHT_PX = 16; // spec: 16 to 20
+export const LINE_HEIGHT_PX = 18; // spec: 16 to 20; room for stacked vowels and tone marks
+export const TEXT_PAD_Y = 4; // extra canvas px on every side so no glyph or stacked mark is ever clipped
 
 // ---- Touch (spec 2) ----
 export const MIN_TOUCH_CSS_PX = 44;

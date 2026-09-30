@@ -11,8 +11,11 @@ import { mkdirSync } from 'node:fs';
 import { RENDER_SCALE } from '../src/config/constants.js';
 
 const OUT = 'src/assets/art';
+// Drive folder เกมลานนภา/Scene_2_Sprite, downloaded as is (originals untouched).
+const SRC = 'assets/incoming/Scene_2_Sprite';
 
-// bg: 'green' = chroma key everywhere (safe, the art has no pure green),
+// bg: 'alpha' = the sheet is already transparent (the "no green" exports; no chroma key),
+//     'green' = chroma key everywhere (safe, the art has no pure green),
 //     'flood' = remove only background connected to the image border
 //               (for black or white backgrounds, keeps black eyes and mouths).
 // ref: which size the scale is taken from (in design px; output is RENDER_SCALE x), so
@@ -25,28 +28,29 @@ const JOBS = [
   // purple one (sprite_chasingghost_2). For the other, use 'sprite_chasingghost_1.png' with bg: 'flood'.
   { out: 'chaser.png', src: 'sprite_chasingghost_2.png', bg: 'flood', frames: 7, ref: { median: 'h', px: 60 }, align: 'bottom' },
   { out: 'jar.png', src: 'sprite_jar_stall2.png', bg: 'flood', frames: 7, split: 'even', ref: { frame: 0, dim: 'h', px: 30 }, align: 'bottom' },
-  { out: 'angel_jayimpacts.png', src: 'sprite_jayimpacts_character.png', bg: 'green', frames: 9, split: 'even', ref: { median: 'h', px: 64 }, align: 'bottom' },
-  { out: 'angel_halo.png', src: 'sprite_jayimpact_fx.png', bg: 'green', region: [0, 400], pick: [0], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
-  { out: 'angel_glint.png', src: 'sprite_jayimpact_fx.png', bg: 'green', region: [0, 400], pick: [1, 2, 3], frames: 3, ref: { max: 'h', px: 8 }, align: 'center' },
-  { out: 'angel_poof.png', src: 'sprite_jayimpact_fx.png', bg: 'green', region: [400, 887], frames: 4, ref: { max: 'w', px: 32 }, align: 'center' },
-  { out: 'krahang.png', src: 'sprite_krahang_stall1.png', bg: 'green', frames: 8, split: 'even', ref: { median: 'h', px: 30 }, align: 'center' },
+  { out: 'angel_jayimpacts.png', src: 'sprite_jayimpacts_character_no_greennew.png', orig: 'sprite_jayimpacts_character.png', bg: 'alpha', frames: 9, split: 'even', ref: { median: 'h', px: 64 }, align: 'bottom' },
+  { out: 'angel_halo.png', src: 'sprite_jayimpact_fx_no_green.png', orig: 'sprite_jayimpact_fx.png', bg: 'alpha', region: [0, 400], pick: [0], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
+  { out: 'angel_glint.png', src: 'sprite_jayimpact_fx_no_green.png', orig: 'sprite_jayimpact_fx.png', bg: 'alpha', region: [0, 400], pick: [1, 2, 3], frames: 3, ref: { max: 'h', px: 8 }, align: 'center' },
+  { out: 'angel_poof.png', src: 'sprite_jayimpact_fx_no_green.png', orig: 'sprite_jayimpact_fx.png', bg: 'alpha', region: [400, 887], frames: 4, ref: { max: 'w', px: 32 }, align: 'center' },
+  { out: 'krahang.png', src: 'sprite_krahang_stall1_no_green.png', orig: 'sprite_krahang_stall1.png', bg: 'alpha', frames: 8, split: 'even', ref: { median: 'h', px: 30 }, align: 'center' },
   { out: 'letter_icon.png', src: 'sprite_letter_stall2.png', bg: 'flood', pick: [0], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
   { out: 'letter_panel.png', src: 'sprite_letter_stall2.png', bg: 'flood', pick: [1], frames: 1, ref: { frame: 0, dim: 'w', px: 140 }, align: 'center' },
   // Bird (scene 1's placeholder sheet). Flood fill so the green legs survive.
-  { out: 'bird_side.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [40, 250], frames: 10, ref: { median: 'h', px: 28 }, align: 'bottom' },
-  { out: 'bird_front.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [440, 680], frames: 6, split: 'even', ref: { median: 'h', px: 28 }, align: 'bottom' },
+  { out: 'bird_side.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [40, 250], frames: 10, ref: { median: 'h', px: 28 }, align: 'bottom' },
+  { out: 'bird_front.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [440, 680], frames: 6, split: 'even', ref: { median: 'h', px: 28 }, align: 'bottom' },
   // Krahang riding the bird, from the bird sheet extras. Used for the cling part of S1,
   // at the same scale as bird_side so it lines up with the bird.
-  { out: 'bird_krahang_cling.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [690, 1000], xRange: [0, 450], frames: 1, ref: { factor: 0.1187 }, align: 'bottom' },
-  { out: 'icon_bird.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [700, 1000], xRange: [470, 640], frames: 1, ref: { frame: 0, dim: 'w', px: 12 }, align: 'center' },
-  { out: 'ground_shadow.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [700, 1000], xRange: [660, 900], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
-  { out: 'fx_feather.png', src: 'sprite_playerdemo.png', bg: 'flood', region: [700, 1000], xRange: [920, 1536], frames: 3, split: 'even', ref: { max: 'w', px: 16 }, align: 'center' },
+  { out: 'bird_krahang_cling.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [690, 1000], xRange: [0, 450], frames: 1, ref: { factor: 0.1187 }, align: 'bottom' },
+  { out: 'icon_bird.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [700, 1000], xRange: [470, 640], frames: 1, ref: { frame: 0, dim: 'w', px: 12 }, align: 'center' },
+  { out: 'ground_shadow.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [700, 1000], xRange: [660, 900], frames: 1, ref: { frame: 0, dim: 'w', px: 16 }, align: 'center' },
+  { out: 'fx_feather.png', src: 'sprite_playerdemo_no_green.png', orig: 'sprite_playerdemo.png', bg: 'alpha', region: [700, 1000], xRange: [920, 1536], frames: 3, split: 'even', ref: { max: 'w', px: 16 }, align: 'center' },
 ];
 
 const ALPHA_MIN = 128;
 
 function removeBackground(px, w, h, mode) {
   const at = (x, y) => (y * w + x) * 4;
+  if (mode === 'alpha') return;
   if (mode === 'green') {
     for (let i = 0; i < px.length; i += 4) {
       const [r, g, b] = [px[i], px[i + 1], px[i + 2]];
@@ -131,8 +135,35 @@ function scaleFor(ref, frames) {
   return target / v;
 }
 
+async function detect(job, file, bg) {
+  const { data, info } = await sharp(`${SRC}/${file}`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width: w, height: h } = info;
+  const px = Buffer.from(data);
+  removeBackground(px, w, h, bg);
+  if (job.xRange) {
+    const [x0, x1] = job.xRange;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (x < x0 || x >= x1) px[(y * w + x) * 4 + 3] = 0;
+  }
+  const band = [job.region?.[0] ?? 0, Math.min(job.region?.[1] ?? h, h)];
+  let frames = job.split === 'even' ? evenFrames(px, w, band, job.frames) : findFrames(px, w, band, job.pick ? null : job.frames);
+  if (job.pick) frames = job.pick.map((i) => frames[i]).filter(Boolean);
+  return { w, h, frames };
+}
+
+/** Compare a no-green sheet with its green original: sheet size, frame count, frame sizes. */
+async function compare(job) {
+  const a = await detect(job, job.orig, 'green');
+  const b = await detect(job, job.src, job.bg);
+  const sizes = (d) => d.frames.map((f) => `${f.w}x${f.h}`).join(' ');
+  const diffs = [];
+  if (a.w !== b.w || a.h !== b.h) diffs.push(`sheet ${a.w}x${a.h} vs ${b.w}x${b.h}`);
+  if (a.frames.length !== b.frames.length) diffs.push(`frames ${a.frames.length} vs ${b.frames.length}`);
+  else if (a.frames.some((f, i) => Math.abs(f.w - b.frames[i].w) > 2 || Math.abs(f.h - b.frames[i].h) > 2)) diffs.push(`frame sizes [${sizes(a)}] vs [${sizes(b)}]`);
+  console.log(`${job.out}: ${job.orig} vs ${job.src}: ${diffs.length ? 'DIFFERS: ' + diffs.join('; ') : 'same frame layout'}`);
+}
+
 async function run(job) {
-  const { data, info } = await sharp(`art-src/${job.src}`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(`${SRC}/${job.src}`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
   const px = Buffer.from(data);
   removeBackground(px, w, h, job.bg);
@@ -170,5 +201,11 @@ async function run(job) {
   console.log(`${job.out}: ${frames.length} x ${cellW}x${cellH} (scale ${s.toFixed(4)})`);
 }
 
-const only = process.argv[2];
-for (const job of JOBS) if (!only || job.out === only) await run(job);
+const args = process.argv.slice(2);
+if (args[0] === '--compare') {
+  for (const job of JOBS) if (job.orig) await compare(job);
+} else {
+  for (const job of JOBS) if (!args[0] || job.out === args[0]) await run(job);
+  const withoutNoGreen = [...new Set(JOBS.filter((j) => !j.orig).map((j) => j.src))];
+  console.log('no "no green" version (used as is):', withoutNoGreen.join(', '));
+}

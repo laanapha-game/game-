@@ -8,6 +8,10 @@ export const ANGEL_PAGES = [
   'ก็จะมีซุ้ม Trick or Treat ให้เจ้าเล่นแบบนี้ด้วยนะ แล้วเจอกันที่ลานนภา!',
 ];
 
+// Stall 1 (Krahang) and stall 2 (ghost in the jar). Verbatim from the owner.
+export const STALL1_PAGES = ['ในงานจริงซุ้มผีแบบนี้ก็มีนะ แต่ก่อนที่เจ้าจะไปถึงลานนภา มาให้ข้ากินตับซะดีดี !!!!!'];
+export const STALL2_PAGES = ['ข้าจะบอกให้ว่า ลานนภา ไปทางไหน แต่เจ้าต้องต้องหาจดหมายนำทางให้เจอ ตาดีทีรอดเว้ยเห้ย ว่าฮ่าฮ่าฮ่า อ้า..'];
+
 export const LETTER_TEXT = 'เดินต่อไปตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภาอยู่ข้างหน้าท่าน';
 
 export const STALL3_PAGE1 = 'เดี๋ยวก่อนเจ้า! ผีไล่หลังอยู่ก็จริง แต่ข้ามีเรื่องจะบอก';
@@ -37,6 +41,8 @@ export const REPLY_RUDE = 'เรื่องของมึง จะหนี�
 // TODO: not in the spec script. Placeholders until the owner supplies copy.
 export const NAMES = {
   angel: 'Jayimpacts',
+  stall1: 'กระหัง', // TODO copy
+  stall2: 'ผีในไห', // TODO copy
   stall3: 'ผีซุ้ม 3', // TODO(open item 3): ghost type for stall 3
   stall4: 'ผีซุ้ม 4', // TODO(open item 3)
   stall5: 'ผีซุ้ม 5', // TODO(open item 3)

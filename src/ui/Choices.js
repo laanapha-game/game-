@@ -7,7 +7,6 @@ import { RENDER_SCALE as R } from '../config/constants.js';
 import { wrap, addLines, setLines } from './text.js';
 
 const DEPTH = 110;
-const LH = 13; // 2 lines inside a 32 px button
 
 export class Choices {
   constructor(scene) {
@@ -21,13 +20,16 @@ export class Choices {
     const c = UI.choices;
     const opts = RANDOMISE_CHOICE_ORDER && Math.random() < 0.5 ? [...options].reverse() : options;
     const minHit = minHitLogical(this.scene.game, MIN_TOUCH_CSS_PX);
+    const bgTexts = (this.layoutInfo = []);
     return new Promise((resolve) => {
       opts.forEach((opt, i) => {
         const y = c.y + i * (c.h + c.gap);
         const bg = addNineSlice(this.scene, c.x, y, 'choice_button_9slice', FRAMES.choice.normal, c.w, c.h, 6).setOrigin(0).setDepth(DEPTH);
-        const lines = wrap(opt.text, c.w - 12).slice(0, 2);
-        const texts = addLines(this.scene, c.x + c.w / 2, y, lines.length, LH, { align: 'center', depth: DEPTH + 1 });
-        setLines(texts, lines, { top: y, height: c.h, lineHeight: LH });
+        // Wrapped by pixel width; never truncated (the dev dialogue check fails if it does not fit).
+        const lines = wrap(opt.text, c.w - 12);
+        const texts = addLines(this.scene, c.x + c.w / 2, y, lines.length, c.lineHeight, { align: 'center', depth: DEPTH + 1 });
+        setLines(texts, lines, { top: y, height: c.h, lineHeight: c.lineHeight });
+        bgTexts.push({ rect: { x: c.x, y, w: c.w, h: c.h }, texts, lines });
         const hitH = Math.max(c.h, Math.min(minHit, c.h + c.gap));
         bg.setInteractive(new Phaser.Geom.Rectangle(0, ((c.h - hitH) / 2) * R, c.w * R, hitH * R), Phaser.Geom.Rectangle.Contains);
         bg.on('pointerdown', () => {

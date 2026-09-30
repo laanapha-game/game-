@@ -97,3 +97,10 @@ test('Latin runs such as 7-Eleven are not split', () => {
   const lines = wrapText('ตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภา', 90, measure);
   assert.ok(lines.some((l) => l.includes('7-Eleven')), lines.join('|'));
 });
+
+test('long URLs break after a slash, not mid-word', () => {
+  const measure = (s) => graphemes(s).length * 6;
+  const lines = wrapText('ซื้อบัตรได้ที่ hellobooku.com/laanapha2026', 120, measure);
+  assert.ok(lines.includes('hellobooku.com/') || lines.some((l) => l.endsWith('hellobooku.com/')), lines.join('|'));
+  assert.ok(lines.some((l) => l.startsWith('laanapha2026')), lines.join('|'));
+});

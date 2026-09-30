@@ -42,6 +42,14 @@ async function tapUntil(page, vp, pred, { every = 60, timeout = 60000 } = {}) {
   }
   return state(page);
 }
+// Taps (slowly) while a dialogue is open, until `done` is true in the page.
+async function tapThroughDialogue(page, vp, done, timeout = 30000) {
+  const end = Date.now() + timeout;
+  while (Date.now() < end && !(await page.evaluate(done))) {
+    if (await page.evaluate(() => window.__scene2.dialogue.active)) await tapCenter(page, vp);
+    await page.waitForTimeout(250);
+  }
+}
 // Logical game coords -> page coords.
 async function toPage(page, x, y) {
   return page.evaluate(([x, y]) => {
@@ -79,7 +87,7 @@ const PLAY_VP = { width: 390, height: 844, dpr: 1 };
   const vp = PLAY_VP;
   const { ctx, page } = await open(vp);
   await tapUntil(page, vp, (s) => s === 'S1', { every: 150 });
-  await page.waitForFunction(() => window.__scene2.tickS1);
+  await tapThroughDialogue(page, vp, () => !!window.__scene2.tickS1); // stall 1 dialogue, then the game starts itself
   await page.waitForTimeout(11000);
   await page.waitForFunction(() => window.__scene2GameOver, null, { timeout: 5000 }).catch(() => {});
   const reason = await page.evaluate(() => window.__scene2GameOver?.reason);
@@ -94,15 +102,16 @@ if (args.includes('--win')) {
   const { ctx, page, errors } = await open(vp, '?today=2026-10-12');
   await shot(page, 's0');
   await tapUntil(page, vp, (s) => s === 'S1', { every: 120 });
-  await page.waitForFunction(() => window.__scene2.tickS1);
+  await tapThroughDialogue(page, vp, () => !!window.__scene2.tickS1);
   await shot(page, 's1');
   await tapUntil(page, vp, (s) => s === 'S2', { every: 40 });
   // Wait for the jars to become pickable, then pick the letter.
-  await page.waitForFunction(() => window.__scene2.children.list.some((o) => o.texture?.key === 'jar' && o.input?.enabled), null, { timeout: 20000 });
+  await tapThroughDialogue(page, vp, () => window.__scene2.jars?.some((j) => j.input?.enabled), 40000);
   await shot(page, 's2');
   const jar = await page.evaluate(() => {
-    const j = window.__scene2.children.list.find((o) => o.texture?.key === 'jar' && o.content === 'letter');
-    return { x: j.x, y: j.y - 20 };
+    const s = window.__scene2;
+    const j = s.jars.find((o) => o.content === 'letter');
+    return { x: j.x + s.world.x, y: j.y - 20 };
   });
   const p = await toPage(page, jar.x, jar.y);
   await page.touchscreen.tap(p.x, p.y);

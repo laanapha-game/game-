@@ -1,6 +1,6 @@
 // Entry point. Runs scene 2 standalone with the placeholder bird, and exports
 // startScene2() for the full game to call with the real character data.
-import '@fontsource/noto-sans-thai/400.css'; // PLACEHOLDER font, see FONT_IS_PLACEHOLDER
+import './styles.css'; // includes the Serithai @font-face
 import Phaser from 'phaser';
 import { GAME_W, GAME_H, RENDER_SCALE, LETTERBOX_COLOR, FONT_FAMILY, FONT_BODY_PX } from './config/constants.js';
 import { installViewScale } from './display/integerScale.js';

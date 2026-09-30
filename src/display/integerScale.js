@@ -67,8 +67,11 @@ export function setupScene(scene) {
   fit();
   scene.registry.events.on('changedata-viewZoom', fit);
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.registry.events.off('changedata-viewZoom', fit));
+  // Texture px per design px: RENDER_SCALE for sprite sheets, 1 for native pipeline assets.
   const onAdded = (go) => {
-    if (go.type === 'Image' || go.type === 'Sprite') go.setScale(1 / RENDER_SCALE);
+    if (go.type !== 'Image' && go.type !== 'Sprite') return;
+    const k = scene.registry.get('texScale')?.get(go.texture.key) ?? RENDER_SCALE;
+    go.setScale(1 / k);
   };
   scene.events.on(Phaser.Scenes.Events.ADDED_TO_SCENE, onAdded);
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.events.off(Phaser.Scenes.Events.ADDED_TO_SCENE, onAdded));

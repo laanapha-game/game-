@@ -25,7 +25,9 @@ function words(text) {
   const segs = wordSeg ? Array.from(wordSeg.segment(text), (s) => s.segment) : text.split(/(\s+)/).filter(Boolean);
   const out = [];
   for (const seg of segs) {
-    if (out.length && LATIN_RUN.test(seg) && LATIN_RUN.test(out[out.length - 1])) out[out.length - 1] += seg;
+    const prev = out[out.length - 1];
+    // Keep Latin runs together, and an opening bracket with the word after it.
+    if (out.length && ((LATIN_RUN.test(seg) && LATIN_RUN.test(prev)) || (prev.endsWith('(') && !/^\s/.test(seg)))) out[out.length - 1] += seg;
     else out.push(seg);
   }
   return out;
@@ -54,7 +56,16 @@ export function wrapText(text, maxWidth, measure) {
       line = word;
       continue;
     }
-    // A single word wider than the box: break between grapheme clusters.
+    // A single word wider than the box: break after '/' or '.' (URLs) if that
+    // fits, otherwise between grapheme clusters.
+    const parts = word.split(/(?<=[/.])/);
+    if (parts.length > 1 && parts.every((p) => measure(p) <= maxWidth)) {
+      for (const part of parts) {
+        if (line !== '' && measure(line + part) > maxWidth) push();
+        line += part;
+      }
+      continue;
+    }
     for (const g of graphemes(word)) {
       if (line !== '' && measure(line + g) > maxWidth) push();
       line += g;

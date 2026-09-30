@@ -1,7 +1,8 @@
-// Scene 2: Trick or Treat run. State machine from spec section 6.
+// Scene 2: Trick or Treat run. State machine from scene2-spec.md section 6.
 //
-//   S0 angel intro -> S1 Krahang tap game -> S2 jar game -> S3 letter + chase start
-//   -> S4 stall 3 -> S5 stall 4 -> S6 stall 5 -> S7 final sprint -> win (scene 3)
+//   S0 angel intro -> WALK -> S1 stall 1 (Krahang): dialogue, shake, tap game
+//   -> WALK -> S2 stall 2 (jar ghost): dialogue, shake, jar game -> S3 letter,
+//   chase starts (2:00 timer) -> S4..S6 stalls 3..5 -> S7 final sprint -> scene 3
 //   any fail -> caught sequence -> GameOver scene (single Home button)
 //
 // Each state is an async step. When the run ends (fail or win) `this.ended` is
@@ -9,8 +10,19 @@
 // continue after a Game over, even one that was mid-dialogue.
 import Phaser from 'phaser';
 import * as C from '../config/constants.js';
-import { MANIFEST, FRAMES, STALL_BOOTH_FRAME } from '../assets/manifest.js';
-import { ANGEL_PAGES, LETTER_TEXT, STALL4_PAGES, STALL5_PAGES, REPLY_POLITE, REPLY_RUDE, NAMES } from '../data/script.js';
+import { MANIFEST, FRAMES } from '../assets/manifest.js';
+import { layoutInstances, nativeLayer } from '../assets/loader.js';
+import {
+  ANGEL_PAGES,
+  LETTER_TEXT,
+  STALL1_PAGES,
+  STALL2_PAGES,
+  STALL4_PAGES,
+  STALL5_PAGES,
+  REPLY_POLITE,
+  REPLY_RUDE,
+  NAMES,
+} from '../data/script.js';
 import { resolveToday, stall3Pages } from '../logic/ticket.js';
 import { TapMeter } from '../logic/meter.js';
 import { ChaseTimer, chaserStage } from '../logic/chaseTimer.js';
@@ -22,16 +34,20 @@ import { MeterView } from '../ui/Meter.js';
 import { TimerBar } from '../ui/TimerBar.js';
 import { ensureFxAnims, burst } from '../ui/fx.js';
 import { wrap, addLines, setLines, textStyle } from '../ui/text.js';
+import { checkDialogues } from '../dev/dialogueCheck.js';
 import { BirdActor } from './BirdActor.js';
 
 const faces = (key) => MANIFEST.find((m) => m.key === key)?.facing ?? 'left';
 const lerp = (a, b, t) => a + (b - a) * t;
 
-// Distance of one auto-run segment and the world positions derived from it (spec 7.4).
-const SEGMENT_PX = C.RUN_SPEED_PX_S * C.RUN_SEGMENT_S;
-const STALL_WORLD_X = [1, 2, 3].map((k) => C.STALL_STOP_X - SEGMENT_PX * k); // stalls 3, 4, 5
-const FINAL_WORLD_X = SEGMENT_PX * 3 + C.SPRINT_DISTANCE_PX; // scroll at which the light is reached
-const LIGHT_ENTRANCE_IN_PIECE = 52; // spec 9: entrance centre from the piece's left edge
+// Scroll distance at which each stall (1..5) stops at STALL_STOP_X (spec 7.4).
+const WALK_PX = C.WALK_SPEED_PX_S * C.WALK_SEGMENT_S;
+const RUN_PX = C.RUN_SPEED_PX_S * C.RUN_SEGMENT_S;
+const STALL_SCROLL = [WALK_PX, WALK_PX * 2, WALK_PX * 2 + RUN_PX, WALK_PX * 2 + RUN_PX * 2, WALK_PX * 2 + RUN_PX * 3];
+const STALL_WORLD_X = STALL_SCROLL.map((s) => C.STALL_STOP_X - s);
+const FINAL_WORLD_X = STALL_SCROLL[4] + C.SPRINT_DISTANCE_PX; // scroll at which the light is reached
+const LIGHT_ENTRANCE_IN_PIECE = 52; // entrance centre from the piece's left edge
+const COUNTER_Y = C.GROUND_Y - C.STALL_H + C.STALL_COUNTER_Y; // counter top on screen
 
 export class TrickOrTreatScene extends Phaser.Scene {
   constructor() {
@@ -61,7 +77,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     setupScene(this);
     this.input.enabled = true;
     this.cameras.main.setBackgroundColor(C.CSS.black);
-    this.bg = this.add.image(0, 0, 'bg_tap').setOrigin(0).setDepth(0);
+    this.buildWorld();
     this.bird = new BirdActor(this, this.character, C.BIRD_X, C.GROUND_Y);
     this.dialogue = new Dialogue(this);
     this.choices = new Choices(this);
@@ -70,10 +86,11 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.input.on('pointerdown', (p) => {
       if (!this.ended) this.tapHandler?.(p);
     });
-    if (C.FONT_IS_PLACEHOLDER && import.meta.env.DEV) {
-      this.add.text(C.GAME_W - 2, C.GAME_H - 2, 'PLACEHOLDER FONT', textStyle(8, C.CSS.magenta)).setOrigin(1, 1).setDepth(500).setAlpha(0.7);
+    if (import.meta.env.DEV) {
+      window.__scene2 = this;
+      this.checkDialogues = () => checkDialogues(this);
     }
-    if (import.meta.env.DEV) window.__scene2 = this;
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('dialoguecheck')) return; // dev check only
     this.run();
   }
 
@@ -109,19 +126,22 @@ export class TrickOrTreatScene extends Phaser.Scene {
     return this.guard(new Promise((r) => this.tweens.add({ ...config, onComplete: r })));
   }
 
-  async fade(rebuild) {
-    const cam = this.cameras.main;
-    cam.fadeOut(250, 0, 0, 0);
-    await this.guard(new Promise((r) => cam.once('camerafadeoutcomplete', r)));
-    rebuild();
-    cam.fadeIn(250, 0, 0, 0);
-  }
-
   /** Plays dialogue pages; screen taps go to the dialogue while it is open. */
   async talk(pages, opts = {}) {
     this.tapHandler = () => this.dialogue.tap();
     await this.guard(this.dialogue.play(pages, opts));
     this.tapHandler = null;
+  }
+
+  /**
+   * Stall 1 and 2: dialogue, then when the last page finishes typing the screen
+   * shakes and the minigame starts by itself (no extra tap).
+   */
+  async talkThenShake(pages, opts) {
+    await this.talk(pages, { ...opts, keepOpen: true, waitLastTap: false });
+    this.cameras.main.shake(C.PRE_GAME_SHAKE_MS, C.PRE_GAME_SHAKE_INTENSITY);
+    await this.wait(C.PRE_GAME_SHAKE_MS);
+    this.dialogue.setVisible(false);
   }
 
   setState(s) {
@@ -134,12 +154,14 @@ export class TrickOrTreatScene extends Phaser.Scene {
   async run() {
     const steps = [
       () => this.s0Angel(),
+      () => this.walkTo(0),
       () => this.s1Krahang(),
+      () => this.walkTo(1),
       () => this.s2Jars(),
       () => this.s3LetterAndChase(),
-      () => this.stall(0),
-      () => this.stall(1),
       () => this.stall(2),
+      () => this.stall(3),
+      () => this.stall(4),
       () => this.s7Sprint(),
     ];
     for (const step of steps) {
@@ -148,7 +170,24 @@ export class TrickOrTreatScene extends Phaser.Scene {
     }
   }
 
-  // S0: angel intro, 5 pages, no timer.
+  /** Scrolls the world until stall `i` stops at STALL_STOP_X. */
+  async scrollTo(i, durationMs, animScale) {
+    this.bird.play('run', 'side');
+    this.bird.sprite.anims.timeScale = animScale;
+    this.running = true;
+    await this.tweenP({ targets: this, worldX: STALL_SCROLL[i], duration: durationMs, ease: 'Linear' });
+    this.running = false;
+    this.bird.sprite.anims.timeScale = 1;
+    this.bird.play('idle', 'side');
+  }
+
+  // WALK: slower auto-scroll before stalls 1 and 2. No timer, no fail.
+  async walkTo(i) {
+    this.setState(`WALK${i + 1}`);
+    await this.scrollTo(i, C.WALK_SEGMENT_S * 1000, C.WALK_SPEED_PX_S / C.RUN_SPEED_PX_S);
+  }
+
+  // S0: angel intro, 5 pages, no timer, then the angel disappears.
   async s0Angel() {
     this.setState('S0');
     this.bird.play('idle', 'side');
@@ -176,17 +215,24 @@ export class TrickOrTreatScene extends Phaser.Scene {
     await this.wait(400);
   }
 
-  // S1: Krahang lands on the bird's back (right side); tap to fling it off.
+  // S1: stall 1. The Krahang talks, the screen shakes, then it leaps from its
+  // stall onto the bird's back (right side). Tap to fling it off.
   async s1Krahang() {
     this.setState('S1');
+    const st = this.stalls[0];
+    await this.talkThenShake(STALL1_PAGES, { speaker: NAMES.stall1 });
+
     const backX = C.BIRD_X + 10;
     const backY = C.GROUND_Y - 18;
-    const k = this.add.sprite(C.GAME_W + 20, C.GROUND_Y - 40, 'krahang', 0).setDepth(55).setFlipX(faces('krahang') === 'right');
+    const from = this.worldToScreen(st.ghost);
+    st.ghost.setVisible(false);
+    const k = this.add.sprite(from.x, from.y - 16, 'krahang', 0).setDepth(55).setFlipX(faces('krahang') === 'right');
     k.play('krahang_jump');
     this.bird.play('scared');
     this.tweens.add({ targets: k, x: backX, duration: 600, ease: 'Linear' });
-    await this.tweenP({ targets: k, y: C.GROUND_Y - 70, duration: 300, ease: 'Quad.easeOut', yoyo: false });
+    await this.tweenP({ targets: k, y: C.GROUND_Y - 80, duration: 300, ease: 'Quad.easeOut' });
     await this.tweenP({ targets: k, y: backY, duration: 300, ease: 'Quad.easeIn' });
+
     // While clinging, show the "Krahang riding the bird" sprite if it exists;
     // otherwise the Krahang's own cling frames on top of the struggling bird.
     const useCombo = this.registry.get('realArt')?.has('bird_krahang_cling');
@@ -255,21 +301,26 @@ export class TrickOrTreatScene extends Phaser.Scene {
     await this.wait(500);
   }
 
-  // S2: two jars, one ghost and one letter; reveal, shuffle, pick.
+  // S2: stall 2. The jar ghost talks (jar open with ghost), shake, then the jar
+  // game on the stall counter: reveal, shuffle, pick.
   async s2Jars() {
     this.setState('S2');
+    const st = this.stalls[1];
+    st.ghost.play('jar_ghost');
+    await this.talkThenShake(STALL2_PAGES, { speaker: NAMES.stall2 });
+    st.ghost.setVisible(false).stop();
+
     const jars = [];
-    await this.fade(() => {
-      this.bg.setTexture('bg_jars');
-      this.bird.play('idle', 'side');
-      const letterSlot = Phaser.Math.Between(0, 1); // random every run
-      C.JAR_XS.forEach((x, slot) => {
-        const s = this.add.sprite(x, C.JAR_TABLE_Y, 'jar', FRAMES.jar.closed).setOrigin(0.5, 1).setDepth(30);
-        s.content = slot === letterSlot ? 'letter' : 'ghost';
-        jars.push(s);
-      });
+    const letterSlot = Phaser.Math.Between(0, 1); // random every run
+    C.JAR_XS.forEach((x, slot) => {
+      const s = this.add.sprite(x - this.worldX, C.JAR_TABLE_Y, 'jar', FRAMES.jar.closed).setOrigin(0.5, 1);
+      s.content = slot === letterSlot ? 'letter' : 'ghost';
+      this.world.add(s);
+      jars.push(s);
     });
-    await this.wait(400);
+    this.jars = jars;
+    this.bird.play('idle', 'side');
+    await this.wait(300);
 
     // Reveal
     jars.forEach((j) => j.play(j.content === 'letter' ? 'jar_letter' : 'jar_ghost'));
@@ -283,8 +334,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
       const [a, b] = Math.random() < 0.5 ? jars : [jars[1], jars[0]];
       const ax = a.x;
       const bx = b.x;
-      a.setDepth(31);
-      b.setDepth(30);
+      this.world.bringToTop(a);
       a.play('jar_shake');
       b.play('jar_shake');
       this.tweens.add({ targets: a, y: C.JAR_TABLE_Y - 10, duration: ms / 2, yoyo: true, ease: 'Sine.easeOut' });
@@ -298,22 +348,20 @@ export class TrickOrTreatScene extends Phaser.Scene {
     const R = C.RENDER_SCALE;
     const minHit = minHitLogical(this.game, C.MIN_TOUCH_CSS_PX) * R; // texture px
     const spacing = Math.abs(C.JAR_XS[1] - C.JAR_XS[0]) * R;
-    const hw = minHit;
-    const hh = minHit;
     const picked = await this.guard(
       new Promise((resolve) => {
         jars.forEach((j) => {
           const fw = j.frame.width;
           const fh = j.frame.height;
-          const w = Math.min(spacing, Math.max(fw, hw));
-          const h = Math.max(fh, hh);
+          const w = Math.min(spacing, Math.max(fw, minHit));
+          const h = Math.max(fh, minHit);
           j.setInteractive(new Phaser.Geom.Rectangle((fw - w) / 2, (fh - h) / 2, w, h), Phaser.Geom.Rectangle.Contains);
           j.once('pointerdown', () => resolve(j));
         });
       }),
     );
     jars.forEach((j) => j.disableInteractive());
-    this.jars = jars;
+    const at = this.worldToScreen(picked);
 
     if (picked.content === 'ghost') {
       picked.play('jar_ghost');
@@ -321,13 +369,13 @@ export class TrickOrTreatScene extends Phaser.Scene {
       const cam = this.cameras.main;
       cam.flash(200, 240, 45, 240);
       cam.shake(C.JUMP_SCARE_MS, 0.02);
-      burst(this, 'fx_splat', picked.x, picked.y - 30, { depth: 60 });
+      burst(this, 'fx_splat', at.x, at.y - 30, { depth: 60 });
       await this.wait(C.JUMP_SCARE_MS);
       return this.fail('ghostJar');
     }
     picked.play('jar_letter');
     this.bird.play('happy', 'front');
-    const icon = this.add.image(picked.x, picked.y - 30, 'letter_icon').setDepth(60);
+    const icon = this.add.image(at.x, at.y - 30, 'letter_icon').setDepth(60);
     await this.tweenP({ targets: icon, x: C.GAME_W / 2, y: 120, duration: 500, ease: 'Quad.easeOut' });
     icon.destroy();
   }
@@ -347,13 +395,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     await this.guard(new Promise((r) => (this.tapHandler = r)));
     this.tapHandler = null;
     [panel, arrow, ...texts].forEach((o) => o.destroy());
-
-    await this.fade(() => {
-      this.jars?.forEach((j) => j.destroy());
-      this.bg.destroy();
-      this.buildWorld();
-      this.bird.play('idle', 'side');
-    });
+    this.bird.play('idle', 'side');
 
     // Chaser enters from the right; the timer starts the moment it appears.
     this.chaser = this.add.sprite(C.GAME_W + 40, C.CHASER_HOVER_Y, 'chaser', FRAMES.chaser.float[0]).setDepth(45);
@@ -368,39 +410,60 @@ export class TrickOrTreatScene extends Phaser.Scene {
     await this.wait(300);
   }
 
-  /** Builds the scrolling route: soi, soi exit, street, white light (spec 7.4). */
+  worldToScreen(obj) {
+    return { x: obj.x + this.world.x, y: obj.y + this.world.y };
+  }
+
+  /** Builds the scrolling route: soi, soi exit, street, white light, and the 5 stalls. */
   buildWorld() {
-    this.far = this.add.tileSprite(0, 0, C.GAME_W * C.RENDER_SCALE, C.GAME_H * C.RENDER_SCALE, 'bg_alley_far').setOrigin(0).setDepth(1).setScale(1 / C.RENDER_SCALE);
+    const R = C.RENDER_SCALE;
+    const far = nativeLayer(this, 'bg/alley_far') ?? 'bg_alley_far';
+    const farScale = far === 'bg_alley_far' ? R : 1;
+    this.far = this.add.tileSprite(0, 0, C.GAME_W * farScale, C.GAME_H * farScale, far).setOrigin(0).setDepth(1).setScale(1 / farScale);
     this.world = this.add.container(0, 0).setDepth(10);
     const W = 360;
     // Soi exit sits between stall 4 and stall 5 (ASSUMPTION for the split).
-    const exitLeft = Math.round((STALL_WORLD_X[1] + STALL_WORLD_X[2]) / 2 - W / 2);
+    const exitLeft = Math.round((STALL_WORLD_X[3] + STALL_WORLD_X[4]) / 2 - W / 2);
     const lightLeft = C.STALL_STOP_X - FINAL_WORLD_X - LIGHT_ENTRANCE_IN_PIECE;
+    const near = nativeLayer(this, 'bg/alley_near') ?? 'bg_alley_near';
     const pieces = [];
-    for (let x = exitLeft + W; x < C.GAME_W; x += W) pieces.push(['bg_alley_near', x]);
+    for (let x = exitLeft + W; x < C.GAME_W; x += W) pieces.push([near, x]);
     pieces.push(['bg_alley_exit', exitLeft]);
     for (let right = exitLeft; right > lightLeft + W; right -= W) pieces.push(['bg_street', right - W]);
     pieces.push(['bg_light_end', lightLeft]);
     for (const [key, x] of pieces) this.world.add(this.add.image(x, 0, key).setOrigin(0));
 
+    // Props from assets/bg/alley_layout.json (tiled every 720 px over the soi part).
+    for (const inst of layoutInstances(this)) {
+      for (let base = exitLeft + W - 720; base > STALL_WORLD_X[4]; base -= 720) {
+        if (base + inst.x > exitLeft + W) continue;
+        this.world.add(this.add.image(base + inst.x, inst.y, inst.key).setOrigin(0, 1));
+      }
+    }
+
+    // Stalls. Draw order per stall: stall, ghost/staff, stall_front (counter),
+    // so the ghost stands behind the counter with head and shoulders above it.
+    const ghostBottom = COUNTER_Y + C.GHOST_SINK;
     this.stalls = STALL_WORLD_X.map((x, i) => {
-      const n = i + 3;
-      const ghost = this.add.sprite(x, C.GROUND_Y - 4, `stall_ghost_${n}`, 0).setOrigin(0.5, 1).play(`stall_ghost_${n}_idle`);
-      const booth = this.add.image(x, C.GROUND_Y, 'booth', STALL_BOOTH_FRAME[n]).setOrigin(0.5, 1);
-      this.world.add([ghost, booth]);
-      return { ghost, booth };
+      const n = i + 1;
+      const kind = C.STALL_KIND[n];
+      const booth = this.add.image(x, C.GROUND_Y, `stall_${kind}`).setOrigin(0.5, 1);
+      let ghost;
+      if (n === 1) ghost = this.add.sprite(x, ghostBottom, 'krahang', FRAMES.krahang.jumpOn[0]).setOrigin(0.5, 1);
+      else if (n === 2) ghost = this.add.sprite(x, C.JAR_TABLE_Y, 'jar', FRAMES.jar.closed).setOrigin(0.5, 1);
+      else ghost = this.add.sprite(x, ghostBottom, `stall_ghost_${n}`, 0).setOrigin(0.5, 1).play(`stall_ghost_${n}_idle`);
+      const front = this.add.image(x, C.GROUND_Y, `stall_${kind}_front`).setOrigin(0.5, 1);
+      // The jar sits ON the counter, so it goes above the front.
+      this.world.add(n === 2 ? [booth, front, ghost] : [booth, ghost, front]);
+      return { booth, ghost, front };
     });
   }
 
-  // S4-S6: auto-run to a stall, then its dialogue.
+  // S4-S6: auto-run to stalls 3..5 (index 2..4), then their dialogue.
   async stall(i) {
-    const n = i + 3;
-    this.setState(`S${i + 4}`);
-    this.bird.play('run', 'side');
-    this.running = true;
-    await this.tweenP({ targets: this, worldX: SEGMENT_PX * (i + 1), duration: C.RUN_SEGMENT_S * 1000, ease: 'Linear' });
-    this.running = false;
-    this.bird.play('idle', 'side');
+    const n = i + 1;
+    this.setState(`S${n + 1}`);
+    await this.scrollTo(i, C.RUN_SEGMENT_S * 1000, 1);
 
     const speaker = NAMES[`stall${n}`];
     if (n === 5) {
@@ -424,7 +487,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
   // S7: tap to fill the meter; meter value maps to scroll toward the light.
   async s7Sprint() {
     this.setState('S7');
-    const startX = SEGMENT_PX * 3;
+    const startX = STALL_SCROLL[4];
     this.meter = new TapMeter(C.SPRINT_GAIN, C.SPRINT_DECAY_PER_S);
     const view = new MeterView(this);
     this.bird.play('run', 'side');
@@ -510,12 +573,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.tickS1?.(dt);
     this.tickS7?.(dt);
 
-    if (this.world) {
-      // Move in art-pixel steps (1 / RENDER_SCALE design px) for smooth scrolling.
-      const R = C.RENDER_SCALE;
-      this.world.x = Math.round(this.worldX * R) / R;
-      this.far.tilePositionX = -Math.round(this.worldX * C.FAR_PARALLAX * R);
-    }
+    // Move in art-pixel steps (1 / RENDER_SCALE design px) for smooth scrolling.
+    const R = C.RENDER_SCALE;
+    this.world.x = Math.round(this.worldX * R) / R;
+    this.far.tilePositionX = -Math.round(this.worldX * C.FAR_PARALLAX * this.far.scaleX ** -1);
     if (this.running && time - (this.lastDust ?? 0) > 220) {
       this.lastDust = time;
       burst(this, 'fx_dust', C.BIRD_X + 10, C.GROUND_Y - 3, { dx: 8, ms: 300 });

@@ -1,5 +1,7 @@
 # ลานนภา Halloween Fest: scene 2 (Trick or Treat run)
 
+The source of truth is [`scene2-spec.md`](scene2-spec.md).
+
 A portrait mobile browser game (180 x 320 layout, rendered at device resolution) built with Phaser 4 and Vite.
 This repo covers scene 2 only. It runs on its own with a placeholder bird.
 
@@ -8,6 +10,9 @@ npm install
 npm run dev          # http://localhost:5173  (dev only: ?today=YYYY-MM-DD overrides the ticket date)
 npm test             # date logic, meters, timer, Thai wrapping, anchors
 npm run test:e2e     # needs `npm run dev`; add -- --win for the full run to scene 3
+npm run check:dialogue  # needs `npm run dev`; every dialogue page must fit its box
+npm run sprites      # character sheets from assets/incoming -> src/assets/art
+python3 tools/bg_pipeline.py && python3 tools/stall_pipeline.py  # backgrounds, props, stalls (Pillow + numpy)
 npm run build
 ```
 
@@ -36,8 +41,8 @@ Layout stays in 180 x 320 design units (spec 2), but the game no longer renders 
 
 ## Sprites
 
-`npm run sprites` (`tools/prep-sprites.mjs`) builds game strips from the sheets in `art-src/`
-(downloaded from Drive `เกมลานนภา/Scene_2_Sprite`). It removes the background, finds the frames,
+`npm run sprites` (`tools/prep-sprites.mjs`) builds game strips from the sheets in `assets/incoming/Scene_2_Sprite/`
+(the Drive folder `เกมลานนภา/Scene_2_Sprite`, downloaded unchanged to `assets/incoming/`; "no green" versions are used where they exist). It removes the background, finds the frames,
 scales them with nearest-neighbour to 3x design size, and writes them to `src/assets/art/`.
 
 In the game now (sizes are design px):
@@ -74,7 +79,7 @@ or add a job to `tools/prep-sprites.mjs`.
   `startScene2({ character, onWin, onGameOver })` (set `window.__LANNAPHA_EMBEDDED__ = true` first), or add the scene classes to its own game.
 - Character contract: anchors are per view (`side.anchors`, `front.anchors`). The placeholder anchor values are guesses.
 - `HOME_ROUTE` is `/` (TODO).
-- Font: Noto Sans Thai (OFL) as a **placeholder**, with a dev-only badge on screen.
+- Font: Serithai Regular pixel font (licence for web embedding still to confirm).
 - Speaker names for stalls 3 to 5 and the GAME OVER / HOME / TAP labels are placeholders.
 - The chase timer starts when the chaser appears, after the letter is read (state table S3). It uses wall-clock time, so it keeps running even when the tab is in the background.
 - Timer bar: the chaser icon moves with time, the bird icon moves with run progress, and the goal is the left end.

@@ -1,25 +1,29 @@
 // Dialogue system (spec 7.3): 9-slice chatbox, typewriter, tap to complete,
 // tap to advance, blinking arrow. Pages that overflow the box are split into
 // continuation pages (the text itself is never changed).
-import { UI, LINE_HEIGHT_PX, TYPEWRITER_CPS, FONT_BODY_PX, CSS } from '../config/constants.js';
+import { UI, LINE_HEIGHT_PX, TYPEWRITER_CPS, FONT_BODY_PX, TEXT_PAD_Y, CSS } from '../config/constants.js';
 import { graphemes, paginate } from '../logic/textWrap.js';
-import { wrap, addLines, textStyle } from './text.js';
+import { wrap, addLines, textStyle, inkHeight } from './text.js';
 import { addNineSlice, sizeNineSlice } from '../display/integerScale.js';
 
 const DEPTH = 100;
-const NAME_OVERLAP = 6; // first line sits below the name tag
+const TAG_TOP = -8; // name tag straddles the box top edge
+const TEXT_TOP = 10; // first line box starts below the name tag
 
 export class Dialogue {
   constructor(scene) {
     this.scene = scene;
     const b = UI.chatbox;
-    this.textWidth = b.w - b.pad * 2;
-    this.textTop = b.y + b.pad + NAME_OVERLAP;
-    this.maxLines = Math.max(1, Math.floor((b.h - b.pad * 2 - NAME_OVERLAP) / LINE_HEIGHT_PX));
+    // Wrap by measured pixel width inside the padding (minus the arrow column),
+    // paginate by how many lines fit including stacked marks. Text is never clipped.
+    this.textWidth = b.w - b.pad * 2 - b.arrowW;
+    this.textTop = b.y + TEXT_TOP;
+    const bottom = b.y + b.h - b.pad;
+    this.maxLines = Math.max(1, Math.floor((bottom - this.textTop - inkHeight()) / LINE_HEIGHT_PX) + 1);
 
     this.box = addNineSlice(scene, b.x, b.y, 'chatbox_9slice', 0, b.w, b.h, 8).setOrigin(0).setDepth(DEPTH);
-    this.tag = addNineSlice(scene, b.x + 4, b.y - 6, 'nametag_9slice', 0, 40, UI.nametag.h, 6).setOrigin(0).setDepth(DEPTH + 1);
-    this.tagText = scene.add.text(0, 0, '', textStyle(FONT_BODY_PX, CSS.white)).setOrigin(0, 0.5).setDepth(DEPTH + 2);
+    this.tag = addNineSlice(scene, b.x + 4, b.y + TAG_TOP, 'nametag_9slice', 0, 40, UI.nametag.h, 6).setOrigin(0).setDepth(DEPTH + 1);
+    this.tagText = scene.add.text(0, 0, '', textStyle(FONT_BODY_PX, CSS.white)).setOrigin(0, 0).setDepth(DEPTH + 2);
     this.lines = addLines(scene, b.x + b.pad, this.textTop, this.maxLines, LINE_HEIGHT_PX, { depth: DEPTH + 1 });
     this.arrow = scene.add.sprite(b.x + b.w - 12, b.y + b.h - 11, 'ui_arrow', 0).setOrigin(0).setDepth(DEPTH + 2);
     scene.anims.exists('ui_arrow_blink') ||
@@ -42,9 +46,11 @@ export class Dialogue {
     this.speaker = name;
     if (!name) return;
     this.tagText.setText(name);
-    const w = Math.max(24, Math.ceil(this.tagText.width) + UI.nametag.padX * 2);
+    const inkW = Math.ceil(this.tagText.width) - TEXT_PAD_Y * 2;
+    const w = Math.max(24, inkW + UI.nametag.padX * 2);
     sizeNineSlice(this.tag, w, UI.nametag.h);
-    this.tagText.setPosition(this.tag.x + UI.nametag.padX, this.tag.y + UI.nametag.h / 2);
+    // Integer position: canvas padding offsets, glyphs roughly centred in the tag.
+    this.tagText.setPosition(this.tag.x + UI.nametag.padX - TEXT_PAD_Y, this.tag.y - TEXT_PAD_Y - 1);
   }
 
   /** Splits script pages into box-sized pages of wrapped lines. */
