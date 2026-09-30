@@ -78,6 +78,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.input.enabled = true;
     this.cameras.main.setBackgroundColor(C.CSS.black);
     this.buildWorld();
+    this.buildAtmosphere();
     this.bird = new BirdActor(this, this.character, C.BIRD_X, C.GROUND_Y);
     this.dialogue = new Dialogue(this);
     this.choices = new Choices(this);
@@ -221,6 +222,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.setState('S1');
     const st = this.stalls[0];
     await this.talkThenShake(STALL1_PAGES, { speaker: NAMES.stall1 });
+    this.dimScene(true);
 
     const backX = C.BIRD_X + 10;
     const backY = C.GROUND_Y - 18;
@@ -298,6 +300,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     k.destroy();
     view.destroy();
     countdown.destroy();
+    this.dimScene(false);
     await this.wait(500);
   }
 
@@ -309,6 +312,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     st.ghost.play('jar_ghost');
     await this.talkThenShake(STALL2_PAGES, { speaker: NAMES.stall2 });
     st.ghost.setVisible(false).stop();
+    this.dimScene(true);
 
     const jars = [];
     const letterSlot = Phaser.Math.Between(0, 1); // random every run
@@ -375,6 +379,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     }
     picked.play('jar_letter');
     this.bird.play('happy', 'front');
+    this.dimScene(false);
     const icon = this.add.image(at.x, at.y - 30, 'letter_icon').setDepth(60);
     await this.tweenP({ targets: icon, x: C.GAME_W / 2, y: 120, duration: 500, ease: 'Quad.easeOut' });
     icon.destroy();
@@ -408,6 +413,27 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.stage = 0;
     await this.tweenP({ targets: this.chaser, x: C.CHASER_X_BY_STAGE[0], duration: 700, ease: 'Quad.easeOut' });
     await this.wait(300);
+  }
+
+  /**
+   * Dark alley: drifting fog over the ground band and a shadow that almost
+   * blacks out the top and bottom of the screen. Both sit above the world and
+   * below the characters and UI.
+   */
+  buildAtmosphere() {
+    this.fog = this.add.tileSprite(0, C.FOG_Y, C.GAME_W, 48, 'fx_fog').setOrigin(0).setDepth(15).setAlpha(C.FOG_ALPHA);
+    this.fog2 = this.add.tileSprite(0, C.FOG_Y + 14, C.GAME_W, 48, 'fx_fog').setOrigin(0).setDepth(16).setAlpha(C.FOG_ALPHA * 0.6).setFlipX(true);
+    this.vignette = this.add.image(0, 0, 'fx_vignette').setOrigin(0).setDepth(20);
+  }
+
+  /** Minigame focus: the world fades dark; the characters (above the dim layer) stay lit. */
+  dimScene(on) {
+    this.tweens.add({
+      targets: this.dim,
+      alpha: on ? C.MINIGAME_DIM_ALPHA : 0,
+      duration: on ? C.MINIGAME_DIM_IN_MS : C.MINIGAME_DIM_OUT_MS,
+      ease: 'Sine.easeInOut',
+    });
   }
 
   worldToScreen(obj) {
@@ -458,6 +484,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
       this.world.add(n === 2 ? [booth, front, ghost] : [booth, ghost, front]);
       return { booth, ghost, front };
     });
+    // Minigame dim layer: inside the world, above stalls and scenery. Jars are added
+    // to the world after it, and the bird and Krahang are above the world, so they stay lit.
+    this.dim = this.add.rectangle(0, 0, C.GAME_W, C.GAME_H, 0x000000).setOrigin(0).setAlpha(0);
+    this.world.add(this.dim);
   }
 
   // S4-S6: auto-run to stalls 3..5 (index 2..4), then their dialogue.
@@ -578,6 +608,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
     const R = C.RENDER_SCALE;
     this.world.x = Math.round(this.worldX * R) / R;
     this.far.tilePositionX = -Math.round(this.worldX * C.FAR_PARALLAX * this.far.scaleX ** -1);
+    this.dim.x = -this.world.x; // screen-fixed inside the scrolling world
+    const drift = (time / 1000) * C.FOG_DRIFT_PX_S;
+    this.fog.tilePositionX = Math.round(-this.worldX * C.FOG_PARALLAX + drift);
+    this.fog2.tilePositionX = Math.round(-this.worldX * C.FOG_PARALLAX * 1.3 - drift * 0.6);
     if (this.running && time - (this.lastDust ?? 0) > 220) {
       this.lastDust = time;
       burst(this, 'fx_dust', C.BIRD_X + 10, C.GROUND_Y - 3, { dx: 8, ms: 300 });

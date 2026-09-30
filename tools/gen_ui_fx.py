@@ -260,3 +260,44 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# ---- atmosphere (added) ----------------------------------------------------------
+def vignette():
+    """180x320 black overlay: nearly solid at the top and bottom edges, clear in the
+    action band. Stepped alpha in 4 px bands keeps it pixel-art."""
+    a = canvas(180, 320)
+    for y in range(320):
+        band = y // 4 * 4
+        if band < 110:
+            t = 1 - band / 110  # 1 at the top -> 0 at y 110
+        elif band >= 244:
+            t = (band - 244) / 72  # 0 at y 244 -> 1 at the bottom
+        else:
+            t = 0
+        a[y, :, 3] = int(round(min(1, t) ** 1.6 * 245))
+    return a
+
+
+def fog():
+    """180x48 tileable fog: soft blocky wisps, white at low alpha."""
+    a = canvas(180, 48)
+    yy, xx = np.mgrid[0:48, 0:180]
+    rng = np.random.default_rng(7)
+    field = np.zeros((48, 180))
+    for _ in range(14):
+        cx, cy = rng.uniform(0, 180), rng.uniform(14, 34)
+        rx, ry = rng.uniform(18, 40), rng.uniform(5, 9)
+        for shift in (-180, 0, 180):  # wrap horizontally
+            field += np.exp(-(((xx - cx - shift) / rx) ** 2 + ((yy - cy) / ry) ** 2))
+    # Vertical taper so the band has no hard top/bottom edge.
+    field = np.clip(field, 0, 1) * np.sin(np.pi * (yy + 0.5) / 48) ** 2
+    level = (np.floor(field * 4) / 4)  # 4 alpha steps
+    level = level[::2, ::2].repeat(2, 0).repeat(2, 1)  # 2 px blocks
+    a[..., :3] = 255
+    a[..., 3] = (level * 70).astype(np.uint8)
+    return a
+
+
+save('fx_vignette.png', vignette())
+save('fx_fog.png', fog())

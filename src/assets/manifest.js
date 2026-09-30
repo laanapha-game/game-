@@ -87,6 +87,9 @@ export const MANIFEST = [
   { key: 'fx_dust', file: 'fx_dust.png', native: 'ui', frameWidth: 8, frameHeight: 8, frames: 3 },
   { key: 'fx_feather', file: 'fx_feather.png', frameWidth: 8, frameHeight: 8, frames: 3, existing: true },
   // Existing in the bird sheet extras: icon_bird, ground_shadow and 3 feather-puff frames.
+  // Atmosphere (tools/gen_ui_fx.py): top/bottom shadow and drifting fog.
+  { key: 'fx_vignette', file: 'fx_vignette.png', native: 'ui', frameWidth: 180, frameHeight: 320, frames: 1 },
+  { key: 'fx_fog', file: 'fx_fog.png', native: 'ui', frameWidth: 180, frameHeight: 48, frames: 1 },
   { key: 'ground_shadow', file: 'ground_shadow.png', frameWidth: 16, frameHeight: 6, frames: 1, existing: true },
 ];
 

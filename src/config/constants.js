@@ -55,6 +55,16 @@ export const WALK_SEGMENT_S = 6;
 export const PRE_GAME_SHAKE_MS = 500; // shake after stall 1/2 dialogue, then the minigame starts
 export const PRE_GAME_SHAKE_INTENSITY = 0.012;
 
+// Atmosphere: dark alley with fog; the minigames at stalls 1 and 2 dim the scene
+// while the characters stay lit above the dim layer.
+export const FOG_Y = 168; // top of the fog band (48 px tall, around the action band)
+export const FOG_ALPHA = 0.9;
+export const FOG_DRIFT_PX_S = 4; // fog drifts on its own, on top of the world scroll
+export const FOG_PARALLAX = 0.8;
+export const MINIGAME_DIM_ALPHA = 0.7;
+export const MINIGAME_DIM_IN_MS = 1800; // slow fade to dark as the minigame starts
+export const MINIGAME_DIM_OUT_MS = 900;
+
 // Stalls (64 x 64 design px). Counter top at y = 40 inside the stall.
 export const STALL_H = 64;
 export const STALL_COUNTER_Y = 40;
