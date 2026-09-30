@@ -264,18 +264,20 @@ if __name__ == '__main__':
 
 # ---- atmosphere (added) ----------------------------------------------------------
 def vignette():
-    """180x320 black overlay: nearly solid at the top and bottom edges, clear in the
-    action band. Stepped alpha in 4 px bands keeps it pixel-art."""
+    """180x320 black gradient: solid black at the top and bottom edges, fading to
+    clear so the centre third of the screen (y 107-213) keeps normal lighting.
+    Stepped alpha in 2 px bands keeps it pixel-art."""
     a = canvas(180, 320)
+    clear0, clear1 = 320 // 3, 320 - 320 // 3  # 106..214
     for y in range(320):
-        band = y // 4 * 4
-        if band < 110:
-            t = 1 - band / 110  # 1 at the top -> 0 at y 110
-        elif band >= 244:
-            t = (band - 244) / 72  # 0 at y 244 -> 1 at the bottom
+        band = y // 2 * 2
+        if band < clear0:
+            t = 1 - band / clear0
+        elif band >= clear1:
+            t = (band - clear1 + 2) / (320 - clear1)
         else:
             t = 0
-        a[y, :, 3] = int(round(min(1, t) ** 1.6 * 245))
+        a[y, :, 3] = int(round(min(1, t) ** 1.3 * 255))
     return a
 
 

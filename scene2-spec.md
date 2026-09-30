@@ -102,7 +102,7 @@ Scene 2 must run standalone with a placeholder bird so it can be built before sc
 - Top area (y 8 to 160): timer bar (y 8 to 16), chatbox (y 24 to 84), reply buttons (y 88 to 166).
 - Bottom area (below y 240): foreground road and the tap meter (about y 270). Tapping works anywhere on screen.
 - Stalls 1 to 5 use stall art A, B, A, B, C. Draw order: stall, ghost/staff, stall_front (rows y >= 40), so the ghost stands behind the counter with head and shoulders above y = 40. The stall 2 jar sits on the counter.
-- Atmosphere: drifting fog over the ground band and a shadow that almost blacks out the top and bottom of the screen (fx_fog, fx_vignette). During the stall 1 and 2 minigames the scene fades dark (MINIGAME_DIM_*) with the characters lit above it, and fades back when the minigame ends.
+- Atmosphere: drifting fog over the ground band and a black gradient from the top and bottom edges, leaving the centre third of the screen (y 107-213) at normal lighting (fx_fog, fx_vignette). During the stall 1 and 2 minigames the scene fades dark (MINIGAME_DIM_*) with the characters lit above it, and fades back when the minigame ends.
 - Background follows the real route (ASSUMPTION for the split): inside the soi until stall 4, then the soi exit and the street with a 7-Eleven-style shop for stall 5 and the sprint, then the white light entrance.
 - The chaser is behind the player on the RIGHT and faces left, closes in by position at the CHASER_STAGE_REMAINING_S thresholds; below 15 s it switches to the open-mouth frame and the screen shakes.
 - Final sprint: meter value maps to scroll progress; meter = 1 reaches the light; bird fades to a white silhouette, whiteout (about 1 s), then scene 3.
