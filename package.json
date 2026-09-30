@@ -1,0 +1,30 @@
+{
+  "name": "lannapha-halloween-scene2",
+  "version": "0.1.0",
+  "description": "Scene 2 (Trick or Treat run) of the Lannapha Halloween Fest promo game",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "node tests/e2e/smoke.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trerapop/Lannapa-Halloween-Fest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/trerapop/Lannapa-Halloween-Fest/issues"
+  },
+  "homepage": "https://github.com/trerapop/Lannapa-Halloween-Fest#readme",
+  "dependencies": {
+    "@fontsource/noto-sans-thai": "^5.3.0",
+    "phaser": "^4.2.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1",
+    "vite": "^8.3.1"
+  },
+  "private": true,
+  "type": "module"
+}
