@@ -46,7 +46,10 @@ export const CHASER_STAGE_REMAINING_S = [90, 60, 30, 15];
 export const SHAKE_LAST_S = 15;
 
 // ---- Layout (spec 7.4, all ASSUMPTIONS, tune visually) ----
-export const GROUND_Y = 240; // same in every background
+export const GROUND_Y = 240; // same in every background: stalls and stall ghosts stand here (the gutter line)
+// The player walks ON the street: every background has the curb top at y 228-232, the
+// curb face to 239, a black gutter at 240-243, a kerb line at 244-245 and the road from 246.
+export const PLAYER_Y = 250; // the player's feet (and the chaser's shadow)
 export const BIRD_X = 118;
 export const STALL_STOP_X = 44; // stall centre when the world stops (spec ~52; 44 leaves room for the ghost beside it)
 export const RUN_SPEED_PX_S = 48; // ASSUMPTION: world scroll speed during auto-run
@@ -79,9 +82,10 @@ export const CHASER_X_BY_STAGE = [170, 165, 160, 155, 150];
 export const CHASER_INTRO_FROM_X = GAME_W + 10; // jumpscare: pops in here, then floats to stage 0
 export const CHASER_INTRO_FLOAT_MS = 1400;
 export const CHASER_TEXT_COLOR = '#FF2A2A'; // scary red for the chaser's line
-export const CHASER_HOVER_Y = GROUND_Y - 48; // ASSUMPTION: floating ghost, centre y (frames are 87 px tall)
-// Where the bird's centre sits inside the flipped Krahang-riding-bird frame (0..1).
+export const CHASER_HOVER_Y = PLAYER_Y - 48; // ASSUMPTION: floating ghost over the street, centre y (frames are 87 px tall)
+// Where the bird's centre sits inside the flipped Krahang-riding-bird frame (0..1), default bird only.
 export const CLING_COMBO_ORIGIN_X = 0.35; // ASSUMPTION, tune visually
+export const CLING_COMBO_KRAHANG = { x: 10, y: -18 }; // Krahang centre from the default bird's feet (land / fling)
 export const JAR_XS = [STALL_STOP_X - 20, STALL_STOP_X + 20]; // 40 px apart, on stall 2's counter
 export const JAR_TABLE_Y = GROUND_Y - 24 + 2; // jar bottom sits on stall 2's counter top
 export const SHAKE_INTENSITY = 0.006; // ~1 px at 180 px wide

@@ -3,7 +3,7 @@
 import { MANIFEST, validateEntry } from './manifest.js';
 import { drawPlaceholderStrip } from './placeholders.js';
 import { RENDER_SCALE as R } from '../config/constants.js';
-import { scene1SheetUrl } from '../integration/scene1.js';
+import { scene1SheetUrl, scene1KrahangCombo } from '../integration/scene1.js';
 
 // Only files that exist are listed, so missing art never causes 404s.
 // src/assets/art/*.png  : RENDER_SCALE x design size (tools/prep-sprites.mjs)
@@ -114,6 +114,11 @@ export function queueCharacterSheets(scene, character) {
     if (!key || scene.textures.exists(key) || inManifest(key)) continue;
     const url = scene1SheetUrl(key);
     if (url) scene.load.image(key, url);
+  }
+  // Stall 1: the Krahang riding this scene 1 character (generated, 3x).
+  const combo = scene1KrahangCombo(character?.id);
+  if (combo?.url && character.side?.key === combo.sideKey && !scene.textures.exists(combo.key)) {
+    scene.load.spritesheet(combo.key, combo.url, { frameWidth: combo.frameWidth * R, frameHeight: combo.frameHeight * R });
   }
 }
 

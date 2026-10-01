@@ -29,6 +29,7 @@ import { TapMeter } from '../logic/meter.js';
 import { ChaseTimer, chaserStage } from '../logic/chaseTimer.js';
 import { minHitLogical, setupScene, pointerPos } from '../display/integerScale.js';
 import { createPlaceholderCharacter } from '../interfaces.js';
+import { scene1KrahangCombo } from '../integration/scene1.js';
 import { Dialogue } from '../ui/Dialogue.js';
 import { Choices } from '../ui/Choices.js';
 import { MeterView } from '../ui/Meter.js';
@@ -81,7 +82,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(C.CSS.black);
     this.buildWorld();
     this.buildAtmosphere();
-    this.bird = new BirdActor(this, this.character, C.BIRD_X, C.GROUND_Y);
+    this.bird = new BirdActor(this, this.character, C.BIRD_X, C.PLAYER_Y);
     this.dialogue = new Dialogue(this);
     this.choices = new Choices(this);
     this.timerBar = new TimerBar(this);
@@ -225,30 +226,29 @@ export class TrickOrTreatScene extends Phaser.Scene {
     await this.talkThenShake(STALL1_PAGES, { speaker: NAMES.stall1 });
     this.dimScene(true);
 
-    const backX = C.BIRD_X + 10;
-    const backY = C.GROUND_Y - 18;
+    // The Krahang lands where it sits in the riding art (on the player's back).
+    const ride = this.clingCombo();
+    const back = ride?.krahang ?? C.CLING_COMBO_KRAHANG;
+    const backX = C.BIRD_X + back.x;
+    const backY = C.PLAYER_Y + back.y;
     const from = this.worldToScreen(st.ghost);
     st.ghost.setVisible(false);
     const k = this.add.sprite(from.x, from.y - 16, 'krahang', 0).setDepth(55).setFlipX(faces('krahang') === 'right');
     k.play('krahang_jump');
     this.bird.play('scared');
     this.tweens.add({ targets: k, x: backX, duration: 600, ease: 'Linear' });
-    await this.tweenP({ targets: k, y: C.GROUND_Y - 80, duration: 300, ease: 'Quad.easeOut' });
+    await this.tweenP({ targets: k, y: C.PLAYER_Y - 90, duration: 300, ease: 'Quad.easeOut' });
     await this.tweenP({ targets: k, y: backY, duration: 300, ease: 'Quad.easeIn' });
 
-    // While clinging, show the "Krahang riding the bird" sprite if it exists and the
-    // player is the default bird it was drawn with; otherwise (scene 1 characters) the
-    // Krahang's own cling frames on top of the player's struggling bird.
-    const useCombo = this.registry.get('realArt')?.has('bird_krahang_cling') && this.character.side.key === 'bird_side';
+    // While clinging, show the "Krahang riding the player" art: drawn for the default
+    // bird, generated for each scene 1 character (tools/krahang_combo.py). Without it,
+    // the Krahang's own cling frames go on top of the struggling player.
     let combo = null;
-    if (useCombo) {
+    if (ride) {
       k.setVisible(false).stop();
       this.bird.sprite.setVisible(false);
-      combo = this.add
-        .sprite(C.BIRD_X, C.GROUND_Y, 'bird_krahang_cling', 0)
-        .setOrigin(C.CLING_COMBO_ORIGIN_X, 1)
-        .setFlipX(faces('bird_krahang_cling') === 'right')
-        .setDepth(55);
+      combo = this.add.sprite(C.BIRD_X, C.PLAYER_Y, ride.key, 0).setOrigin(ride.originX, 1).setFlipX(ride.flipX).setDepth(55);
+      if (ride.anim) combo.play(ride.anim);
     } else {
       k.play('krahang_cling');
     }
@@ -257,7 +257,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     const meter = new TapMeter(C.TAP_GAME_GAIN, C.TAP_GAME_DECAY_PER_S);
     const view = new MeterView(this);
     const countdown = this.add.text(C.GAME_W / 2, 256, '', textStyle(C.FONT_TITLE_PX, C.CSS.yellow)).setOrigin(0.5).setDepth(92);
-    const sweat = this.time.addEvent({ delay: 500, loop: true, callback: () => burst(this, 'fx_sweat', C.BIRD_X - 8, C.GROUND_Y - 30, { dy: 4 }) });
+    const sweat = this.time.addEvent({ delay: 500, loop: true, callback: () => burst(this, 'fx_sweat', C.BIRD_X - 8, C.PLAYER_Y - 30, { dy: 4 }) });
     const endAt = this.time.now + C.TAP_GAME_TIME_S * 1000;
     let taps = 0;
 
@@ -296,9 +296,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
       k.setPosition(backX, backY).setVisible(true);
     }
     k.play('krahang_flung');
-    for (let i = 0; i < 4; i++) burst(this, 'fx_feather', C.BIRD_X + 6, C.GROUND_Y - 16, { dx: Phaser.Math.Between(4, 24), dy: Phaser.Math.Between(-16, 8), ms: 500 });
+    for (let i = 0; i < 4; i++) burst(this, 'fx_feather', C.BIRD_X + 6, C.PLAYER_Y - 16, { dx: Phaser.Math.Between(4, 24), dy: Phaser.Math.Between(-16, 8), ms: 500 });
     this.bird.play('relieved', 'front');
-    await this.tweenP({ targets: k, x: C.GAME_W + 40, y: C.GROUND_Y - 110, duration: 550, ease: 'Quad.easeOut' });
+    await this.tweenP({ targets: k, x: C.GAME_W + 40, y: C.PLAYER_Y - 120, duration: 550, ease: 'Quad.easeOut' });
     k.destroy();
     view.destroy();
     countdown.destroy();
@@ -402,7 +402,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.setState('S3_INTRO');
     this.chaser = this.add.sprite(C.CHASER_INTRO_FROM_X, C.CHASER_HOVER_Y, 'chaser', FRAMES.chaser.openMouth).setDepth(45);
     this.chaser.setFlipX(faces('chaser') === 'right');
-    this.chaserShadow = this.add.image(this.chaser.x, C.GROUND_Y + 1, 'ground_shadow').setOrigin(0.5, 1).setDepth(44);
+    this.chaserShadow = this.add.image(this.chaser.x, C.PLAYER_Y + 1, 'ground_shadow').setOrigin(0.5, 1).setDepth(44);
     const cam = this.cameras.main;
     cam.flash(250, 200, 0, 0);
     cam.shake(450, 0.015);
@@ -454,6 +454,22 @@ export class TrickOrTreatScene extends Phaser.Scene {
     setLines(texts, lines, { top, height: P.h, lineHeight: lh });
     const arrow = this.add.sprite(cx + P.w / 2 - 12, top + P.h - 12, 'ui_arrow', 0).setOrigin(0).setDepth(152).play('ui_arrow_blink');
     return { panel, texts, arrow };
+  }
+
+  /** "Krahang riding the player" art for S1, or null (then the Krahang's frames go on top). */
+  clingCombo() {
+    if (this.character.side.key === 'bird_side') {
+      if (!this.registry.get('realArt')?.has('bird_krahang_cling')) return null;
+      return { key: 'bird_krahang_cling', originX: C.CLING_COMBO_ORIGIN_X, flipX: faces('bird_krahang_cling') === 'right', krahang: C.CLING_COMBO_KRAHANG };
+    }
+    const c = scene1KrahangCombo(this.character.id);
+    if (!c || this.character.side.key !== c.sideKey || !this.textures.exists(c.key)) return null;
+    const anim = `${c.key}_cling`;
+    if (!this.anims.exists(anim)) {
+      // Pairs with the struggle frames (same rate as BirdActor's struggle).
+      this.anims.create({ key: anim, frames: [...Array(c.frames).keys()].map((frame) => ({ key: c.key, frame })), frameRate: 8, repeat: -1 });
+    }
+    return { key: c.key, originX: c.originX, flipX: false, anim, krahang: c.krahangCentre };
   }
 
   worldToScreen(obj) {
@@ -607,7 +623,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     }
     this.chaser.stop().setFrame(FRAMES.chaser.openMouth).setDepth(150);
     this.bird.play('scared', 'side');
-    this.tweens.add({ targets: this.chaser, x: C.BIRD_X + 8, y: C.GROUND_Y - 30, duration: C.CAUGHT_MS * 0.6, ease: 'Quad.easeIn' });
+    this.tweens.add({ targets: this.chaser, x: C.BIRD_X + 8, y: C.PLAYER_Y - 30, duration: C.CAUGHT_MS * 0.6, ease: 'Quad.easeIn' });
     this.time.delayedCall(C.CAUGHT_MS * 0.6, () => {
       this.cameras.main.flash(150, 240, 45, 240);
       this.cameras.main.shake(250, 0.01);
@@ -634,7 +650,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.fog2.tilePositionX = Math.round(-this.worldX * C.FOG_PARALLAX * 1.3 - drift * 0.6);
     if (this.running && time - (this.lastDust ?? 0) > 220) {
       this.lastDust = time;
-      burst(this, 'fx_dust', C.BIRD_X + 10, C.GROUND_Y - 3, { dx: 8, ms: 300 });
+      burst(this, 'fx_dust', C.BIRD_X + 10, C.PLAYER_Y - 3, { dx: 8, ms: 300 });
     }
     this.bird.sync();
 

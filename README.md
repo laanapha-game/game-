@@ -16,7 +16,8 @@ npm test             # date logic, meters, timer, Thai wrapping, anchors, scene 
 npm run test:e2e     # needs `npm run dev`; add -- --win for the full run to scene 3
 npm run test:flow    # needs `npm run dev`; scene 1 -> scene 2 -> onWin for every character (-- --full: whole runs)
 npm run check:dialogue  # needs `npm run dev`; every dialogue page must fit its box
-npm run scene1       # after a new scene 1 file: rebuild game.html and the scene 1 character sheets
+npm run scene1       # after a new scene 1 file: rebuild game.html, the scene 1 character sheets and the
+                     # Krahang-riding-the-character art for stall 1 (tools/krahang_combo.py)
 npm run sprites      # character sheets from assets/incoming -> src/assets/art (scene 1's too)
 python3 tools/bg_pipeline.py && python3 tools/stall_pipeline.py  # backgrounds, props, stalls (Pillow + numpy)
 python3 tools/gen_ui_fx.py   # small UI and FX sprites (assets/ui/, 1x)
@@ -68,6 +69,7 @@ In the game now (sizes are design px):
 | `angel_halo/glint/poof.png` | sprite_jayimpact_fx | |
 | `krahang.png` | sprite_krahang_stall1 | jump-on 3, cling 2, flung 3; faces right, flipped in code |
 | `bird_krahang_cling.png` | sprite_playerdemo (extras) | Krahang riding the default bird, used while clinging in S1 with the default bird only |
+| `characters/<id>_krahang.png` | `krahang.png` cling frames + the character's struggle frames (`tools/krahang_combo.py`) | Krahang riding each scene 1 character on its back, 2 frames of 50 x 37 |
 | `characters/<id>_side.png`, `_front.png` | scene 1's code (`npm run scene1`) | The player: 8 characters, 9 + 3 frames of 32 x 36, side faces left, costumes drawn in |
 | `bird_side.png`, `bird_front.png` | sprite_playerdemo | Default bird (scene 2 on its own, fallback). 10 + 6 frames; side faces right, flipped in code |
 | `icon_bird`, `ground_shadow`, `fx_feather` | sprite_playerdemo (extras) | |

@@ -143,6 +143,24 @@ test('scene 1 adapter: every exported character maps to the CharacterData contra
   assert.equal(adaptScene1Character({ id: 'nobody' }, data), null);
 });
 
+test('Krahang-riding art exists for every scene 1 character, 2 frames, feet centred', async () => {
+  const { readFileSync } = await import('node:fs');
+  const data = JSON.parse(readFileSync('src/assets/art/characters/characters.json', 'utf8'));
+  const combo = JSON.parse(readFileSync('src/assets/art/characters/krahang_combo.json', 'utf8'));
+  assert.deepEqual(combo.frames, ['struggle0', 'struggle1']);
+  assert.equal(combo.feet.x * 2, combo.frame.w); // character centred, so origin 0.5 keeps it on BIRD_X
+  assert.equal(combo.feet.y, combo.frame.h);
+  for (const c of data.characters) {
+    const e = combo.characters[c.id];
+    assert.ok(e, c.id);
+    const png = readFileSync(`src/assets/art/characters/${e.file}`);
+    // PNG IHDR: width at byte 16, height at byte 20.
+    assert.equal(png.readUInt32BE(16), combo.frame.w * combo.renderScale * 2, c.id);
+    assert.equal(png.readUInt32BE(20), combo.frame.h * combo.renderScale, c.id);
+    assert.ok(e.krahangCentre[0] > 0, `${c.id}: Krahang on the back (right of the feet)`);
+  }
+});
+
 test('Latin runs such as 7-Eleven are not split', () => {
   const measure = (s) => graphemes(s).length * 6;
   const lines = wrapText('ตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภา', 90, measure);

@@ -190,6 +190,13 @@ for (const id of ids) {
   check(selected.id === id && got.flow.id === id, `${id}: scene 1 selected it and handed { id, name } to scene 2 (${got.flow.name})`);
   check(got.player === id && got.key === `scene1_${id}_side`, `${id}: scene 2 player is ${got.player} (${got.key})`);
   check(got.flip === false, `${id}: faces left without a flip (scene 1 side frames face left)`);
+  const ride = await page.evaluate(() => {
+    const s = window.__scene2;
+    const r = s.clingCombo();
+    return { key: r?.key, frames: r ? s.textures.get(r.key).frameTotal - 1 : 0, feet: window.__scene2.bird.sprite.y };
+  });
+  check(ride.key === `scene1_${id}_krahang` && ride.frames === 2, `${id}: Krahang-riding art loaded for stall 1 (${ride.key}, ${ride.frames} frames)`);
+  check(ride.feet === 250, `${id}: walks on the street (feet at y ${ride.feet})`);
 
   const px = await page.evaluate(comparePixels);
   check(px.frames === 12 && px.badFrames.length === 0, `${id}: ${px.frames} frames match scene 1 pixel for pixel${px.badFrames.length ? ' (' + px.badFrames.join(', ') + ')' : ''}`);
