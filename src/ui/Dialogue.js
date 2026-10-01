@@ -5,6 +5,9 @@ import { UI, LINE_HEIGHT_PX, TYPEWRITER_CPS, FONT_BODY_PX, TEXT_PAD_Y, CSS } fro
 import { graphemes, paginate } from '../logic/textWrap.js';
 import { wrap, addLines, textStyle, inkHeight } from './text.js';
 import { addNineSlice, sizeNineSlice } from '../display/integerScale.js';
+import { audio } from '../audio/engine.js';
+
+const BLIP_EVERY = 2; // typewriter voice: one blip per 2 characters (about 15 a second)
 
 const DEPTH = 100;
 const TAG_TOP = -8; // name tag straddles the box top edge
@@ -71,8 +74,11 @@ export class Dialogue {
    * Plays pages. Resolves after the last page is tapped away.
    * hooks: onType(pageIndex), onComplete(pageIndex, isLast)
    * keepOpen: leave the box on screen after the last page (for reply choices).
+   * voice: typewriter sound, 'angel' | 'ghost' | 'chaser' | 'narrator' (src/audio/synth.js).
    */
-  play(pages, { speaker = null, hooks = {}, keepOpen = false, waitLastTap = true, color = CSS.white } = {}) {
+  play(pages, { speaker = null, hooks = {}, keepOpen = false, waitLastTap = true, color = CSS.white, voice = 'narrator' } = {}) {
+    if (!this.box.visible) audio.sfx('chat_open');
+    this.voice = voice;
     this.pages = this.layout(pages);
     this.lines.forEach((t) => t.setColor(color));
     this.hooks = hooks;
@@ -92,6 +98,7 @@ export class Dialogue {
     this.pageGraphemes = lines.map((l) => graphemes(l));
     this.total = this.pageGraphemes.reduce((n, g) => n + g.length, 0);
     this.shown = 0;
+    this.lastBlip = -BLIP_EVERY;
     this.complete = false;
     this.arrow.setVisible(false);
     this.render();
@@ -125,6 +132,7 @@ export class Dialogue {
       this.finishPage();
       return;
     }
+    audio.sfx('page_next');
     if (this.pageIndex < this.pages.length - 1) this.showPage(this.pageIndex + 1);
     else this.close();
   }
@@ -144,6 +152,10 @@ export class Dialogue {
   update(dtS) {
     if (!this.resolve || this.complete) return;
     this.shown = Math.min(this.total, this.shown + TYPEWRITER_CPS * dtS);
+    if (Math.floor(this.shown) - this.lastBlip >= BLIP_EVERY) {
+      this.lastBlip = Math.floor(this.shown);
+      audio.sfx('type_blip', { voice: this.voice });
+    }
     this.render();
     if (this.shown >= this.total) this.finishPage();
   }

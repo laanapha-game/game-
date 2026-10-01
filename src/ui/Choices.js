@@ -4,6 +4,7 @@ import { UI, RANDOMISE_CHOICE_ORDER, MIN_TOUCH_CSS_PX } from '../config/constant
 import { FRAMES } from '../assets/manifest.js';
 import { minHitLogical, addNineSlice } from '../display/integerScale.js';
 import { wrap, addLines, setLines } from './text.js';
+import { audio } from '../audio/engine.js';
 
 const DEPTH = 110;
 
@@ -20,6 +21,7 @@ export class Choices {
     const opts = RANDOMISE_CHOICE_ORDER && Math.random() < 0.5 ? [...options].reverse() : options;
     const minHit = minHitLogical(this.scene.game, MIN_TOUCH_CSS_PX);
     const bgTexts = (this.layoutInfo = []);
+    audio.sfx('choice_show');
     return new Promise((resolve) => {
       opts.forEach((opt, i) => {
         const y = c.y + i * (c.h + c.gap);
@@ -35,6 +37,7 @@ export class Choices {
         bg.on('pointerdown', () => {
           if (this.locked) return;
           this.locked = true;
+          audio.sfx('choice_press');
           bg.setFrame(FRAMES.choice.pressed);
           this.scene.time.delayedCall(150, () => {
             this.clear();

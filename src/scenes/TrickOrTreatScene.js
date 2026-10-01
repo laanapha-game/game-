@@ -38,6 +38,8 @@ import { ensureFxAnims, burst } from '../ui/fx.js';
 import { wrap, addLines, setLines, textStyle } from '../ui/text.js';
 import { checkDialogues } from '../dev/dialogueCheck.js';
 import { BirdActor } from './BirdActor.js';
+import { SoundButtons } from '../ui/SoundButtons.js';
+import { audio } from '../audio/engine.js';
 
 const faces = (key) => MANIFEST.find((m) => m.key === key)?.facing ?? 'left';
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -87,7 +89,13 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.choices = new Choices(this);
     this.timerBar = new TimerBar(this);
     this.timerBar.setVisible(false);
-    this.input.on('pointerdown', (p) => {
+    // Sound: night ambience everywhere, calm music until the chase (src/audio/).
+    this.soundButtons = new SoundButtons(this);
+    audio.ambient('night');
+    audio.mood('calm');
+    this.bird.onStep = (alt) => audio.sfx('step', { alt, run: this.bird.sprite.anims.timeScale >= 1 });
+    this.input.on('pointerdown', (p, over) => {
+      if (this.soundButtons.owns(over)) return; // not a game tap
       if (!this.ended) this.tapHandler?.(p);
     });
     document.getElementById('boot')?.remove(); // first frame is up
@@ -133,6 +141,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
 
   /** Plays dialogue pages; screen taps go to the dialogue while it is open. */
   async talk(pages, opts = {}) {
+    // Typewriter voice: angel, the chaser, or a stall ghost.
+    const voice = opts.voice ?? (opts.speaker === NAMES.angel ? 'angel' : opts.color === C.CHASER_TEXT_COLOR ? 'chaser' : 'ghost');
+    opts = { ...opts, voice };
     this.tapHandler = () => this.dialogue.tap();
     await this.guard(this.dialogue.play(pages, opts));
     this.tapHandler = null;
@@ -145,6 +156,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
   async talkThenShake(pages, opts) {
     await this.talk(pages, { ...opts, keepOpen: true, waitLastTap: false });
     this.cameras.main.shake(C.PRE_GAME_SHAKE_MS, C.PRE_GAME_SHAKE_INTENSITY);
+    audio.sfx('shake_rumble');
     await this.wait(C.PRE_GAME_SHAKE_MS);
     this.dialogue.setVisible(false);
   }
@@ -202,17 +214,23 @@ export class TrickOrTreatScene extends Phaser.Scene {
     // The real angel sheet has the halo drawn in; the separate halo is only for marker art.
     const halo = this.add.image(52, angelY - 43, 'angel_halo').setDepth(41).setAlpha(0).setVisible(!this.registry.get('realArt')?.has('angel_jayimpacts'));
     burst(this, 'angel_poof', 52, angelY - 28, { depth: 43 });
+    audio.sfx('angel_poof');
+    audio.sfx('angel_appear');
     for (let i = 0; i < 4; i++) burst(this, 'angel_glint', 52 + Phaser.Math.Between(-18, 18), angelY - Phaser.Math.Between(8, 56), { depth: 42 });
     await this.tweenP({ targets: [angel, halo], alpha: 1, y: '-=6', duration: 350, ease: 'Back.easeOut' });
     this.tweens.add({ targets: [angel, halo], y: '-=3', duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     const glints = this.time.addEvent({
       delay: 600,
       loop: true,
-      callback: () => burst(this, 'angel_glint', 52 + Phaser.Math.Between(-16, 16), angel.y - Phaser.Math.Between(10, 46), { depth: 42 }),
+      callback: () => {
+        burst(this, 'angel_glint', 52 + Phaser.Math.Between(-16, 16), angel.y - Phaser.Math.Between(10, 46), { depth: 42 });
+        audio.sfx('angel_glint');
+      },
     });
     await this.talk(ANGEL_PAGES, { speaker: NAMES.angel });
     glints.remove();
     burst(this, 'angel_poof', 52, angel.y - 24, { depth: 43 });
+    audio.sfx('angel_poof');
     angel.destroy();
     halo.destroy();
     await this.wait(400);
@@ -235,10 +253,12 @@ export class TrickOrTreatScene extends Phaser.Scene {
     st.ghost.setVisible(false);
     const k = this.add.sprite(from.x, from.y - 16, 'krahang', 0).setDepth(55).setFlipX(faces('krahang') === 'right');
     k.play('krahang_jump');
+    audio.sfx('krahang_leap');
     this.bird.play('scared');
     this.tweens.add({ targets: k, x: backX, duration: 600, ease: 'Linear' });
     await this.tweenP({ targets: k, y: C.PLAYER_Y - 90, duration: 300, ease: 'Quad.easeOut' });
     await this.tweenP({ targets: k, y: backY, duration: 300, ease: 'Quad.easeIn' });
+    audio.sfx('krahang_land');
 
     // While clinging, show the "Krahang riding the player" art: drawn for the default
     // bird, generated for each scene 1 character (tools/krahang_combo.py). Without it,
@@ -267,6 +287,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
           if (this.time.now >= endAt) return;
           meter.tap();
           view.press();
+          audio.sfx('tap', { level: meter.value });
           const w = pointerPos(this, p);
           burst(this, 'fx_tap_ripple', w.x, w.y, { depth: 200 });
           const jiggle = ++taps % 2 ? 1 : -1;
@@ -278,7 +299,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
           meter.update(dt);
           view.set(meter.value);
           const left = Math.max(0, endAt - this.time.now);
-          countdown.setText(String(Math.ceil(left / 1000)));
+          const secs = String(Math.ceil(left / 1000));
+          if (secs !== countdown.text) audio.sfx('countdown_tick');
+          countdown.setText(secs);
           if (left <= 0 && !meter.full) resolve('timeout');
         };
       }),
@@ -296,6 +319,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
       k.setPosition(backX, backY).setVisible(true);
     }
     k.play('krahang_flung');
+    audio.sfx('meter_full');
+    audio.sfx('krahang_flung');
+    audio.sfx('feather_puff');
     for (let i = 0; i < 4; i++) burst(this, 'fx_feather', C.BIRD_X + 6, C.PLAYER_Y - 16, { dx: Phaser.Math.Between(4, 24), dy: Phaser.Math.Between(-16, 8), ms: 500 });
     this.bird.play('relieved', 'front');
     await this.tweenP({ targets: k, x: C.GAME_W + 40, y: C.PLAYER_Y - 120, duration: 550, ease: 'Quad.easeOut' });
@@ -312,6 +338,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.setState('S2');
     const st = this.stalls[1];
     st.ghost.play('jar_ghost');
+    audio.sfx('ghost_moan');
     await this.talkThenShake(STALL2_PAGES, { speaker: NAMES.stall2 });
     st.ghost.setVisible(false).stop();
     this.dimScene(true);
@@ -330,6 +357,8 @@ export class TrickOrTreatScene extends Phaser.Scene {
 
     // Reveal
     jars.forEach((j) => j.play(j.content === 'letter' ? 'jar_letter' : 'jar_ghost'));
+    audio.sfx('ghost_moan');
+    audio.sfx('letter_chime');
     await this.wait(C.JAR_REVEAL_MS);
     jars.forEach((j) => j.stop().setFrame(FRAMES.jar.closed));
     await this.wait(300);
@@ -342,6 +371,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
       const bx = b.x;
       this.world.bringToTop(a);
       a.play('jar_shake');
+      audio.sfx('jar_swap');
       b.play('jar_shake');
       this.tweens.add({ targets: a, y: C.JAR_TABLE_Y - 10, duration: ms / 2, yoyo: true, ease: 'Sine.easeOut' });
       this.tweens.add({ targets: b, x: ax, duration: ms, ease: 'Sine.easeInOut' });
@@ -369,7 +399,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
     jars.forEach((j) => j.disableInteractive());
     const at = this.worldToScreen(picked);
 
+    audio.sfx('ui_click');
     if (picked.content === 'ghost') {
+      audio.sfx('jumpscare');
+      audio.duck(1200);
       picked.play('jar_ghost');
       this.bird.play('scared', 'side');
       const cam = this.cameras.main;
@@ -380,6 +413,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
       return this.fail('ghostJar');
     }
     picked.play('jar_letter');
+    audio.sfx('letter_chime');
     this.bird.play('happy', 'front');
     this.dimScene(false);
     const icon = this.add.image(at.x, at.y - 30, 'letter_icon').setDepth(60);
@@ -391,8 +425,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
   async s3LetterAndChase() {
     this.setState('S3');
     const { panel, texts, arrow } = this.buildLetter();
+    audio.sfx('paper');
     await this.wait(400); // avoid the pick tap closing the letter at once
     await this.guard(new Promise((r) => (this.tapHandler = r)));
+    audio.sfx('paper');
     this.tapHandler = null;
     [panel, arrow, ...texts].forEach((o) => o.destroy());
     this.bird.play('idle', 'side');
@@ -405,6 +441,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.chaserShadow = this.add.image(this.chaser.x, C.PLAYER_Y + 1, 'ground_shadow').setOrigin(0.5, 1).setDepth(44);
     const cam = this.cameras.main;
     cam.flash(250, 200, 0, 0);
+    audio.mood(null); // silence, then the scare
+    audio.sfx('jumpscare', { level: 0.85 });
+    audio.duck(1500);
     cam.shake(450, 0.015);
     this.bird.lookBack(true);
     this.bird.play('scared', 'side');
@@ -416,6 +455,8 @@ export class TrickOrTreatScene extends Phaser.Scene {
     // The chase starts: bird faces forward, 2:00 timer starts (same rule, never pauses).
     this.bird.lookBack(false);
     this.timer.start();
+    audio.intensity(0);
+    audio.mood('chase');
     this.timerBar.setVisible(true);
     this.stage = 0;
     await this.wait(200);
@@ -566,6 +607,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
           if (this.timer.expired) return;
           this.meter.tap();
           view.press();
+          audio.sfx('tap', { level: this.meter.value });
           const w = pointerPos(this, p);
           burst(this, 'fx_tap_ripple', w.x, w.y, { depth: 200 });
           if (this.meter.full) resolve();
@@ -594,11 +636,14 @@ export class TrickOrTreatScene extends Phaser.Scene {
     const tw = (cfg) => new Promise((r) => this.tweens.add({ ...cfg, onComplete: r }));
     // Run into the light, fade to a white silhouette, then white out.
     this.bird.play('run', 'side');
+    audio.mood(null);
+    audio.sfx('light_swell');
     await tw({ targets: this.bird.sprite, x: C.STALL_STOP_X, duration: 700, ease: 'Linear' });
     const sil = this.bird.silhouette(); // bird and any costume layers, same frame and mirroring
     this.bird.sprite.stop();
     await tw({ targets: sil, alpha: 1, duration: 400 });
     const white = this.add.image(0, 0, 'fx_whiteout').setOrigin(0).setDepth(1000).setAlpha(0);
+    audio.ambient(null);
     await tw({ targets: white, alpha: 1, duration: C.WHITEOUT_MS });
     this.onWin?.(this.passOn, this);
   }
@@ -617,6 +662,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.jars?.forEach((j) => j.active && j.disableInteractive());
     this.input.enabled = false;
     this.cameras.main.shakeEffect.reset();
+    audio.mood(null);
 
     if (!this.chaser) {
       this.chaser = this.add.sprite(C.GAME_W + 40, C.CHASER_HOVER_Y, 'chaser', 0).setDepth(45).setFlipX(faces('chaser') === 'right');
@@ -627,6 +673,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.time.delayedCall(C.CAUGHT_MS * 0.6, () => {
       this.cameras.main.flash(150, 240, 45, 240);
       this.cameras.main.shake(250, 0.01);
+      // Caught: the chaser's bite. Softer right after the ghost-jar scare.
+      audio.sfx('jumpscare', { level: reason === 'ghostJar' ? 0.6 : 1 });
+      audio.duck(1000);
     });
     this.time.delayedCall(C.CAUGHT_MS, () => {
       this.scene.start('GameOver', { reason, onGameOver: this.onGameOver });
@@ -668,6 +717,21 @@ export class TrickOrTreatScene extends Phaser.Scene {
       return;
     }
     this.updateChaser(time, remaining);
+    this.chaseSound(remaining);
+  }
+
+  /** Chase music speeds up as time runs out; heartbeat in the last 15 s, ticks in the last 10. */
+  chaseSound(remaining) {
+    audio.intensity(1 - remaining / C.CHASE_TIME_S);
+    if (remaining <= C.SHAKE_LAST_S && this.time.now - (this.lastBeat ?? 0) >= C.HEARTBEAT_MS) {
+      this.lastBeat = this.time.now;
+      audio.sfx('heartbeat');
+    }
+    const sec = Math.ceil(remaining);
+    if (remaining <= C.TICK_LAST_S && sec !== this.lastTickSec) {
+      this.lastTickSec = sec;
+      audio.sfx('timer_tick');
+    }
   }
 
   updateChaser(time, remaining) {
@@ -678,6 +742,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     if (stage > this.stage && this.stage >= 0) {
       this.stage = stage;
       this.tweens.add({ targets: c, x: C.CHASER_X_BY_STAGE[stage], duration: 600, ease: 'Quad.easeOut' });
+      audio.sfx('chaser_closer');
       if (stage === C.CHASER_STAGE_REMAINING_S.length) c.stop().setFrame(FRAMES.chaser.openMouth);
     }
     c.y = C.CHASER_HOVER_Y + Math.round(Math.sin(time / 300) * 2);

@@ -62,6 +62,7 @@ export async function startScene2({ parent = 'game', character, onWin, onGameOve
     render: { smoothPixelArt: true, roundPixels: true },
     scale: { mode: Phaser.Scale.NONE, autoCenter: Phaser.Scale.NO_CENTER },
     input: { activePointers: 3 },
+    audio: { noAudio: true }, // sound is src/audio/engine.js (synthesized, shared with scene 1's page)
     scene: [BootScene, TrickOrTreatScene, GameOverScene, Scene3Stub],
   });
   game.registry.set('character', character ?? createPlaceholderCharacter());

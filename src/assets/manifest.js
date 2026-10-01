@@ -77,6 +77,9 @@ export const MANIFEST = [
   { key: 'ui_meter_fill', file: 'ui_meter_fill.png', native: 'ui', frameWidth: 120, frameHeight: 10, frames: 1 },
   { key: 'ui_timer_frame', file: 'ui_timer_frame.png', native: 'ui', frameWidth: 120, frameHeight: 8, frames: 1 },
   { key: 'icon_chaser', file: 'icon_chaser.png', native: 'ui', frameWidth: 12, frameHeight: 12, frames: 1 },
+  // Sound buttons (top corners): speaker = all sound (as scene 1's speaker), note = music. Frames: on, off.
+  { key: 'ui_sound', file: 'ui_sound.png', native: 'ui', frameWidth: 12, frameHeight: 10, frames: 2 },
+  { key: 'ui_music', file: 'ui_music.png', native: 'ui', frameWidth: 12, frameHeight: 10, frames: 2 },
   { key: 'icon_bird', file: 'icon_bird.png', frameWidth: 12, frameHeight: 12, frames: 1, existing: true },
 
   // FX

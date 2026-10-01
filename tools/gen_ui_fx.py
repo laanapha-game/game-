@@ -241,6 +241,54 @@ def dust():
     return strip(frames)
 
 
+# ---- sound buttons (scene 2, top corners) -------------------------------------
+# The speaker copies scene 1's speaker icon pixel for pixel (drawSpeaker in
+# assets/incoming/scene1/): yellow body, black shadow 1 px down-right, yellow
+# waves when on, a magenta x when off. 12x10, frames: on, off.
+SPK_BODY = [(0, 2), (1, 2), (2, 2), (0, 3), (1, 3), (2, 3), (0, 4), (1, 4), (2, 4), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5),
+            (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6)]
+SPK_ON = [(6, 2), (6, 3), (6, 4), (8, 1), (8, 2), (8, 3), (8, 4), (8, 5)]
+SPK_OFF = [(6, 2), (8, 2), (7, 3), (6, 4), (8, 4)]
+
+
+def sound_icon():
+    frames = []
+    for wave, wc in ((SPK_ON, 'y'), (SPK_OFF, 'm')):
+        a = canvas(12, 10)
+        for x, y in SPK_BODY + wave:
+            px(a, x + 2, y + 2, 'k')
+        for x, y in SPK_BODY:
+            px(a, x + 1, y + 1, 'y')
+        for x, y in wave:
+            px(a, x + 1, y + 1, wc)
+        frames.append(a)
+    return strip(frames)
+
+
+# Music note (two beamed eighths) in the same style. 12x10, frames: on, off
+# (dark note with a magenta slash).
+NOTE = ['..yyyyyy', '..y....y', '..y....y', '..y....y', 'yyy..yyy', 'yyy..yyy']
+
+
+def music_icon():
+    frames = []
+    for col in ('y', 'd'):
+        a = canvas(12, 10)
+        for j, row in enumerate(NOTE):
+            for i, ch in enumerate(row):
+                if ch != '.':
+                    px(a, i + 3, j + 3, 'k')
+        for j, row in enumerate(NOTE):
+            for i, ch in enumerate(row):
+                if ch != '.':
+                    px(a, i + 2, j + 2, col)
+        if col == 'd':
+            for i in range(9):
+                px(a, 1 + i, 8 - i, 'm')
+        frames.append(a)
+    return strip(frames)
+
+
 def main():
     save('chatbox_9slice.png', chatbox())
     save('nametag_9slice.png', nametag())
@@ -256,6 +304,8 @@ def main():
     save('fx_sweat.png', sweat())
     save('fx_tap_ripple.png', tap_ripple())
     save('fx_dust.png', dust())
+    save('ui_sound.png', sound_icon())
+    save('ui_music.png', music_icon())
 
 
 if __name__ == '__main__':

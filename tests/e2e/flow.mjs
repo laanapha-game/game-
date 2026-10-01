@@ -38,6 +38,16 @@ async function open() {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  // Count oscillators per AudioContext, to hear whether scene 1's own sounds play.
+  await page.addInitScript(() => {
+    const AC = window.AudioContext;
+    const orig = AC.prototype.createOscillator;
+    window.__osc = new Map();
+    AC.prototype.createOscillator = function () {
+      window.__osc.set(this, (window.__osc.get(this) ?? 0) + 1);
+      return orig.call(this);
+    };
+  });
   // Scene 1 asks Google Fonts for Kanit; not needed for the test (and may be offline).
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.goto(`${BASE}game.html?today=2026-10-12`);
@@ -218,10 +228,32 @@ for (const id of ids) {
   await ctx.close();
 }
 
+// Scene 1's own sounds: oscillators on contexts other than scene 2's engine.
+const scene1Oscillators = (page) =>
+  page.evaluate(() => [...window.__osc.entries()].filter(([c]) => c !== window.__audio.ctx).reduce((n, [, v]) => n + v, 0));
+
 // Game over -> Home -> scene 1 home -> play again with another character.
+// With sound: scene 1's speaker is the master switch; switching it off in scene 2
+// switches scene 1's off too, so its own button sounds stop.
 if (!only) {
   const { ctx, page, errors } = await open();
+  await tap1(page, 168, 8); // scene 1's speaker
+  await page.waitForTimeout(400);
+  const s1 = await page.evaluate(() => ({ on: window.__audio.audio.sound, mood: window.__audio.audio.currentMood }));
+  check(s1.on && s1.mood === 'title' && (await scene1Oscillators(page)) > 0, `scene 1 speaker: sound on, title music, scene 1's own jingle (${JSON.stringify(s1)})`);
+  const loud = await scene1Oscillators(page);
+  await tap1(page, 90, 225); // the bird hops with scene 1's own sound (control for the silent check below)
+  await page.waitForTimeout(300);
+  check((await scene1Oscillators(page)) > loud, "scene 1's own hop sound plays while its sound is on");
+  await page.waitForTimeout(300);
   await chooseInScene1(page, 2);
+  check((await page.evaluate(() => window.__audio.audio.currentMood)) === 'calm', 'scene 2 switches to its music');
+  const spk = await page.evaluate(() => {
+    const r = document.querySelector('#game canvas').getBoundingClientRect();
+    return { x: r.left + (168 * r.width) / 180, y: r.top + (8 * r.height) / 320 };
+  });
+  await page.touchscreen.tap(spk.x, spk.y); // sound off in scene 2
+  check((await page.evaluate(() => window.__audio.audio.sound)) === false, 'scene 2 speaker turns sound off');
   await page.evaluate(() => window.__scene2.fail('test'));
   await page.waitForFunction(() => window.__scene2GameOver, null, { timeout: 5000 });
   const home = await page.evaluate(() => {
@@ -232,6 +264,11 @@ if (!only) {
   await page.waitForTimeout(800);
   const back = await page.evaluate(() => ({ hidden: document.getElementById('game').hidden, canvases: document.querySelectorAll('#game canvas').length }));
   check(back.hidden && back.canvases === 0, `Game over -> Home: scene 2 closed, scene 1 home shown (${JSON.stringify(back)})`);
+  const quiet = await scene1Oscillators(page);
+  await tap1(page, 90, 225); // the bird on scene 1's home: hops with a sound when scene 1's sound is on
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(() => ({ on: window.__audio.audio.sound, mood: window.__audio.audio.currentMood }));
+  check(!after.on && after.mood === 'title' && (await scene1Oscillators(page)) === quiet, `scene 1's speaker follows scene 2's switch (silent home tap, ${JSON.stringify(after)})`);
   if (shots) await page.screenshot({ path: `${shots}/home_after_gameover.png` });
   await page.evaluate(() => {
     window.__scene2 = undefined;

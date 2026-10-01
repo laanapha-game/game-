@@ -146,6 +146,15 @@ Price line per mode (stall 3 page 4 shows `ค่าเข้าขึ้นเ�
 
 Dates from the official ticket poster. The only gap is 10-11 Oct. The phase table lives in `src/data/ticketPhases.js`.
 
+### 7.6 Sound
+
+All sound is synthesized in the browser with Web Audio (`src/audio/`): no audio files, nothing to license, nothing to download. One engine per page, shared by scene 1's page and scene 2.
+- Switches: sound starts OFF, as scene 1 does ("silent until the player taps the speaker icon"). Scene 1's speaker is the master switch; scene 2 shows the same speaker top right (all sound) and a note top left (music on/off). Switching in scene 2 also switches scene 1's speaker when the player goes back home. Buttons have 44 CSS px hit areas and are not game taps.
+- Channels: effects, music, ambience, through one limiter. Jumpscares dip the music and ambience.
+- Ambience: night wind and crickets on every screen until the whiteout.
+- Music (A minor pentatonic music box): `title` on scene 1's home and select, `calm` for the angel, walks and stalls 1-2, silence for the chase intro scare, then `chase` (tempo 128 rising to 160 as the 2:00 runs out, lead melody after a third of the chase). No music on the Game over screen or after the light.
+- Effects: buttons (click, reply buttons, sound buttons), taps (pitch rises with the meter), chatbox (open whoosh, typewriter voice per speaker: angel, stall ghosts, the chaser, and a page click), Jayimpacts (poof in and out, sparkle arpeggio, a chime per glint), foley (footsteps on the run animation's foot frames, slower when walking; pre-game shake rumble; Krahang leap, landing, fling and feathers; jar rattles, swaps and ghost moan; letter chime and paper), chase (chaser closing in, heartbeat in the last 15 s, clock ticks in the last 10 s), jumpscares (ghost jar, the chaser's entrance, caught), endings (light swell, Game over stinger, scene 3 chime). Scene 1 keeps its own button sounds.
+
 ## 8. Script (exact text)
 
 The exact text lives in `src/data/script.js` (owner-approved, edited through `docs/chatbox-script.md`).
@@ -181,7 +190,7 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 
 ## 10. Test checklist
 
-- `npm test` (date rows, meters, timer, wrapping, adapter, layer mirroring), `npm run test:e2e -- --win` (viewports, fail path, full win path), `npm run check:dialogue` (every page fits), `npm run test:flow` (scene 1 -> scene 2 -> onWin for every character; `-- --full` plays each whole run by tapping).
+- `npm test` (date rows, meters, timer, wrapping, adapter, layer mirroring, music patterns), `npm run test:e2e -- --win` (viewports, fail path, full win path; sound: every effect renders in range offline, sound buttons, every scene 2 sound heard on the win path, calm then chase music), `npm run check:dialogue` (every page fits), `npm run test:flow` (scene 1 -> scene 2 -> onWin for every character; `-- --full` plays each whole run by tapping).
 - Viewports: 360 x 640, 390 x 844, 412 x 915.
 - Date logic: 29 Sep, 30 Sep, 12, 14, 15, 17, 18, 23, 24, 25 Oct, 26 Oct via the dev override.
 - Fail paths: tap game timeout, ghost jar, rude reply at stall 3 and 4, timer 0 during dialogue, timer 0 during sprint.

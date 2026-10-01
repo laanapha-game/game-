@@ -3,7 +3,7 @@
 // (scene 2 on its own; the scene 1 -> scene 2 flow is tests/e2e/flow.mjs). Needs `npm run dev` on :5173.
 // Usage: node tests/e2e/smoke.mjs [--win] [--shots=dir]
 import { chromium } from 'playwright';
-import { state, tapUntil, tapThroughDialogue, playToWin } from './play.mjs';
+import { state, tapUntil, tapThroughDialogue, playToWin, toPage } from './play.mjs';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173/';
 const args = process.argv.slice(2);
@@ -63,6 +63,38 @@ for (const [query, want] of [['', 'placeholder-bird'], ['?character=pumpkin', 'p
   await ctx.close();
 }
 
+// 1c. Sound: every effect and every music loop renders (offline), not silent, not clipping.
+{
+  const { ctx, page, errors } = await open({ width: 390, height: 844, dpr: 1 });
+  const levels = await page.evaluate(() => window.__audio.selfTest());
+  const bad = Object.entries(levels).filter(([, v]) => v.peak < 0.02 || v.peak > 1);
+  check(bad.length === 0, `sound: ${Object.keys(levels).length} effects and music loops render in range${bad.length ? ' (' + JSON.stringify(bad) + ')' : ''}`);
+  // Sound buttons: start off (like scene 1), speaker turns sound on, note turns music off;
+  // tapping them is not a game tap (the angel's first page keeps typing).
+  const before = await page.evaluate(() => ({ on: window.__audio.audio.sound, page: window.__scene2.dialogue.pageIndex, shown: window.__scene2.dialogue.shown }));
+  const spk = await toPage(page, 168, 8);
+  await page.touchscreen.tap(spk.x, spk.y);
+  const note = await toPage(page, 13, 8);
+  await page.touchscreen.tap(note.x, note.y);
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(() => ({
+    on: window.__audio.audio.sound,
+    music: window.__audio.audio.musicOn,
+    running: window.__audio.ctx?.state,
+    mood: window.__audio.audio.currentMood,
+    frames: [window.__scene2.soundButtons.speaker.frame.name, window.__scene2.soundButtons.note.frame.name],
+    page: window.__scene2.dialogue.pageIndex,
+    complete: window.__scene2.dialogue.complete,
+  }));
+  check(!before.on && after.on && after.running === 'running' && after.mood === 'calm', `speaker button turns sound on (${JSON.stringify(after)})`);
+  check(after.music === false && after.frames.join() === '0,1', `note button turns music off, icons follow`);
+  check(after.page === before.page, `sound buttons are not game taps`);
+  await page.touchscreen.tap(note.x, note.y);
+  check(await page.evaluate(() => window.__audio.audio.musicOn), 'note button turns music back on');
+  check(errors.length === 0, `no console errors (${errors.join(' | ')})`);
+  await ctx.close();
+}
+
 // Gameplay runs use DPR 1: headless Chromium renders on the CPU, and a full
 // device-resolution canvas is too slow there to play at speed (real phones use the GPU).
 const PLAY_VP = { width: 390, height: 844, dpr: 1 };
@@ -77,6 +109,8 @@ const PLAY_VP = { width: 390, height: 844, dpr: 1 };
   await page.waitForFunction(() => window.__scene2GameOver, null, { timeout: 5000 }).catch(() => {});
   const reason = await page.evaluate(() => window.__scene2GameOver?.reason);
   check(reason === 'tapTimeout', `tap game timeout -> Game over (${reason})`);
+  const failSounds = await page.evaluate(() => ['countdown_tick', 'jumpscare', 'gameover'].filter((n) => !window.__audio.log.includes(n)));
+  check(failSounds.length === 0, `fail path sounds: countdown, caught jumpscare, Game over stinger${failSounds.length ? ' (missing ' + failSounds.join(', ') + ')' : ''}`);
   await shot(page, 'gameover');
   await ctx.close();
 }
@@ -85,7 +119,21 @@ const PLAY_VP = { width: 390, height: 844, dpr: 1 };
 if (args.includes('--win')) {
   const vp = PLAY_VP;
   const { ctx, page, errors } = await open(vp, '?today=2026-10-12');
+  const spk = await toPage(page, 168, 8);
+  await page.touchscreen.tap(spk.x, spk.y); // sound on for the whole run
+  const moods = [];
+  const watch = setInterval(async () => {
+    const m = await page.evaluate(() => window.__audio?.audio.currentMood).catch(() => null);
+    if (m && moods.at(-1) !== m) moods.push(m);
+  }, 500);
   const final = await playToWin(page, vp, (name) => shot(page, name));
+  clearInterval(watch);
+  const heard = new Set(await page.evaluate(() => window.__audio.log));
+  const want = ['angel_poof', 'angel_appear', 'angel_glint', 'chat_open', 'type_blip', 'page_next', 'step', 'shake_rumble', 'krahang_leap', 'krahang_land',
+    'tap', 'countdown_tick', 'meter_full', 'krahang_flung', 'ghost_moan', 'jar_swap', 'letter_chime', 'paper', 'jumpscare', 'choice_show', 'choice_press', 'light_swell', 'scene3_chime'];
+  const missing = want.filter((n) => !heard.has(n));
+  check(missing.length === 0, `win path plays every scene 2 sound (${missing.length ? 'missing ' + missing.join(', ') : want.length + ' kinds'})`);
+  check(moods.join('>').includes('calm>chase'), `music: calm, then chase (${moods.join(' > ')})`);
   check(final === 'SCENE3', `full run reaches scene 3 (${final})`);
   await shot(page, 'scene3');
   check(errors.length === 0, `no console errors on win path (${errors.join(' | ')})`);

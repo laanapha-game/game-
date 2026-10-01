@@ -161,6 +161,26 @@ test('Krahang-riding art exists for every scene 1 character, 2 frames, feet cent
   }
 });
 
+test('music patterns use known instruments, sane notes and lengths', async () => {
+  const { MOODS } = await import('../src/audio/music.js');
+  const INSTR = ['box', 'pluck', 'bass', 'pad', 'stab', 'hat', 'kick', 'snare'];
+  for (const [name, m] of Object.entries(MOODS)) {
+    for (const x of [0, 0.5, 1]) {
+      assert.ok(m.bpm(x) >= 60 && m.bpm(x) <= 180, name);
+      let notes = 0;
+      for (let st = 0; st < m.length; st++) {
+        for (const [inst, midi, len, g] of m.notes(st, x)) {
+          assert.ok(INSTR.includes(inst), `${name} ${inst}`);
+          assert.ok(Number.isFinite(midi) && midi >= 0 && midi <= 108, `${name} step ${st} midi ${midi}`);
+          assert.ok(len > 0 && g > 0 && g <= 0.35, `${name} step ${st}`);
+          notes++;
+        }
+      }
+      assert.ok(notes > m.length / 2, `${name} has music in it`);
+    }
+  }
+});
+
 test('Latin runs such as 7-Eleven are not split', () => {
   const measure = (s) => graphemes(s).length * 6;
   const lines = wrapText('ตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภา', 90, measure);

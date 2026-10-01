@@ -22,6 +22,15 @@ export class BirdActor {
     this.makeAnims();
     this.setView('side');
     this.play('idle');
+    // Footsteps: on the first frame and half way through the run cycle (both feet),
+    // so they follow the animation speed (slower walk, faster run).
+    this.onStep = null;
+    this.sprite.on(Phaser.Animations.Events.ANIMATION_UPDATE, (anim, frame) => {
+      if (this.animName !== 'run' || !this.onStep) return;
+      const i = frame.index - 1;
+      const half = Math.floor(anim.frames.length / 2);
+      if (i === 0 || i === half) this.onStep(i === half);
+    });
   }
 
   /** Flip needed to face LEFT (sheet drawn facing right). lookBack() flips on top of this. */

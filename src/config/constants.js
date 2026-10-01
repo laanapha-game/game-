@@ -44,6 +44,8 @@ export const JAR_PICK_TIME_LIMIT_S = null; // ASSUMPTION: no time limit on picki
 export const TYPEWRITER_CPS = 30; // counted in grapheme clusters so Thai marks never appear alone
 export const CHASER_STAGE_REMAINING_S = [90, 60, 30, 15];
 export const SHAKE_LAST_S = 15;
+export const HEARTBEAT_MS = 800; // heartbeat sound in the last SHAKE_LAST_S seconds
+export const TICK_LAST_S = 10; // clock ticks in the last seconds of the chase
 
 // ---- Layout (spec 7.4, all ASSUMPTIONS, tune visually) ----
 export const GROUND_Y = 240; // same in every background: stalls and stall ghosts stand here (the gutter line)
@@ -100,6 +102,7 @@ export const UI = {
   meter: { x: 30, y: 270, w: 120, h: 10 },
   tapButton: { x: 90, y: 298 },
   letterPanel: { w: 140, h: 100, pad: 4 }, // narrow side padding so each authored line fits on one row
+  soundButtons: { sound: { x: 168, y: 8 }, music: { x: 13, y: 8 } }, // centres; either side of the timer bar (x 30-150)
 };
 
 // ---- Text (spec 2) ----
