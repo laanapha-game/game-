@@ -5,5 +5,5 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 export default defineConfig({
   base: './',
   plugins: [viteSingleFile()],
-  build: { outDir: 'dist-demo', assetsInlineLimit: 100_000_000, chunkSizeWarningLimit: 5000 },
+  build: { target: ['es2020', 'safari14'], outDir: 'dist-demo', assetsInlineLimit: 100_000_000, chunkSizeWarningLimit: 5000 },
 });

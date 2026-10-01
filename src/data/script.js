@@ -12,6 +12,9 @@ export const ANGEL_PAGES = [
 export const STALL1_PAGES = ['ในงานจริงซุ้มผีแบบนี้ก็มีนะ แต่ก่อนที่เจ้าจะไปถึงลานนภา มาให้ข้ากินตับซะดีดี !!!!!'];
 export const STALL2_PAGES = ['ข้าจะบอกให้ว่า ลานนภา ไปทางไหน แต่เจ้าต้องต้องหาจดหมายนำทางให้เจอ ตาดีทีรอดเว้ยเห้ย ว่าฮ่าฮ่าฮ่า อ้า..'];
 
+// Chase intro: the chasing ghost finds the player (red text, no name tag).
+export const CHASER_INTRO_PAGES = ['อยู่นี่เองเจ้าวิญญาณไร้ที่ไป'];
+
 export const LETTER_TEXT = 'เดินต่อไปตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภาอยู่ข้างหน้าท่าน';
 
 export const STALL3_PAGE1 = 'เดี๋ยวก่อนเจ้า! ผีไล่หลังอยู่ก็จริง แต่ข้ามีเรื่องจะบอก';

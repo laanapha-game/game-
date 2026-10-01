@@ -37,7 +37,7 @@ Scene 2 must run standalone with a placeholder bird so it can be built before sc
 
 - Every fail path goes to one Game over screen, which has a single button to the home page. No retry.
 - Fail conditions: tap game timeout, picking the ghost jar, a rude reply, chase timer reaching 0, final sprint meter not full at 0.
-- The 2:00 chase timer starts when the chasing ghost appears (after the letter) and NEVER pauses (not during dialogue or reply choices). WALK segments come before it: no timer, no fail.
+- The 2:00 chase timer starts when the chase starts, right after the chase intro cutscene (after the letter) and NEVER pauses (not during dialogue or reply choices). WALK segments come before it: no timer, no fail.
 - If the timer reaches 0 at any moment in the chase (including mid-dialogue), cut to the caught sequence, then Game over.
 - Winning the final sprint with time left goes to scene 3.
 
@@ -66,12 +66,12 @@ Scene 2 must run standalone with a placeholder bird so it can be built before sc
 
 | State | What happens | On success | On fail |
 |---|---|---|---|
-| S0 Angel intro | Angel Jayimpacts, 5 dialogue pages, no choices, no timer; angel disappears (poof) | WALK1 | none |
+| S0 Angel intro | Angel Jayimpacts pops in (poof + sparkles) and floats on one frame; 5 dialogue pages, no choices, no timer; disappears (poof) | WALK1 | none |
 | WALK1 | Auto-scroll WALK_SEGMENT_S with the bird's run frames, slower. Stall 1 slides in from the left and stops at x~52 | S1 | none |
 | S1 Stall 1 (Krahang) | Dialogue; when the last page finishes typing, shake ~0.5 s, then the tap game starts by itself: the Krahang leaps from its stall onto the bird's back, tap to fill the meter within TAP_GAME_TIME_S | WALK2 (Krahang flung away) | GAME_OVER |
 | WALK2 | As WALK1, to stall 2 | S2 | none |
 | S2 Stall 2 (jar ghost) | Dialogue while the jar shows its open-with-ghost frames; shake ~0.5 s, then the jar game on the stall counter: two jars, one ghost, one letter; reveal, shuffle, pick. No pick time limit (ASSUMPTION) | Letter jar: S3 | Ghost jar: jump scare, GAME_OVER |
-| S3 Letter and chase start | Letter panel is read, then the chasing ghost appears and the 2:00 timer starts | S4 | timer 0: GAME_OVER |
+| S3 Letter and chase start | Letter panel is read. Chase intro cutscene: the chaser jumps in (open mouth, red flash, shake), says the red line, the bird looks back scared, the ghost floats in close (stage 0). Then the chase starts and the 2:00 timer starts | S4 | timer 0: GAME_OVER |
 | S4 Stall 3 | Auto-run RUN_SEGMENT_S, ticket dialogue (date-based), reply choice | Polite: S5 | Rude or timer 0: GAME_OVER |
 | S5 Stall 4 | Auto-run, "almost there" dialogue, reply choice | Polite: S6 | Rude or timer 0: GAME_OVER |
 | S6 Stall 5 | Auto-run, costume contest dialogue, urgent call to tap. No choice | After last page: S7 | timer 0: GAME_OVER |
@@ -153,6 +153,11 @@ Stall 1, Krahang (S1):
 Stall 2, ghost in the jar (S2):
 ```
 ข้าจะบอกให้ว่า ลานนภา ไปทางไหน แต่เจ้าต้องต้องหาจดหมายนำทางให้เจอ ตาดีทีรอดเว้ยเห้ย ว่าฮ่าฮ่าฮ่า อ้า..
+```
+
+Chase intro (S3), red text, no name tag:
+```
+อยู่นี่เองเจ้าวิญญาณไร้ที่ไป
 ```
 
 Letter (S3), shown in the 140 x 100 panel:

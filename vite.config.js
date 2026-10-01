@@ -2,5 +2,5 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   base: './',
-  build: { assetsInlineLimit: 0, chunkSizeWarningLimit: 2000 },
+  build: { target: ['es2020', 'safari14'], assetsInlineLimit: 0, chunkSizeWarningLimit: 2000 },
 });

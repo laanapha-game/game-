@@ -44,7 +44,8 @@ export class BirdActor {
 
   setView(view) {
     this.view = view;
-    this.sprite.setFlipX(this.flipped);
+    // `backward`: look behind (to the right) in the side view.
+    this.sprite.setFlipX(this.flipped !== (view === 'side' && !!this.backward));
     for (const v of ['side', 'front']) this.layers[v].forEach((l) => l.sprite.setVisible(v === view));
   }
 
@@ -52,6 +53,12 @@ export class BirdActor {
     if (view !== this.view || this.sprite.texture.key !== this.c[view].key) this.setView(view);
     this.sprite.play(`${this.c[view].key}_${name}`, true);
     this.animName = name;
+  }
+
+  /** Turn to look behind (right) or forward (left) in the side view. */
+  lookBack(on) {
+    this.backward = on;
+    this.setView(this.view);
   }
 
   setPosition(x, y = this.sprite.y) {

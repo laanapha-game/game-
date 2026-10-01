@@ -72,8 +72,9 @@ export class Dialogue {
    * hooks: onType(pageIndex), onComplete(pageIndex, isLast)
    * keepOpen: leave the box on screen after the last page (for reply choices).
    */
-  play(pages, { speaker = null, hooks = {}, keepOpen = false, waitLastTap = true } = {}) {
+  play(pages, { speaker = null, hooks = {}, keepOpen = false, waitLastTap = true, color = CSS.white } = {}) {
     this.pages = this.layout(pages);
+    this.lines.forEach((t) => t.setColor(color));
     this.hooks = hooks;
     this.keepOpen = keepOpen;
     this.waitLastTap = waitLastTap;

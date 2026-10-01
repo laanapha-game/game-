@@ -16,6 +16,7 @@ import {
   ANGEL_PAGES,
   LETTER_TEXT,
   STALL1_PAGES,
+  CHASER_INTRO_PAGES,
   STALL2_PAGES,
   STALL4_PAGES,
   STALL5_PAGES,
@@ -87,6 +88,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.input.on('pointerdown', (p) => {
       if (!this.ended) this.tapHandler?.(p);
     });
+    document.getElementById('boot')?.remove(); // first frame is up
     if (import.meta.env.DEV) {
       window.__scene2 = this;
       this.checkDialogues = () => checkDialogues(this);
@@ -193,22 +195,20 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.setState('S0');
     this.bird.play('idle', 'side');
     const angelY = C.GROUND_Y - 8;
-    const angel = this.add.sprite(52, angelY, 'angel_jayimpacts', 0).setOrigin(0.5, 1).setDepth(40).play('angel_idle');
+    // Pops in with a poof and sparkles, then just floats (one frame, no frame swaps).
+    const angel = this.add.sprite(52, angelY + 6, 'angel_jayimpacts', 0).setOrigin(0.5, 1).setDepth(40).setAlpha(0);
     // The real angel sheet has the halo drawn in; the separate halo is only for marker art.
-    const halo = this.add.image(52, angelY - 49, 'angel_halo').setDepth(41).setVisible(!this.registry.get('realArt')?.has('angel_jayimpacts'));
-    this.tweens.add({ targets: [angel, halo], y: '-=2', duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const halo = this.add.image(52, angelY - 43, 'angel_halo').setDepth(41).setAlpha(0).setVisible(!this.registry.get('realArt')?.has('angel_jayimpacts'));
+    burst(this, 'angel_poof', 52, angelY - 28, { depth: 43 });
+    for (let i = 0; i < 4; i++) burst(this, 'angel_glint', 52 + Phaser.Math.Between(-18, 18), angelY - Phaser.Math.Between(8, 56), { depth: 42 });
+    await this.tweenP({ targets: [angel, halo], alpha: 1, y: '-=6', duration: 350, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: [angel, halo], y: '-=3', duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     const glints = this.time.addEvent({
       delay: 600,
       loop: true,
       callback: () => burst(this, 'angel_glint', 52 + Phaser.Math.Between(-16, 16), angel.y - Phaser.Math.Between(10, 46), { depth: 42 }),
     });
-    await this.talk(ANGEL_PAGES, {
-      speaker: NAMES.angel,
-      hooks: {
-        onType: () => angel.play('angel_talk'),
-        onComplete: (i, last) => angel.play(last ? 'angel_wave' : i === 0 ? 'angel_sign' : 'angel_idle'),
-      },
-    });
+    await this.talk(ANGEL_PAGES, { speaker: NAMES.angel });
     glints.remove();
     burst(this, 'angel_poof', 52, angel.y - 24, { depth: 43 });
     angel.destroy();
@@ -402,17 +402,28 @@ export class TrickOrTreatScene extends Phaser.Scene {
     [panel, arrow, ...texts].forEach((o) => o.destroy());
     this.bird.play('idle', 'side');
 
-    // Chaser enters from the right; the timer starts the moment it appears.
-    this.chaser = this.add.sprite(C.GAME_W + 40, C.CHASER_HOVER_Y, 'chaser', FRAMES.chaser.float[0]).setDepth(45);
+    // Chase intro cutscene: the chaser jumps in (open mouth, red flash, shake),
+    // calls out in red, the bird turns back scared, the ghost floats in close.
+    this.setState('S3_INTRO');
+    this.chaser = this.add.sprite(C.CHASER_INTRO_FROM_X, C.CHASER_HOVER_Y, 'chaser', FRAMES.chaser.openMouth).setDepth(45);
     this.chaser.setFlipX(faces('chaser') === 'right');
-    this.chaser.play('chaser_float');
     this.chaserShadow = this.add.image(this.chaser.x, C.GROUND_Y + 1, 'ground_shadow').setOrigin(0.5, 1).setDepth(44);
+    const cam = this.cameras.main;
+    cam.flash(250, 200, 0, 0);
+    cam.shake(450, 0.015);
+    this.bird.lookBack(true);
+    this.bird.play('scared', 'side');
+    this.time.delayedCall(450, () => this.chaser.active && this.chaser.play('chaser_float'));
+    this.tweens.add({ targets: this.chaser, x: C.CHASER_X_BY_STAGE[0], duration: C.CHASER_INTRO_FLOAT_MS, ease: 'Sine.easeInOut' });
+    this.introFloat = true; // update() bobs the chaser while it floats in
+    await this.talk(CHASER_INTRO_PAGES, { color: C.CHASER_TEXT_COLOR });
+
+    // The chase starts: bird faces forward, 2:00 timer starts (same rule, never pauses).
+    this.bird.lookBack(false);
     this.timer.start();
     this.timerBar.setVisible(true);
-    this.bird.play('scared', 'side');
     this.stage = 0;
-    await this.tweenP({ targets: this.chaser, x: C.CHASER_X_BY_STAGE[0], duration: 700, ease: 'Quad.easeOut' });
-    await this.wait(300);
+    await this.wait(200);
   }
 
   /**
@@ -620,6 +631,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
     }
     this.bird.sync();
 
+    if (this.introFloat && this.chaser) {
+      this.chaser.y = C.CHASER_HOVER_Y + Math.round(Math.sin(time / 300) * 2);
+      this.chaserShadow?.setX(this.chaser.x);
+    }
     if (!this.timer.started || this.won) return;
     const remaining = this.timer.remainingS();
     this.timerBar.update(remaining / C.CHASE_TIME_S, Math.min(1, this.worldX / FINAL_WORLD_X));
@@ -635,6 +650,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
   updateChaser(time, remaining) {
     const c = this.chaser;
     if (!c) return;
+    this.introFloat = false;
     const stage = chaserStage(remaining, C.CHASER_STAGE_REMAINING_S);
     if (stage > this.stage && this.stage >= 0) {
       this.stage = stage;

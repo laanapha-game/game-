@@ -3,7 +3,7 @@
 // stacked Thai vowels and tone marks, leaves its box, touches the name tag, or
 // is clipped by the text canvas. Run with `npm run check:dialogue`.
 import { UI } from '../config/constants.js';
-import { ANGEL_PAGES, STALL1_PAGES, STALL2_PAGES, STALL4_PAGES, STALL5_PAGES, REPLY_POLITE, REPLY_RUDE, NAMES } from '../data/script.js';
+import { ANGEL_PAGES, CHASER_INTRO_PAGES, STALL1_PAGES, STALL2_PAGES, STALL4_PAGES, STALL5_PAGES, REPLY_POLITE, REPLY_RUDE, NAMES } from '../data/script.js';
 import { stall3Pages } from '../logic/ticket.js';
 
 // Every stall 3 variant (spec 10 date rows).
@@ -43,6 +43,7 @@ export function checkDialogues(scene) {
     ['angel', ANGEL_PAGES, NAMES.angel],
     ['stall1', STALL1_PAGES, NAMES.stall1],
     ['stall2', STALL2_PAGES, NAMES.stall2],
+    ['chaser intro', CHASER_INTRO_PAGES, null],
     ...DATES.map((d) => [`stall3 ${d}`, stall3Pages(d), NAMES.stall3]),
     ['stall4', STALL4_PAGES, NAMES.stall4],
     ['stall5', STALL5_PAGES, NAMES.stall5],
@@ -52,8 +53,9 @@ export function checkDialogues(scene) {
   dlg.setVisible(true);
   for (const [name, script, speaker] of sets) {
     dlg.setSpeaker(speaker);
-    const tag = { x0: dlg.tag.x, y0: dlg.tag.y, x1: dlg.tag.x + dlg.tag.displayWidth - 1, y1: dlg.tag.y + dlg.tag.displayHeight - 1 };
-    const tagInk = inkOf(dlg.tagText);
+    dlg.tag.setVisible(!!speaker);
+    const tag = !speaker ? { x0: -1, y0: -1, x1: -1, y1: -1 } : { x0: dlg.tag.x, y0: dlg.tag.y, x1: dlg.tag.x + dlg.tag.displayWidth - 1, y1: dlg.tag.y + dlg.tag.displayHeight - 1 };
+    const tagInk = speaker ? inkOf(dlg.tagText) : null;
     if (tagInk && (!inside(tagInk, tag) || tagInk.clipped)) violations.push({ set: name, what: 'name tag text', ink: tagInk });
     dlg.layout(script).forEach((lines, i) => {
       dlg.lines.forEach((t, li) => t.setText(lines[li] ?? ''));

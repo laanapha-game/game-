@@ -73,7 +73,12 @@ export const STALL_GHOST_OFFSET_X = 42; // stalls 3-5: ghost centre this far rig
 export const GHOST_SINK = 12; // ghost bottom this far below the counter top: head and shoulders show above it
 export const FAR_PARALLAX = 0.5; // ASSUMPTION: far layer scroll factor
 export const SPRINT_DISTANCE_PX = 360; // ASSUMPTION: scroll covered by a full sprint meter
-export const CHASER_X_BY_STAGE = [200, 188, 178, 170, 164]; // ASSUMPTION: centre x, stage 0 = > 90 s left
+// Chaser centre x per stage (stage 0 = > 90 s left). It starts close to the bird
+// after the intro cutscene, then creeps closer at each threshold. ASSUMPTION, tune.
+export const CHASER_X_BY_STAGE = [170, 165, 160, 155, 150];
+export const CHASER_INTRO_FROM_X = GAME_W + 10; // jumpscare: pops in here, then floats to stage 0
+export const CHASER_INTRO_FLOAT_MS = 1400;
+export const CHASER_TEXT_COLOR = '#FF2A2A'; // scary red for the chaser's line
 export const CHASER_HOVER_Y = GROUND_Y - 48; // ASSUMPTION: floating ghost, centre y (frames are 87 px tall)
 // Where the bird's centre sits inside the flipped Krahang-riding-bird frame (0..1).
 export const CLING_COMBO_ORIGIN_X = 0.35; // ASSUMPTION, tune visually
