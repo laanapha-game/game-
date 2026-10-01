@@ -53,15 +53,18 @@ export function wrap(text, width, px = FONT_BODY_PX, bold = false) {
   return wrapText(text, width, measurer(px, bold));
 }
 
-/** bold: the font has no bold face, so the browser emboldens it (then alpha is snapped). */
-export function textStyle(px = FONT_BODY_PX, color = CSS.white, bold = false) {
+/**
+ * bold: the font has no bold face, so the browser emboldens it (then alpha is snapped).
+ * res: canvas px per design px; default the device resolution (sharp). Lower = more pixelated.
+ */
+export function textStyle(px = FONT_BODY_PX, color = CSS.white, bold = false, res = textResolution) {
   patchTextSmoothing();
   return {
     fontFamily: FONT_FAMILY,
     fontStyle: bold ? 'bold' : 'normal',
     fontSize: `${px}px`,
     color,
-    resolution: textResolution,
+    resolution: Math.min(res, textResolution),
     testString: TEST_STRING,
     padding: { top: TEXT_PAD_Y, bottom: TEXT_PAD_Y, left: TEXT_PAD_Y, right: TEXT_PAD_Y },
   };
@@ -71,11 +74,12 @@ export function textStyle(px = FONT_BODY_PX, color = CSS.white, bold = false) {
  * Lays out lines. align: 'left' puts x at the left edge, 'center' centres on x.
  * `y` is the top of the first line box (the canvas padding sits above it).
  */
-export function addLines(scene, x, y, count, lineHeight, { px = FONT_BODY_PX, color, align = 'left', depth = 0, bold = false } = {}) {
+export function addLines(scene, x, y, count, lineHeight, { px = FONT_BODY_PX, color, align = 'left', depth = 0, bold = false, res } = {}) {
   const lines = [];
   for (let i = 0; i < count; i++) {
-    const t = scene.add.text(x - (align === 'center' ? 0 : TEXT_PAD_Y), y + i * lineHeight - TEXT_PAD_Y, '', textStyle(px, color, bold));
+    const t = scene.add.text(x - (align === 'center' ? 0 : TEXT_PAD_Y), y + i * lineHeight - TEXT_PAD_Y, '', textStyle(px, color, bold, res));
     t.setOrigin(align === 'center' ? 0.5 : 0, 0).setDepth(depth);
+    if (res) pixelated(t);
     lines.push(t);
   }
   return lines;
@@ -108,4 +112,18 @@ export function inkHeight(px = FONT_BODY_PX) {
   measureCtx.font = `${px}px ${FONT_FAMILY}`;
   const t = measureCtx.measureText(TEST_STRING);
   return Math.ceil(t.actualBoundingBoxAscent + t.actualBoundingBoxDescent);
+}
+
+/** Scale a low-resolution text up with hard pixel edges (no smoothing). */
+export function pixelated(t) {
+  const nearest = () => t.texture?.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+  nearest();
+  // The text canvas is re-uploaded on every change; keep the filter.
+  const set = t.setText.bind(t);
+  t.setText = (v) => {
+    const r = set(v);
+    nearest();
+    return r;
+  };
+  return t;
 }

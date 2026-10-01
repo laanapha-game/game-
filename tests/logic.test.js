@@ -181,6 +181,22 @@ test('music patterns use known instruments, sane notes and lengths', async () =>
   }
 });
 
+test('chase timer: setRate makes the rest of the time run faster, time spent is kept', async () => {
+  const { ChaseTimer } = await import('../src/logic/chaseTimer.js');
+  let now = 0;
+  const t = new ChaseTimer(120, () => now);
+  t.start();
+  now = 60_000; // 60 s at normal speed
+  assert.equal(t.remainingS(), 60);
+  t.setRate(1.5);
+  assert.equal(t.remainingS(), 60);
+  now += 20_000; // 20 s at 1.5x = 30 s of chase time
+  assert.equal(t.remainingS(), 30);
+  now += 20_000;
+  assert.equal(t.remainingS(), 0);
+  assert.ok(t.expired);
+});
+
 test('Latin runs such as 7-Eleven are not split', () => {
   const measure = (s) => graphemes(s).length * 6;
   const lines = wrapText('ตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภา', 90, measure);

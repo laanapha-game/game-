@@ -36,9 +36,15 @@ export async function toPage(page, x, y) {
 /**
  * Plays from S0 to the end of the win path. `shot(name)` is called at the
  * moments worth a screenshot (walk, struggle + dim, chase intro look-back, run,
- * sprint, win silhouette). Returns the final state.
+ * sprint, win silhouette). The chase runs and the sprint are tapped. Returns the final state.
  */
-export async function playToWin(page, vp, shot = async () => {}) {
+export async function playToWin(page, vp, shot = async () => {}, report = {}) {
+  // Idle check: with no taps the world does not move (no auto-run) and does not slide back.
+  const idle = async (ms) => {
+    const a = await page.evaluate(() => window.__scene2.worldX);
+    await page.waitForTimeout(ms);
+    return { before: a, after: await page.evaluate(() => window.__scene2.worldX) };
+  };
   await shot('s0');
   await tapUntil(page, vp, (s) => s === 'WALK1', { every: 120 });
   await page.waitForTimeout(800);
@@ -68,12 +74,21 @@ export async function playToWin(page, vp, shot = async () => {}) {
   await shot('s3_lookback');
   for (const target of ['S4', 'S5', 'S6']) {
     await tapUntil(page, vp, (s) => s === target, { every: 200, timeout: 30000 });
+    // Tap to run across the street to the stall (no auto-run in the chase).
     if (target === 'S4') {
-      await page.waitForFunction(() => window.__scene2.running, null, { timeout: 5000 }).catch(() => {});
-      await page.waitForTimeout(600);
-      await shot('s4_run');
+      await page.waitForFunction(() => !!window.__scene2.tickRun, null, { timeout: 5000 }).catch(() => {});
+      report.runIdle = await idle(1200);
     }
-    await page.waitForFunction(() => window.__scene2.dialogue.active, null, { timeout: 20000 });
+    let ranShot = target !== 'S4';
+    const end = Date.now() + 40000;
+    while (Date.now() < end && !(await page.evaluate(() => window.__scene2.dialogue.active || window.__scene2.ended))) {
+      await tapCenter(page, vp);
+      await page.waitForTimeout(80);
+      if (!ranShot && (await page.evaluate(() => window.__scene2.running))) {
+        await shot('s4_run');
+        ranShot = true;
+      }
+    }
     await shot(`${target}_dialogue`);
     if (target !== 'S6') {
       // Tap through pages until the reply buttons exist, then press the polite one.
@@ -91,6 +106,14 @@ export async function playToWin(page, vp, shot = async () => {}) {
     }
   }
   await tapUntil(page, vp, (s) => s === 'S7', { every: 200, timeout: 30000 });
+  await page.waitForFunction(() => !!window.__scene2.tickRun, null, { timeout: 5000 }).catch(() => {});
+  report.sprint = await page.evaluate(() => ({ eyes: window.__scene2.chaser.texture.key, rate: window.__scene2.timer.rate }));
+  for (let i = 0; i < 8; i++) {
+    await tapCenter(page, vp);
+    await page.waitForTimeout(60);
+  }
+  await page.waitForTimeout(300); // let the run catch up with the taps
+  report.sprintIdle = await idle(1200);
   await shot('s7');
   await tapUntil(page, vp, (s) => s === 'WIN' || s === 'SCENE3' || s === 'GAME_OVER_SCREEN', { every: 40, timeout: 60000 });
   await page.waitForTimeout(1050); // ran into the light, white silhouette up, whiteout starting

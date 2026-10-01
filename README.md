@@ -21,6 +21,7 @@ npm run scene1       # after a new scene 1 file: rebuild game.html, the scene 1 
 npm run sprites      # character sheets from assets/incoming -> src/assets/art (scene 1's too)
 python3 tools/bg_pipeline.py && python3 tools/stall_pipeline.py  # backgrounds, props, stalls (Pillow + numpy)
 python3 tools/gen_ui_fx.py   # small UI and FX sprites (assets/ui/, 1x)
+python3 tools/chaser_red_eyes.py  # red-eyed chaser for the final sprint (after npm run sprites)
 python3 tools/reres_bg.py    # re-resolution upscaled route backgrounds -> assets/raw/ (then bg_pipeline)
 python3 tools/gen_alley_far.py  # night sky with moon -> assets/raw/alley_far.png (then bg_pipeline)
 npm run build
@@ -132,5 +133,6 @@ Another host can still embed scene 2 with `startScene2({ parent, character, onWi
 - Speaker names for stalls 3 to 5 and the GAME OVER / HOME / TAP labels are placeholders.
 - The chase timer starts when the chaser appears, after the letter is read (state table S3). It uses wall-clock time, so it keeps running even when the tab is in the background.
 - Timer bar: the chaser icon moves with time, the bird icon moves with run progress, and the goal is the left end.
-- Soi exit is placed between stalls 4 and 5. Run speed is 48 px/s and a full sprint covers 360 px.
+- Soi exit is placed between stalls 4 and 5. The chase runs to stalls 3-5 and the final sprint are tapped (12 px per tap,
+  10.8 in the sprint, no drain over time); in the sprint the chaser has red eyes and the chase clock runs 1.5x.
 - Reply order is fixed (polite on top). The jar pick has no time limit.

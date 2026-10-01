@@ -120,6 +120,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     mk('krahang_cling', 'krahang', FRAMES.krahang.cling, 6);
     mk('krahang_flung', 'krahang', FRAMES.krahang.flung, 10, 0);
     mk('chaser_float', 'chaser', FRAMES.chaser.float, 4);
+    mk('chaser_red_float', 'chaser_red', FRAMES.chaser.float, 4 * C.FINAL_CHASE_SPEED);
     mk('jar_shake', 'jar', FRAMES.jar.shake, 12);
     mk('jar_ghost', 'jar', FRAMES.jar.ghost, 8);
     mk('jar_letter', 'jar', FRAMES.jar.letter, 6);
@@ -576,7 +577,8 @@ export class TrickOrTreatScene extends Phaser.Scene {
   async stall(i) {
     const n = i + 1;
     this.setState(`S${n + 1}`);
-    await this.scrollTo(i, C.RUN_SEGMENT_S * 1000, 1);
+    // Tap to run across the street to the next stall (like the final sprint).
+    await this.tapRun(STALL_SCROLL[i], C.CHASE_TAP_PX);
 
     const speaker = NAMES[`stall${n}`];
     if (n === 5) {
@@ -600,33 +602,64 @@ export class TrickOrTreatScene extends Phaser.Scene {
   // S7: tap to fill the meter; meter value maps to scroll toward the light.
   async s7Sprint() {
     this.setState('S7');
-    const startX = STALL_SCROLL[4];
-    this.meter = new TapMeter(C.SPRINT_GAIN, C.SPRINT_DECAY_PER_S);
+    this.finalChase();
+    await this.tapRun(FINAL_WORLD_X, C.SPRINT_GAIN * C.SPRINT_DISTANCE_PX);
+    return this.win();
+  }
+
+  /** Final sprint: the chaser's eyes turn red and it comes 1.5x faster (the clock runs 1.5x). */
+  finalChase() {
+    this.redEyes = true;
+    this.timer.setRate(C.FINAL_CHASE_SPEED);
+    const c = this.chaser;
+    if (c && this.textures.exists('chaser_red')) {
+      const frame = c.frame.name;
+      if (c.anims.isPlaying) c.play('chaser_red_float');
+      else c.setTexture('chaser_red', frame);
+    }
+    this.cameras.main.flash(200, 200, 0, 0);
+    audio.sfx('chaser_closer');
+  }
+
+  /**
+   * Tap to run to world scroll `toX`: each tap runs `pxPerTap` further, the world
+   * catches up at CHASE_RUN_PX_S, the bird runs while it moves and stops when the
+   * taps stop. Progress never goes back (owner request). The meter shows progress.
+   */
+  async tapRun(toX, pxPerTap) {
+    const fromX = this.worldX;
     const view = new MeterView(this);
-    this.bird.play('run', 'side');
+    let target = fromX;
+    this.bird.play('idle', 'side');
     await this.guard(
       new Promise((resolve) => {
         this.tapHandler = (p) => {
           if (this.timer.expired) return;
-          this.meter.tap();
+          target = Math.min(toX, target + pxPerTap);
           view.press();
-          audio.sfx('tap', { level: this.meter.value });
+          audio.sfx('tap', { level: (target - fromX) / (toX - fromX) });
           const w = pointerPos(this, p);
           burst(this, 'fx_tap_ripple', w.x, w.y, { depth: 200 });
-          if (this.meter.full) resolve();
         };
-        this.tickS7 = (dt) => {
-          this.meter.update(dt);
-          view.set(this.meter.value);
-          this.worldX = startX + this.meter.value * C.SPRINT_DISTANCE_PX;
+        this.tickRun = (dt) => {
+          const moving = this.worldX < target - 0.01;
+          if (moving) this.worldX = Math.min(target, this.worldX + C.CHASE_RUN_PX_S * dt);
+          if (moving !== this.running) {
+            this.running = moving;
+            this.bird.play(moving ? 'run' : 'idle', 'side');
+          }
+          view.set((this.worldX - fromX) / (toX - fromX));
+          if (this.worldX >= toX - 0.01) resolve();
         };
       }),
     );
     this.tapHandler = null;
-    this.tickS7 = null;
+    this.tickRun = null;
+    this.running = false;
+    this.worldX = toX;
     view.set(1);
-    this.worldX = FINAL_WORLD_X;
-    return this.win();
+    view.destroy();
+    this.bird.play('idle', 'side');
   }
 
   // ---------- endings ----------
@@ -658,7 +691,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.setState('GAME_OVER');
     this.failReason = reason;
     this.tapHandler = null;
-    this.tickS1 = this.tickS7 = null;
+    this.tickS1 = this.tickRun = null;
     this.tweens.killAll();
     this.time.removeAllEvents();
     this.choices.clear();
@@ -682,7 +715,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
       audio.duck(1000);
     });
     this.time.delayedCall(C.CAUGHT_MS, () => {
-      this.scene.start('GameOver', { reason, onGameOver: this.onGameOver });
+      this.scene.start('GameOver', { reason, onGameOver: this.onGameOver, redEyes: !!this.redEyes });
     });
   }
 
@@ -691,7 +724,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     const dt = Math.min(delta, 100) / 1000;
     this.dialogue.update(dt);
     this.tickS1?.(dt);
-    this.tickS7?.(dt);
+    this.tickRun?.(dt);
 
     // Move in art-pixel steps (1 / RENDER_SCALE design px) for smooth scrolling.
     const R = C.RENDER_SCALE;

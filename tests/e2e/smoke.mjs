@@ -135,7 +135,11 @@ if (args.includes('--win')) {
       if (m === 'chase') chaseFrom = st;
     }
   }, 500);
-  const final = await playToWin(page, vp, (name) => shot(page, name));
+  const report = {};
+  const final = await playToWin(page, vp, (name) => shot(page, name), report);
+  check(report.runIdle && report.runIdle.after === report.runIdle.before, `chase run: no taps, no movement (tap to run) ${JSON.stringify(report.runIdle)}`);
+  check(report.sprintIdle && report.sprintIdle.before > 0 && report.sprintIdle.after === report.sprintIdle.before, `final sprint: progress does not drain when not tapping ${JSON.stringify(report.sprintIdle)}`);
+  check(report.sprint?.eyes === 'chaser_red' && report.sprint?.rate === 1.5, `final sprint: red-eyed chaser, chase clock 1.5x ${JSON.stringify(report.sprint)}`);
   clearInterval(watch);
   const heard = new Set(await page.evaluate(() => window.__audio.log));
   const want = ['angel_poof', 'angel_appear', 'aura', 'chat_open', 'type_blip', 'page_next', 'step', 'shake_rumble', 'krahang_leap', 'krahang_land',

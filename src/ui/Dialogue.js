@@ -1,9 +1,9 @@
 // Dialogue system (spec 7.3): 9-slice chatbox, typewriter, tap to complete,
 // tap to advance, blinking arrow. Pages that overflow the box are split into
 // continuation pages (the text itself is never changed).
-import { UI, LINE_HEIGHT_PX, TYPEWRITER_CPS, FONT_BODY_PX, TEXT_PAD_Y, CSS } from '../config/constants.js';
+import { UI, LINE_HEIGHT_PX, TYPEWRITER_CPS, FONT_BODY_PX, TEXT_PAD_Y, CSS, CHATBOX_TEXT_RES } from '../config/constants.js';
 import { graphemes, paginate } from '../logic/textWrap.js';
-import { wrap, addLines, textStyle, inkHeight } from './text.js';
+import { wrap, addLines, textStyle, inkHeight, pixelated } from './text.js';
 import { addNineSlice, sizeNineSlice } from '../display/integerScale.js';
 import { audio } from '../audio/engine.js';
 
@@ -26,8 +26,9 @@ export class Dialogue {
 
     this.box = addNineSlice(scene, b.x, b.y, 'chatbox_9slice', 0, b.w, b.h, 8).setOrigin(0).setDepth(DEPTH);
     this.tag = addNineSlice(scene, b.x + 4, b.y + TAG_TOP, 'nametag_9slice', 0, 40, UI.nametag.h, 6).setOrigin(0).setDepth(DEPTH + 1);
-    this.tagText = scene.add.text(0, 0, '', textStyle(FONT_BODY_PX, CSS.white)).setOrigin(0, 0).setDepth(DEPTH + 2);
-    this.lines = addLines(scene, b.x + b.pad, this.textTop, this.maxLines, LINE_HEIGHT_PX, { depth: DEPTH + 1 });
+    // Chatbox text is slightly pixelated (CHATBOX_TEXT_RES).
+    this.tagText = pixelated(scene.add.text(0, 0, '', textStyle(FONT_BODY_PX, CSS.white, false, CHATBOX_TEXT_RES)).setOrigin(0, 0).setDepth(DEPTH + 2));
+    this.lines = addLines(scene, b.x + b.pad, this.textTop, this.maxLines, LINE_HEIGHT_PX, { depth: DEPTH + 1, res: CHATBOX_TEXT_RES });
     this.arrow = scene.add.sprite(b.x + b.w - 12, b.y + b.h - 11, 'ui_arrow', 0).setOrigin(0).setDepth(DEPTH + 2);
     scene.anims.exists('ui_arrow_blink') ||
       scene.anims.create({ key: 'ui_arrow_blink', frames: [0, 1].map((frame) => ({ key: 'ui_arrow', frame })), frameRate: 4, repeat: -1 });

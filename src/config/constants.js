@@ -33,8 +33,14 @@ export const CHASE_TIME_S = 120; // never pauses
 export const TAP_GAME_TIME_S = 10;
 export const TAP_GAME_GAIN = 0.06;
 export const TAP_GAME_DECAY_PER_S = 0.1;
-export const SPRINT_GAIN = 0.03; // ASSUMPTION, tune
-export const SPRINT_DECAY_PER_S = 0.1;
+export const SPRINT_GAIN = 0.03; // ASSUMPTION, tune: share of the sprint distance per tap
+export const SPRINT_DECAY_PER_S = 0; // owner: escape progress no longer drains over time
+// Chase runs to stalls 3-5 are tap-controlled like the final sprint (owner request):
+// each tap runs CHASE_TAP_PX further, the world catches up at CHASE_RUN_PX_S, and
+// progress never goes back. ASSUMPTION, tune.
+export const CHASE_TAP_PX = 12;
+export const CHASE_RUN_PX_S = 120;
+export const FINAL_CHASE_SPEED = 1.5; // final sprint: red-eyed chaser, the chase clock runs 1.5x
 export const RUN_SEGMENT_S = 10;
 export const JAR_REVEAL_MS = 1200;
 export const JAR_SWAPS = 6; // ASSUMPTION
@@ -114,7 +120,11 @@ export const FONT_FAMILY = '"Lannapha Serithai", monospace'; // @font-face in sr
 export const FONT_BODY_PX = 12;
 export const FONT_TITLE_PX = 16;
 export const LINE_HEIGHT_PX = 18; // spec: 16 to 20; room for stacked vowels and tone marks
-export const TEXT_PAD_Y = 4; // extra canvas px on every side so no glyph or stacked mark is ever clipped
+export const TEXT_PAD_Y = 4;
+// Chatbox text (dialogue and name tag): canvas px per design px. 2 = slightly
+// pixelated (visible pixel steps, still easy to read); the rest of the text is
+// drawn at the device resolution (sharp). 1 = fully blocky, on the design grid.
+export const CHATBOX_TEXT_RES = 2; // extra canvas px on every side so no glyph or stacked mark is ever clipped
 
 // ---- Touch (spec 2) ----
 export const MIN_TOUCH_CSS_PX = 44;

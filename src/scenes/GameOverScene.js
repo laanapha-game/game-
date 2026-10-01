@@ -13,7 +13,7 @@ export class GameOverScene extends Phaser.Scene {
     super('GameOver');
   }
 
-  create({ reason, onGameOver } = {}) {
+  create({ reason, onGameOver, redEyes } = {}) {
     setupScene(this);
     this.cameras.main.setBackgroundColor(C.CSS.black);
     if (import.meta.env.DEV) window.__scene2GameOver = { reason };
@@ -21,7 +21,7 @@ export class GameOverScene extends Phaser.Scene {
     audio.sfx('gameover');
     new SoundButtons(this);
     const cx = C.GAME_W / 2;
-    this.add.sprite(cx, 130, 'chaser', FRAMES.chaser.openMouth);
+    this.add.sprite(cx, 130, redEyes && this.textures.exists('chaser_red') ? 'chaser_red' : 'chaser', FRAMES.chaser.openMouth);
     this.add.text(cx, 190, UI_TEXT.gameOver, textStyle(C.FONT_TITLE_PX, C.CSS.orangeRed)).setOrigin(0.5);
 
     const w = 96;

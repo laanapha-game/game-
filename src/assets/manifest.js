@@ -37,6 +37,8 @@ export const MANIFEST = [
   // From the bird sheet extras: the Krahang riding the bird (cling pose for S1), faces right.
   { key: 'bird_krahang_cling', file: 'bird_krahang_cling.png', frameWidth: 42, frameHeight: 32, frames: 1, facing: 'right', existing: true },
   { key: 'chaser', file: 'chaser.png', frameWidth: 64, frameHeight: 64, frames: 7, facing: 'right', existing: true },
+  // Final sprint: the same chaser with red eyes (tools/chaser_red_eyes.py, only eye pixels changed).
+  { key: 'chaser_red', file: 'chaser_red.png', frameWidth: 64, frameHeight: 64, frames: 7, facing: 'right', existing: true },
   // Stall ghosts (Drive): dancing ghost (stall 3), zombie (stall 4), baby ghost (stall 5).
   { key: 'stall_ghost_3', file: 'stall_ghost_3.png', frameWidth: 28, frameHeight: 46, frames: 6, existing: true },
   { key: 'stall_ghost_4', file: 'stall_ghost_4.png', frameWidth: 31, frameHeight: 40, frames: 4, existing: true },

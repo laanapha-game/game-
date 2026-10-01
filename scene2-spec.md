@@ -17,7 +17,7 @@ Read this whole file before writing code. Anything marked TODO or ASSUMPTION is 
 - Input: pointer events. Set `touch-action: manipulation`. Disable double-tap zoom, text selection and the context menu.
 - Touch targets must be at least 44 CSS px even when the drawing is smaller. Use larger hit areas.
 - Palette (hex estimated from screenshots, sample the real values from source files): orange-red #DE5238, black #000000, yellow #FFFF4F, magenta #F02DF0, white #FFFFFF. The bird also uses blue #0000FF and green #55FF3A. Background palette: #DE5238 #000000 #8F2F20 #4A1A14 #FFFF4F #F02DF0 #FFFFFF. Stall palette: #FFFF4F #F02DF0 #000000 #FFFFFF #DE5238 #C4C42E #A61EA6.
-- Thai text: Serithai Regular (pixel font, `src/assets/fonts/Serithai-Regular.otf`), 12 px body, 16 px title, line height 18 px, smoothing off (alpha snapped to 0/255, drawn on the design grid). Wrap by measured pixel width inside the box padding, paginate by how many lines fit, never clip. `npm run check:dialogue` renders every page at 390x844 and fails if any glyph (stacked vowels and tone marks included) leaves its box. TODO: confirm the Serithai licence allows embedding.
+- Thai text: Serithai Regular (pixel font, `src/assets/fonts/Serithai-Regular.otf`), 12 px body, 16 px title, line height 18 px, smoothing off (alpha snapped to 0/255). Chatbox text (dialogue and name tag) is slightly pixelated: rasterised at 2 px per design px (CHATBOX_TEXT_RES) and scaled up without smoothing; other text is drawn at device resolution. Wrap by measured pixel width inside the box padding, paginate by how many lines fit, never clip. `npm run check:dialogue` renders every page at 390x844 and fails if any glyph (stacked vowels and tone marks included) leaves its box. TODO: confirm the Serithai licence allows embedding.
 - Framework: Phaser 4. Scene 1 is plain Canvas 2D (not Phaser); they connect through scene 1's `registerScene` API (section 3).
 
 ## 3. Interfaces with other scenes
@@ -62,10 +62,12 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 | TAP_GAME_GAIN | 0.06 | Meter gain per tap (0 to 1) |
 | TAP_GAME_DECAY_PER_S | 0.10 | Meter drains when not tapping |
 | SPRINT_GAIN | 0.03 | ASSUMPTION, tune |
-| SPRINT_DECAY_PER_S | 0.10 | |
+| SPRINT_DECAY_PER_S | 0 | Owner: escape progress no longer drains over time |
+| CHASE_TAP_PX | 12 | ASSUMPTION. Chase runs to stalls 3-5: px run per tap (world catches up at CHASE_RUN_PX_S = 120) |
+| FINAL_CHASE_SPEED | 1.5 | Final sprint: red-eyed chaser comes 1.5x faster (the chase clock runs 1.5x) |
 | WALK_SPEED_PX_S | 24 | ASSUMPTION. Walk before stalls 1 and 2 (run frames, slower) |
 | WALK_SEGMENT_S | 6 | |
-| RUN_SEGMENT_S | 10 | Auto-run time before each of stalls 3, 4, 5 (48 px/s) |
+| RUN_SEGMENT_S | 10 | Sets the distance between stalls 3, 4, 5 (10 s x 48 px/s = 480 px); the player taps to cover it |
 | PRE_GAME_SHAKE_MS | 500 | Shake after stall 1/2 dialogue, then the minigame starts |
 | JAR_REVEAL_MS | 1200 | Show which jar holds the letter |
 | JAR_SWAPS | 6 | ASSUMPTION |
@@ -84,16 +86,17 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 | WALK2 | As WALK1, to stall 2 | S2 | none |
 | S2 Stall 2 (jar ghost) | Dialogue while the jar shows its open-with-ghost frames; shake ~0.5 s, then the jar game on the stall counter: two jars, one ghost, one letter; reveal, shuffle, pick. No pick time limit (ASSUMPTION) | Letter jar: S3 | Ghost jar: jump scare, GAME_OVER |
 | S3 Letter and chase start | Letter panel is read. Chase intro cutscene: the chaser jumps in (open mouth, red flash, shake), says the red line, the bird looks back scared, the ghost floats in close (stage 0). Then the chase starts and the 2:00 timer starts | S4 | timer 0: GAME_OVER |
-| S4 Stall 3 | Auto-run RUN_SEGMENT_S, ticket dialogue (date-based), reply choice | Polite: S5 | Rude or timer 0: GAME_OVER |
-| S5 Stall 4 | Auto-run, "almost there" dialogue, reply choice | Polite: S6 | Rude or timer 0: GAME_OVER |
-| S6 Stall 5 | Auto-run, costume contest dialogue, urgent call to tap. No choice | After last page: S7 | timer 0: GAME_OVER |
-| S7 Final sprint | Tap meter fills to reach the white light path | Meter full with time left: run into the light, whiteout, scene 3 | Timer 0: GAME_OVER |
+| S4 Stall 3 | Tap to run across the street to stall 3, ticket dialogue (date-based), reply choice | Polite: S5 | Rude or timer 0: GAME_OVER |
+| S5 Stall 4 | Tap to run, "almost there" dialogue, reply choice | Polite: S6 | Rude or timer 0: GAME_OVER |
+| S6 Stall 5 | Tap to run, costume contest dialogue, urgent call to tap. No choice | After last page: S7 | timer 0: GAME_OVER |
+| S7 Final sprint | The chaser's eyes turn red and it comes 1.5x faster; tap to run to the white light path | Meter full with time left: run into the light, whiteout, scene 3 | Timer 0: GAME_OVER |
 | GAME_OVER | Caught sequence (chaser open-mouth frame, about 1 s), then Game over screen with one button | home page | |
 
 ## 7. Mechanics
 
-### 7.1 Tap meter (S1 and S7)
-- Meter value 0 to 1. Each tap adds the gain constant. Decay is applied continuously.
+### 7.1 Tap meter (S1) and tap to run (S4-S7)
+- S1: meter value 0 to 1. Each tap adds the gain constant. Decay is applied continuously.
+- Chase runs (S4-S6) and the final sprint (S7), owner change: the player taps to run, as in the sprint. Each tap runs a fixed distance further (CHASE_TAP_PX; sprint SPRINT_GAIN x SPRINT_DISTANCE_PX), the world catches up at CHASE_RUN_PX_S, the bird runs while moving and stands when the taps stop. Progress never goes back over time. The meter shows progress to the next stall or the light.
 - Win the moment the meter reaches 1 while time remains. Show a tap ripple effect at the touch point.
 - S1: the timer is TAP_GAME_TIME_S. S7: the timer is whatever is left of the chase timer.
 - S1 layout: the bird faces left. The Krahang leaps from stall 1 onto the bird's back (its right side), and is flung to the right when the meter fills.
@@ -117,7 +120,7 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 - Atmosphere: drifting fog over the ground band and a black gradient from the top and bottom edges, leaving the centre third of the screen (y 107-213) at normal lighting (fx_fog, fx_vignette). During the stall 1 and 2 minigames the scene fades dark (MINIGAME_DIM_*) with the characters lit above it, and fades back when the minigame ends.
 - Background follows the real route (ASSUMPTION for the split): inside the soi until stall 4, then the soi exit and the street with a 7-Eleven-style shop for stall 5 and the sprint, then the white light entrance.
 - The chaser is behind the player on the RIGHT and faces left, closes in by position at the CHASER_STAGE_REMAINING_S thresholds; below 15 s it switches to the open-mouth frame and the screen shakes.
-- Final sprint: meter value maps to scroll progress; meter = 1 reaches the light; bird fades to a white silhouette, whiteout (about 1 s), then scene 3.
+- Final sprint: the chaser switches to its red-eyed sheet (chaser_red.png, `tools/chaser_red_eyes.py` recolours only the pupils and the dark sockets around them) and the chase clock runs FINAL_CHASE_SPEED (1.5x), so the chaser closes in and the time runs out 1.5x faster. Progress maps to scroll; full progress reaches the light; bird fades to a white silhouette, whiteout (about 1 s), then scene 3.
 - Timer bar (120 x 8) with chaser icon (moves with time) and bird icon (moves with run progress).
 
 ### 7.5 Stall 3 ticket text by date
