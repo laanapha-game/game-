@@ -119,7 +119,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     mk('krahang_cling', 'krahang', FRAMES.krahang.cling, 6);
     mk('krahang_flung', 'krahang', FRAMES.krahang.flung, 10, 0);
     mk('chaser_float', 'chaser', FRAMES.chaser.float, 4);
-    mk('chaser_red_float', 'chaser_red', FRAMES.chaser.float, 4 * C.FINAL_CHASE_SPEED);
+    mk('chaser_red_float', 'chaser_red', FRAMES.chaser.float, 4 * 2); // faster flutter in the final sprint
     mk('jar_shake', 'jar', FRAMES.jar.shake, 12);
     mk('jar_ghost', 'jar', FRAMES.jar.ghost, 8);
     mk('jar_letter', 'jar', FRAMES.jar.letter, 6);
@@ -607,7 +607,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     return this.win();
   }
 
-  /** Final sprint: the chaser's eyes turn red and it comes 1.5x faster (the clock runs 1.5x). */
+  /** Final sprint: the chaser's eyes turn red and it comes FINAL_CHASE_SPEED (3x) faster (the clock runs 3x). */
   finalChase() {
     this.redEyes = true;
     this.timer.setRate(C.FINAL_CHASE_SPEED);
@@ -789,7 +789,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     });
     // Glide on an exact position; draw on whole pixels.
     this.chaserX ??= c.x;
-    this.chaserX += (C.BIRD_X + gap - this.chaserX) * Math.min(1, dt * C.CHASER_FOLLOW_PER_S);
+    this.chaserX += (C.BIRD_X + gap - this.chaserX) * Math.min(1, dt * C.CHASER_FOLLOW_PER_S * this.timer.rate); // glides faster in the sprint
     c.x = Math.round(this.chaserX);
     // Growl each time it gets another 10 px closer.
     const band = Math.floor(gap / 10);

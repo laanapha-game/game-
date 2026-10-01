@@ -2,7 +2,7 @@
 // Uses wall-clock time, so it also keeps running while dialogue, choices,
 // the letter, or even a backgrounded tab would otherwise freeze the game loop.
 // setRate(r): from now on time runs r x as fast (the final sprint: the chaser
-// comes 1.5x faster). Time already spent is kept.
+// comes 3x faster). Time already spent is kept.
 export class ChaseTimer {
   constructor(totalS, clock = () => performance.now()) {
     this.totalMs = totalS * 1000;

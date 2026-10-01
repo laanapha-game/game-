@@ -40,7 +40,7 @@ export const SPRINT_DECAY_PER_S = 0; // owner: escape progress no longer drains 
 // progress never goes back. ASSUMPTION, tune.
 export const CHASE_TAP_PX = 12;
 export const CHASE_RUN_PX_S = 120;
-export const FINAL_CHASE_SPEED = 1.5; // final sprint: red-eyed chaser, the chase clock runs 1.5x
+export const FINAL_CHASE_SPEED = 3; // final sprint (owner): red-eyed chaser comes 3x faster, the chase clock runs 3x
 export const RUN_SEGMENT_S = 10;
 export const JAR_REVEAL_MS = 1200;
 export const JAR_SWAPS = 6; // ASSUMPTION

@@ -64,7 +64,7 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 | SPRINT_GAIN | 0.03 | ASSUMPTION, tune |
 | SPRINT_DECAY_PER_S | 0 | Owner: escape progress no longer drains over time |
 | CHASE_TAP_PX | 12 | ASSUMPTION. Chase runs to stalls 3-5: px run per tap (world catches up at CHASE_RUN_PX_S = 120) |
-| FINAL_CHASE_SPEED | 1.5 | Final sprint: red-eyed chaser comes 1.5x faster (the chase clock runs 1.5x) |
+| FINAL_CHASE_SPEED | 3 | Final sprint (owner): red-eyed chaser comes 3x faster (the chase clock runs 3x) |
 | WALK_SPEED_PX_S | 24 | ASSUMPTION. Walk before stalls 1 and 2 (run frames, slower) |
 | WALK_SEGMENT_S | 6 | |
 | RUN_SEGMENT_S | 10 | Sets the distance between stalls 3, 4, 5 (10 s x 48 px/s = 480 px); the player taps to cover it |
@@ -89,7 +89,7 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 | S4 Stall 3 | Tap to run across the street to stall 3, ticket dialogue (date-based), reply choice | Polite: S5 | Rude or timer 0: GAME_OVER |
 | S5 Stall 4 | Tap to run, "almost there" dialogue, reply choice | Polite: S6 | Rude or timer 0: GAME_OVER |
 | S6 Stall 5 | Tap to run, costume contest dialogue, urgent call to tap. No choice | After last page: S7 | timer 0: GAME_OVER |
-| S7 Final sprint | The chaser's eyes turn red and it comes 1.5x faster; tap to run to the white light path | Meter full with time left: run into the light, whiteout, scene 3 | Timer 0: GAME_OVER |
+| S7 Final sprint | The chaser's eyes turn red and it comes 3x faster; tap to run to the white light path | Meter full with time left: run into the light, whiteout, scene 3 | Timer 0: GAME_OVER |
 | GAME_OVER | Caught sequence (chaser open-mouth frame, about 1 s), then Game over screen with one button | home page | |
 
 ## 7. Mechanics
@@ -120,7 +120,7 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 - Atmosphere: drifting fog over the ground band and a black gradient from the top and bottom edges, leaving the centre third of the screen (y 107-213) at normal lighting (fx_fog, fx_vignette). During the stall 1 and 2 minigames the scene fades dark (MINIGAME_DIM_*) with the characters lit above it, and fades back when the minigame ends.
 - Background follows the real route (ASSUMPTION for the split): inside the soi until stall 4, then the soi exit and the street with a 7-Eleven-style shop for stall 5 and the sprint, then the white light entrance.
 - The chaser is behind the player on the RIGHT and faces left. Its distance follows the chase, from the same two progressions as the timer bar: the bird's run progress minus the chaser's (elapsed chase time), scaled so it starts at x 170. Tapping ahead pushes it back (its centre stops at the screen edge, so it stays in view); waiting or reading lets it creep up onto the bird's back; when its progress reaches the bird's, the bird is caught (Game over). It glides to its distance, growls each time it gets 10 px closer, and opens its mouth when within 28 px or in the last 15 s. Camera shakes are gentle (constants: 0.25-0.8% of the screen width); in the last 15 s one small pulse per heartbeat.
-- Final sprint: the chaser switches to its red-eyed sheet (chaser_red.png, `tools/chaser_red_eyes.py` recolours only the pupils and the dark sockets around them) and the chase clock runs FINAL_CHASE_SPEED (1.5x), so the chaser closes in and the time runs out 1.5x faster. Progress maps to scroll; full progress reaches the light; bird fades to a white silhouette, whiteout (about 1 s), then scene 3.
+- Final sprint: the chaser switches to its red-eyed sheet (chaser_red.png, `tools/chaser_red_eyes.py` recolours only the pupils and the dark sockets around them) and the chase clock runs FINAL_CHASE_SPEED (3x), so the chaser closes in and the time runs out 3x faster: about 5 taps a second keeps level with it. Progress maps to scroll; full progress reaches the light; bird fades to a white silhouette, whiteout (about 1 s), then scene 3.
 - Timer bar (120 x 8) with chaser icon (moves with time) and bird icon (moves with run progress).
 
 ### 7.5 Stall 3 ticket text by date
