@@ -234,7 +234,6 @@ export const SFX = {
     tone(B, t, 900, { dur: 0.25, gain: 0.08, glide: 300 });
   },
   angel_appear: (B, t) => [81, 84, 88, 93, 96].forEach((m, i) => bell(B, t + 0.12 + i * 0.07, m, 0.07, 0.8)),
-  angel_glint: (B, t) => bell(B, t, 93 + PENTA[Math.floor(Math.random() * 5)], 0.035, 0.5),
   // Chase
   heartbeat: (B, t) => {
     tone(B, t, 62, { dur: 0.12, gain: 0.35, glide: 40 });
@@ -276,4 +275,43 @@ export const SFX = {
     tone(B, t, 41.2, { type: 'sine', dur: 2.2, gain: 0.18, attack: 0.3 });
   },
   scene3_chime: (B, t) => [81, 85, 88, 93].forEach((m, i) => bell(B, t + i * 0.12, m, 0.08, 1.2)),
+};
+
+// ---------- loops (held sounds: start returns stop(t)) ----------
+export const LOOPS = {
+  // Jayimpacts' aura: a faint, high shimmer (A major chord, very quiet) with a slow
+  // tremolo, fading in and out. Much quieter than the effects.
+  aura(B, t) {
+    const ctx = B.ctx;
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.linearRampToValueAtTime(0.006, t + 0.8);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 2400;
+    lp.connect(out).connect(B.dest);
+    const trem = ctx.createGain();
+    trem.gain.value = 0.7;
+    trem.connect(lp);
+    const lfo = ctx.createOscillator();
+    const depth = ctx.createGain();
+    lfo.frequency.value = 0.6;
+    depth.gain.value = 0.3;
+    lfo.connect(depth).connect(trem.gain);
+    const nodes = [lfo];
+    for (const [m, d] of [[81, -4], [85, 3], [88, -2], [93, 5]]) {
+      const o = ctx.createOscillator();
+      o.frequency.value = midiHz(m);
+      o.detune.value = d;
+      o.connect(trem);
+      nodes.push(o);
+    }
+    nodes.forEach((n) => n.start(t));
+    return (at) => {
+      // Fade from wherever the fade-in got to (no reading of .value: it can be stale).
+      out.gain.cancelScheduledValues(at);
+      out.gain.setTargetAtTime(0.0001, at, 0.12);
+      nodes.forEach((n) => n.stop(at + 0.8));
+    };
+  },
 };

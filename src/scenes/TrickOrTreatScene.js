@@ -216,6 +216,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     burst(this, 'angel_poof', 52, angelY - 28, { depth: 43 });
     audio.sfx('angel_poof');
     audio.sfx('angel_appear');
+    audio.hold('aura', true); // her aura: a faint shimmer while she is here
     for (let i = 0; i < 4; i++) burst(this, 'angel_glint', 52 + Phaser.Math.Between(-18, 18), angelY - Phaser.Math.Between(8, 56), { depth: 42 });
     await this.tweenP({ targets: [angel, halo], alpha: 1, y: '-=6', duration: 350, ease: 'Back.easeOut' });
     this.tweens.add({ targets: [angel, halo], y: '-=3', duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -224,12 +225,12 @@ export class TrickOrTreatScene extends Phaser.Scene {
       loop: true,
       callback: () => {
         burst(this, 'angel_glint', 52 + Phaser.Math.Between(-16, 16), angel.y - Phaser.Math.Between(10, 46), { depth: 42 });
-        audio.sfx('angel_glint');
       },
     });
     await this.talk(ANGEL_PAGES, { speaker: NAMES.angel });
     glints.remove();
     burst(this, 'angel_poof', 52, angel.y - 24, { depth: 43 });
+    audio.hold('aura', false);
     audio.sfx('angel_poof');
     angel.destroy();
     halo.destroy();
@@ -665,6 +666,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.input.enabled = false;
     this.cameras.main.shakeEffect.reset();
     audio.mood(null);
+    audio.hold('aura', false);
 
     if (!this.chaser) {
       this.chaser = this.add.sprite(C.GAME_W + 40, C.CHASER_HOVER_Y, 'chaser', 0).setDepth(45).setFlipX(faces('chaser') === 'right');

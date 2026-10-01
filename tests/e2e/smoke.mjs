@@ -69,6 +69,9 @@ for (const [query, want] of [['', 'placeholder-bird'], ['?character=pumpkin', 'p
   const levels = await page.evaluate(() => window.__audio.selfTest());
   const bad = Object.entries(levels).filter(([, v]) => v.peak < 0.02 || v.peak > 1);
   check(bad.length === 0, `sound: ${Object.keys(levels).length} effects and music loops render in range${bad.length ? ' (' + JSON.stringify(bad) + ')' : ''}`);
+  // Jayimpacts' aura stays quiet: under the old glint chime's peak (0.044) and under the music.
+  const aura = levels['loop:aura'];
+  check(aura.peak < 0.044 && aura.rms < levels['music:calm'].rms, `Jayimpacts' aura is quiet (peak ${aura.peak}, rms ${aura.rms} vs calm music ${levels['music:calm'].rms})`);
   // Sound is on by default and starts on the first tap; the speaker turns it off and on,
   // the note turns music off; tapping them is not a game tap.
   const before = await page.evaluate(() => ({ on: window.__audio.audio.sound, page: window.__scene2.dialogue.pageIndex, frame: window.__scene2.soundButtons.speaker.frame.name }));
@@ -135,7 +138,7 @@ if (args.includes('--win')) {
   const final = await playToWin(page, vp, (name) => shot(page, name));
   clearInterval(watch);
   const heard = new Set(await page.evaluate(() => window.__audio.log));
-  const want = ['angel_poof', 'angel_appear', 'angel_glint', 'chat_open', 'type_blip', 'page_next', 'step', 'shake_rumble', 'krahang_leap', 'krahang_land',
+  const want = ['angel_poof', 'angel_appear', 'aura', 'chat_open', 'type_blip', 'page_next', 'step', 'shake_rumble', 'krahang_leap', 'krahang_land',
     'tap', 'countdown_tick', 'meter_full', 'krahang_flung', 'ghost_moan', 'jar_swap', 'letter_chime', 'paper', 'jumpscare', 'choice_show', 'choice_press', 'light_swell', 'scene3_chime'];
   const missing = want.filter((n) => !heard.has(n));
   check(missing.length === 0, `win path plays every scene 2 sound (${missing.length ? 'missing ' + missing.join(', ') : want.length + ' kinds'})`);

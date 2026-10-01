@@ -6,13 +6,14 @@
 //   audio.sfx(name, o)   one-shot effect (SFX in synth.js)
 //   audio.mood(name, o)  background music: 'title' | 'calm' | 'funky' | 'chase' | null
 //   audio.ambient(name)  'night' (wind and crickets) | null
+//   audio.hold(name, on) held sound on/off (LOOPS in synth.js: 'aura')
 //   audio.intensity(x)   0..1, chase tempo and lead
 //   audio.duck(ms)       dip music and ambience (jumpscares)
 //
 // One instance per page, shared by scene 1's bridge and scene 2. Sound is ON by
 // default (SOUND_ON_AT_START); browsers only let audio start in a tap, so it is
 // heard from the player's first tap anywhere (unlock()).
-import { SFX, INSTRUMENTS, noiseBuffer } from './synth.js';
+import { SFX, INSTRUMENTS, LOOPS, noiseBuffer } from './synth.js';
 import { MOODS } from './music.js';
 
 const AC = typeof window !== 'undefined' ? window.AudioContext || window.webkitAudioContext : null;
@@ -21,7 +22,8 @@ const TICK_MS = 25;
 const LEVEL = { sfx: 0.9, music: 0.32, ambient: 0.5 };
 export const SOUND_ON_AT_START = true;
 
-const state = { sound: SOUND_ON_AT_START, music: true, mood: null, moodOpts: {}, ambient: null, intensity: 0 };
+const state = { sound: SOUND_ON_AT_START, music: true, mood: null, moodOpts: {}, ambient: null, intensity: 0, held: new Set() };
+const holding = new Map(); // name -> stop(t)
 const listeners = new Set();
 let ctx = null;
 let bus = null;
@@ -145,14 +147,23 @@ function stopAmbient() {
   const { nodes, gain } = amb;
   const t = ctx.currentTime;
   gain.gain.cancelScheduledValues(t);
-  gain.gain.setValueAtTime(gain.gain.value, t);
-  gain.gain.linearRampToValueAtTime(0.0001, t + 0.4);
-  nodes.forEach((n) => n.stop(t + 0.45));
+  gain.gain.setTargetAtTime(0.0001, t, 0.1);
+  nodes.forEach((n) => n.stop(t + 0.7));
   amb = null;
+}
+
+function startHeld(name) {
+  if (holding.has(name) || !live()) return;
+  holding.set(name, LOOPS[name](B('sfx'), ctx.currentTime + 0.01));
+}
+function stopHeld(name) {
+  holding.get(name)?.(ctx.currentTime);
+  holding.delete(name);
 }
 
 function restartLayers() {
   startAmbient();
+  for (const name of state.held) startHeld(name);
   if (state.mood && live()) seq = { mood: state.mood, step: 0, next: ctx.currentTime + 0.1 };
 }
 
@@ -186,6 +197,7 @@ export const audio = {
       bus.master.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
       stopScheduler();
       stopAmbient();
+      for (const name of [...holding.keys()]) stopHeld(name);
       seq = null;
     }
     emit();
@@ -231,6 +243,17 @@ export const audio = {
     state.ambient = name;
     if (live()) startAmbient();
     else stopAmbient();
+  },
+
+  hold(name, on) {
+    if (dev && on) log.push(name);
+    if (on) {
+      state.held.add(name);
+      startHeld(name);
+    } else {
+      state.held.delete(name);
+      if (ctx) stopHeld(name);
+    }
   },
 
   intensity(x) {
@@ -284,6 +307,7 @@ export async function audioSelfTest() {
   };
   const out = {};
   for (const name of Object.keys(SFX)) out[`sfx:${name}`] = await render(2.6, (b) => SFX[name](b, 0.01, { voice: 'angel', level: 0.5 }));
+  for (const name of Object.keys(LOOPS)) out[`loop:${name}`] = await render(3, (b) => LOOPS[name](b, 0.01)(2.2));
   for (const [name, m] of Object.entries(MOODS)) {
     const stepS = 60 / m.bpm(1) / m.stepsPerBeat;
     out[`music:${name}`] = await render(stepS * m.length + 1.5, (b) => {
