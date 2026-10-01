@@ -93,7 +93,7 @@ or add a job to `tools/prep-sprites.mjs`.
 ## Sound
 
 `src/audio/` synthesizes everything with Web Audio (no audio files): `synth.js` (instruments and effects),
-`music.js` (title, calm and chase loops), `engine.js` (switches, channels, scheduler, ambience). Sound is on by
+`music.js` (title, calm, funky and chase loops), `engine.js` (switches, channels, scheduler, ambience). Sound is on by
 default (`SOUND_ON_AT_START`) and starts on the player's first tap (a browser rule); in the full game that tap also
 switches scene 1's speaker on. Scene 1's speaker is the master switch; scene 2 has a speaker (all sound) and a note (music) in its
 top corners. The full list is in spec section 7.6. In dev, `window.__audio.selfTest()` renders every sound offline

@@ -103,6 +103,27 @@ export const INSTRUMENTS = {
   stab(B, t, m, dur, g) {
     for (const d of [-12, 12]) tone(B, t, midiHz(m), { type: 'square', dur: Math.max(0.12, dur * 0.6), gain: g * 0.4, detune: d, lp: 1600 });
   },
+  // Spooky organ: square + sine an octave down, slight vibrato.
+  organ(B, t, m, dur, g) {
+    tone(B, t, midiHz(m), { type: 'square', dur: Math.max(0.12, dur), gain: g * 0.5, attack: 0.01, lp: 2200, vib: 3, vibHz: 6 });
+    tone(B, t, midiHz(m) / 2, { type: 'sine', dur: Math.max(0.12, dur), gain: g * 0.5, attack: 0.01 });
+  },
+  // Funky clavinet chop: short bright square.
+  clav(B, t, m, dur, g) {
+    tone(B, t, midiHz(m), { type: 'square', dur: 0.07, gain: g, lp: 3200 });
+  },
+  // Theremin "woo": sine with wide vibrato, sliding in from below.
+  theremin(B, t, m, dur, g) {
+    tone(B, t, midiHz(m - 2), { type: 'sine', dur, gain: g, attack: 0.08, glide: midiHz(m), vib: 14, vibHz: 6.5 });
+  },
+  // Low dread drone: detuned saws under a dark filter.
+  drone(B, t, m, dur, g) {
+    for (const d of [-9, 0, 9]) tone(B, t, midiHz(m), { type: 'sawtooth', dur, gain: g * 0.4, attack: 0.4, detune: d, lp: 260 });
+  },
+  // Screech lead: thin saw with a nervous vibrato.
+  scream(B, t, m, dur, g) {
+    tone(B, t, midiHz(m), { type: 'sawtooth', dur: Math.max(0.1, dur), gain: g, attack: 0.01, lp: 2600, vib: 18, vibHz: 9 });
+  },
   hat(B, t, m, dur, g) {
     noise(B, t, { dur: 0.03, gain: g, type: 'highpass', freq: 7000 });
   },

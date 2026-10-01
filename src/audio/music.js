@@ -17,9 +17,21 @@ const TITLE_CHORDS = [[45, 57, 60, 64], [41, 57, 60, 65], [48, 55, 60, 64], [40,
 const CALM_MELODY = [81, _, 84, _, 88, _, 86, _, /**/ 84, _, 81, _, _, _, 79, _, /**/ 81, _, 84, _, 86, _, 84, 81, /**/ 80, _, _, _, 76, _, _, _];
 const CALM_CHORDS = [[45, 57, 60, 64], [38, 57, 62, 65], [41, 57, 60, 65], [40, 56, 59, 64]];
 
-// Chase: driving ostinato, faster as time runs out.
-const CHASE_BASS = [45, 45, 45, 48, 45, 45, 46, 43, /**/ 41, 41, 41, 45, 40, 40, 44, 40];
-const CHASE_LEAD = [76, 77, 76, _, 74, 76, _, _, /**/ 72, 74, 72, _, 71, _, 68, _];
+// Stalls 1-2: funky, fun horror. Swung 16ths, a bluesy bassline with a
+// chromatic creep, clav chops, backbeat, a spooky organ lick and a theremin "woo".
+const FUNK_BASS = {
+  0: 45, 3: 45, 4: 48, 6: 50, 7: 51, 8: 52, 10: 45, 12: 43, 14: 45, 15: 48,
+  16: 50, 19: 50, 20: 53, 22: 51, 23: 50, 24: 48, 26: 45, 28: 43, 30: 40, 31: 43,
+};
+const FUNK_CLAV = { 2: [57, 60, 64, 67], 7: [57, 60, 64, 67], 10: [57, 60, 64, 67], 14: [57, 60, 64, 67], 18: [62, 65, 69, 72], 23: [62, 65, 69, 72], 26: [62, 65, 69, 72], 30: [62, 65, 69, 72] };
+const FUNK_ORGAN = { 12: 76, 13: 79, 14: 81, 28: 84, 29: 83, 30: 82, 31: 81 }; // ends on a chromatic slide down
+const FUNK_THEREMIN = { 0: 76, 16: 75 };
+
+// Chase: scary and intense. A tritone drone, a Phrygian bass pulse, four-on-the-floor
+// kick, 16th hats, dissonant stabs (A, Bb, Eb), a diminished choir and a screech
+// lead; tempo and drums build as the 2:00 runs out.
+const CHASE_PULSE = [45, 45, 45, 45, 45, 45, 45, 45, /**/ 46, 46, 46, 46, 45, 45, 44, 44];
+const CHASE_SCREAM = { 6: 81, 7: 82, 14: 81, 15: 80, 22: 81, 23: 82, 24: 87, 30: 86, 31: 85 };
 
 export const MOODS = {
   title: {
@@ -57,17 +69,37 @@ export const MOODS = {
       return out;
     },
   },
+  funky: {
+    bpm: () => 108,
+    stepsPerBeat: 4,
+    swing: 0.22,
+    length: 32,
+    notes(s) {
+      const out = [];
+      if (FUNK_BASS[s] != null) out.push(['bass', FUNK_BASS[s], 1.5, 0.15]);
+      if (FUNK_CLAV[s]) out.push(...chord('clav', FUNK_CLAV[s], 1, 0.035));
+      if (FUNK_ORGAN[s] != null) out.push(['organ', FUNK_ORGAN[s], 1, 0.07]);
+      if (FUNK_THEREMIN[s] != null) out.push(['theremin', FUNK_THEREMIN[s], 7, 0.05]);
+      if (s % 16 === 0 || s % 16 === 6 || s % 16 === 10) out.push(['kick', 0, 1, 0.26]);
+      if (s % 8 === 4) out.push(['snare', 0, 1, 0.15]);
+      if (s % 2 === 0) out.push(['hat', 0, 1, s % 4 === 2 ? 0.045 : 0.025]);
+      return out;
+    },
+  },
   chase: {
-    bpm: (x) => 128 + 32 * x,
-    stepsPerBeat: 2,
-    length: 16,
+    bpm: (x) => 140 + 32 * x,
+    stepsPerBeat: 4,
+    length: 32,
     notes(s, x) {
-      const out = [['bass', CHASE_BASS[s], 1, 0.11], ['hat', 0, 1, s % 2 ? 0.03 : 0.045]];
-      if (s % 4 === 0) out.push(['kick', 0, 1, 0.3]);
-      if (s % 4 === 2) out.push(['snare', 0, 1, 0.12 + 0.06 * x]);
-      if (s === 0) out.push(...chord('stab', [69, 72, 76], 2, 0.05));
-      if (s === 8) out.push(...chord('stab', [65, 69, 72], 2, 0.05));
-      if (x > 0.35 && CHASE_LEAD[s] != null) out.push(['box', CHASE_LEAD[s] + 12, 1, 0.06 + 0.04 * x]);
+      const out = [['hat', 0, 1, s % 4 === 2 ? 0.04 : 0.022]];
+      if (s % 2 === 0) out.push(['bass', CHASE_PULSE[s / 2], 1.5, 0.13]);
+      if (s % 4 === 0) out.push(['kick', 0, 1, 0.32]);
+      if (x > 0.5 && (s === 14 || s === 30)) out.push(['kick', 0, 1, 0.26]);
+      if (s % 16 === 8) out.push(['snare', 0, 1, 0.16 + 0.06 * x]);
+      if (x > 0.66 && s >= 28) out.push(['snare', 0, 1, 0.08 + 0.04 * (s - 28)]); // roll into the loop
+      if (s === 0) out.push(['drone', 33, 32, 0.14], ['drone', 39, 32, 0.08], ...chord('pad', [57, 60, 63], 32, 0.035));
+      if (s === 0 || s === 20) out.push(...chord('stab', [57, 58, 63], 2, 0.05));
+      if (x > 0.25 && CHASE_SCREAM[s] != null) out.push(['scream', CHASE_SCREAM[s], 1, 0.03 + 0.03 * x]);
       return out;
     },
   },

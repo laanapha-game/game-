@@ -89,7 +89,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.choices = new Choices(this);
     this.timerBar = new TimerBar(this);
     this.timerBar.setVisible(false);
-    // Sound: night ambience everywhere, calm music until the chase (src/audio/).
+    // Sound: night ambience everywhere; music calm, funky from stall 1, scary from the chaser's entrance (src/audio/).
     this.soundButtons = new SoundButtons(this);
     audio.ambient('night');
     audio.mood('calm');
@@ -240,6 +240,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
   // stall onto the bird's back (right side). Tap to fling it off.
   async s1Krahang() {
     this.setState('S1');
+    audio.mood('funky'); // facing the first stall: funky, fun horror until the chase
     const st = this.stalls[0];
     await this.talkThenShake(STALL1_PAGES, { speaker: NAMES.stall1 });
     this.dimScene(true);
@@ -441,8 +442,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.chaserShadow = this.add.image(this.chaser.x, C.PLAYER_Y + 1, 'ground_shadow').setOrigin(0.5, 1).setDepth(44);
     const cam = this.cameras.main;
     cam.flash(250, 200, 0, 0);
-    audio.mood(null); // silence, then the scare
+    // The chaser appears: the scare, then the scary chase music straight away.
     audio.sfx('jumpscare', { level: 0.85 });
+    audio.intensity(0);
+    audio.mood('chase');
     audio.duck(1500);
     cam.shake(450, 0.015);
     this.bird.lookBack(true);
@@ -455,8 +458,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     // The chase starts: bird faces forward, 2:00 timer starts (same rule, never pauses).
     this.bird.lookBack(false);
     this.timer.start();
-    audio.intensity(0);
-    audio.mood('chase');
+    audio.mood('chase'); // already playing since the chaser appeared
     this.timerBar.setVisible(true);
     this.stage = 0;
     await this.wait(200);

@@ -4,7 +4,7 @@
 //   audio.setSound(on)   master switch (scene 1's speaker, scene 2's speaker button)
 //   audio.setMusic(on)   music only (scene 2's note button); ambience and effects stay
 //   audio.sfx(name, o)   one-shot effect (SFX in synth.js)
-//   audio.mood(name, o)  background music: 'title' | 'calm' | 'chase' | null
+//   audio.mood(name, o)  background music: 'title' | 'calm' | 'funky' | 'chase' | null
 //   audio.ambient(name)  'night' (wind and crickets) | null
 //   audio.intensity(x)   0..1, chase tempo and lead
 //   audio.duck(ms)       dip music and ambience (jumpscares)
@@ -66,7 +66,9 @@ function tick() {
     const stepS = 60 / m.bpm(state.intensity) / m.stepsPerBeat;
     while (seq.next < until) {
       if (state.music) {
-        for (const [inst, midi, len, g] of m.notes(seq.step % m.length, state.intensity)) INSTRUMENTS[inst](B('music'), seq.next, midi, len * stepS, g);
+        // Swing: every other step lands a little late (funky groove).
+        const at = seq.next + (seq.step % 2 ? (m.swing ?? 0) * stepS : 0);
+        for (const [inst, midi, len, g] of m.notes(seq.step % m.length, state.intensity)) INSTRUMENTS[inst](B('music'), at, midi, len * stepS, g);
       }
       seq.step++;
       seq.next += stepS;
@@ -290,7 +292,10 @@ export async function audioSelfTest() {
       g.gain.value = LEVEL.music;
       g.connect(b.dest);
       const mb = { ...b, dest: g };
-      for (let s = 0; s < m.length; s++) for (const [inst, midi, len, gain] of m.notes(s, 1)) INSTRUMENTS[inst](mb, 0.01 + s * stepS, midi, len * stepS, gain);
+      for (let s = 0; s < m.length; s++) {
+        const at = 0.01 + s * stepS + (s % 2 ? (m.swing ?? 0) * stepS : 0);
+        for (const [inst, midi, len, gain] of m.notes(s, 1)) INSTRUMENTS[inst](mb, at, midi, len * stepS, gain);
+      }
     });
   }
   return out;

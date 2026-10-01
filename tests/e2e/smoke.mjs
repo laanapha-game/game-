@@ -124,9 +124,13 @@ if (args.includes('--win')) {
   const { ctx, page, errors } = await open(vp, '?today=2026-10-12');
   // Sound is on by default; the run's first tap starts it.
   const moods = [];
+  let chaseFrom = null;
   const watch = setInterval(async () => {
-    const m = await page.evaluate(() => window.__audio?.audio.currentMood).catch(() => null);
-    if (m && moods.at(-1) !== m) moods.push(m);
+    const [m, st] = await page.evaluate(() => [window.__audio?.audio.currentMood, window.__scene2?.state]).catch(() => []);
+    if (m && moods.at(-1) !== m) {
+      moods.push(m);
+      if (m === 'chase') chaseFrom = st;
+    }
   }, 500);
   const final = await playToWin(page, vp, (name) => shot(page, name));
   clearInterval(watch);
@@ -135,7 +139,8 @@ if (args.includes('--win')) {
     'tap', 'countdown_tick', 'meter_full', 'krahang_flung', 'ghost_moan', 'jar_swap', 'letter_chime', 'paper', 'jumpscare', 'choice_show', 'choice_press', 'light_swell', 'scene3_chime'];
   const missing = want.filter((n) => !heard.has(n));
   check(missing.length === 0, `win path plays every scene 2 sound (${missing.length ? 'missing ' + missing.join(', ') : want.length + ' kinds'})`);
-  check(moods.join('>').includes('calm>chase'), `music: calm, then chase (${moods.join(' > ')})`);
+  check(moods.join('>') === 'calm>funky>chase', `music: calm, funky from stall 1, chase from the chaser's entrance (${moods.join(' > ')})`);
+  check(chaseFrom === 'S3_INTRO', `chase music starts when the chaser appears (${chaseFrom})`);
   check(final === 'SCENE3', `full run reaches scene 3 (${final})`);
   await shot(page, 'scene3');
   check(errors.length === 0, `no console errors on win path (${errors.join(' | ')})`);
