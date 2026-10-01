@@ -14,21 +14,3 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
-
-#game {
-  position: fixed;
-  inset: 0;
-}
-
-#game canvas {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  touch-action: manipulation;
-}
-
-/* Serithai Regular, Thai pixel font (all game text). */
-@font-face {
-  font-family: 'Serithai';
-  src: url('./assets/fonts/Serithai-Regular.otf') format('opentype');
-  font-display: block;
-}

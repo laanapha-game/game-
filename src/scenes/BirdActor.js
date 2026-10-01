@@ -1,7 +1,9 @@
 // The player's bird, built from the character data of scene 1 (see src/interfaces.js).
 // Always faces LEFT in scene 2: a sheet drawn facing right is flipped in code, and
-// the costume anchors are mirrored with it.
-import { anchorFor } from '../interfaces.js';
+// the costume anchors are mirrored with it. Scene 1's characters face left already
+// and have their costumes drawn in, so they need neither.
+import Phaser from 'phaser';
+import { layerTopLeft } from '../interfaces.js';
 
 export class BirdActor {
   constructor(scene, character, x, y, depth = 50) {
@@ -13,7 +15,7 @@ export class BirdActor {
     this.layers = { side: [], front: [] };
     for (const view of ['side', 'front']) {
       for (const layer of character.layers?.[view] ?? []) {
-        const s = scene.add.sprite(x, y, layer.key, layer.frame ?? 0).setOrigin(0.5, 1).setDepth(depth + 1);
+        const s = scene.add.sprite(x, y, layer.key, layer.frame ?? 0).setOrigin(0, 0).setDepth(depth + 1);
         this.layers[view].push({ def: layer, sprite: s });
       }
     }
@@ -22,8 +24,14 @@ export class BirdActor {
     this.play('idle');
   }
 
+  /** Flip needed to face LEFT (sheet drawn facing right). lookBack() flips on top of this. */
   get flipped() {
     return this.view === 'side' && this.c.side.facing === 'right';
+  }
+
+  /** What is on screen: mirrored relative to the sheet as drawn (includes lookBack). */
+  get shownFlipped() {
+    return this.sprite.flipX;
   }
 
   makeAnims() {
@@ -46,7 +54,7 @@ export class BirdActor {
     this.view = view;
     // `backward`: look behind (to the right) in the side view.
     this.sprite.setFlipX(this.flipped !== (view === 'side' && !!this.backward));
-    for (const v of ['side', 'front']) this.layers[v].forEach((l) => l.sprite.setVisible(v === view));
+    this.sync();
   }
 
   play(name, view = this.view) {
@@ -73,21 +81,53 @@ export class BirdActor {
     this.sprite.x = Math.round(v);
   }
 
-  /** Keep shadow and costume layers glued to the fixed anchors. Call every frame. */
+  /**
+   * Keep shadow and costume layers glued to the fixed anchors, mirrored exactly
+   * when the bird is shown flipped (facing fix or lookBack). Call every frame.
+   */
   sync() {
     const s = this.sprite;
     this.shadow.setPosition(s.x, this.shadow.y);
-    const fw = this.c.frameWidth;
-    const fh = this.c.frameHeight;
-    const left = s.x - fw / 2;
-    const top = s.y - fh;
-    for (const { def, sprite } of this.layers[this.view]) {
-      const a = anchorFor(this.c, this.view, def.anchor, this.flipped);
-      const ox = (def.offsetX ?? 0) * (this.flipped ? -1 : 1);
-      sprite.setPosition(left + a.x + ox, top + a.y + (def.offsetY ?? 0));
-      sprite.setFlipX(this.flipped);
-      sprite.setAlpha(s.alpha);
+    // Real frame size in design px (the sheet may differ from the declared frame size).
+    const fw = Math.round(s.displayWidth);
+    const fh = Math.round(s.displayHeight);
+    const frameLeft = Math.round(s.x - fw * s.originX);
+    const frameTop = Math.round(s.y - fh * s.originY);
+    const flipped = this.shownFlipped;
+    for (const v of ['side', 'front']) {
+      for (const { def, sprite } of this.layers[v]) {
+        sprite.setVisible(v === this.view && s.visible);
+        if (v !== this.view) continue;
+        const p = layerTopLeft({
+          frameLeft,
+          frameTop,
+          frameWidth: fw,
+          anchor: this.c[v].anchors[def.anchor],
+          offsetX: def.offsetX,
+          offsetY: def.offsetY,
+          layerW: Math.round(sprite.displayWidth),
+          layerH: Math.round(sprite.displayHeight),
+          flipped,
+        });
+        sprite.setPosition(p.x, p.y).setFlipX(flipped).setAlpha(s.alpha);
+      }
     }
+  }
+
+  /** White silhouettes of the bird and its visible layers (win), above them, alpha 0. */
+  silhouette() {
+    this.sync();
+    const parts = [this.sprite, ...this.layers[this.view].map((l) => l.sprite)].filter((p) => p.visible);
+    return parts.map((p) =>
+      this.scene.add
+        .sprite(p.x, p.y, p.texture.key, p.frame.name)
+        .setOrigin(p.originX, p.originY)
+        .setFlipX(p.flipX)
+        .setDepth(p.depth + 2)
+        .setTint(0xffffff)
+        .setTintMode(Phaser.TintModes.FILL)
+        .setAlpha(0),
+    );
   }
 
   destroy() {

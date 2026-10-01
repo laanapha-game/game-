@@ -18,20 +18,32 @@ Read this whole file before writing code. Anything marked TODO or ASSUMPTION is 
 - Touch targets must be at least 44 CSS px even when the drawing is smaller. Use larger hit areas.
 - Palette (hex estimated from screenshots, sample the real values from source files): orange-red #DE5238, black #000000, yellow #FFFF4F, magenta #F02DF0, white #FFFFFF. The bird also uses blue #0000FF and green #55FF3A. Background palette: #DE5238 #000000 #8F2F20 #4A1A14 #FFFF4F #F02DF0 #FFFFFF. Stall palette: #FFFF4F #F02DF0 #000000 #FFFFFF #DE5238 #C4C42E #A61EA6.
 - Thai text: Serithai Regular (pixel font, `src/assets/fonts/Serithai-Regular.otf`), 12 px body, 16 px title, line height 18 px, smoothing off (alpha snapped to 0/255, drawn on the design grid). Wrap by measured pixel width inside the box padding, paginate by how many lines fit, never clip. `npm run check:dialogue` renders every page at 390x844 and fails if any glyph (stacked vowels and tone marks included) leaves its box. TODO: confirm the Serithai licence allows embedding.
-- Framework: Phaser 4. TODO confirm it matches the scene 1 developer's stack.
+- Framework: Phaser 4. Scene 1 is plain Canvas 2D (not Phaser); they connect through scene 1's `registerScene` API (section 3).
 
-## 3. Interfaces with other scenes (TODO, agree before coding)
+## 3. Interfaces with other scenes
 
-Input to scene 2:
-- Selected character data: sprite key or layers, frame size (32 x 32), and FIXED anchor points for head top and eye position (for hats and costumes), identical in every frame (per view).
+Scene 1 (home and character select, by the scene 1 developer) is in `assets/incoming/scene1/`, kept exactly as delivered. It is a single HTML page drawn with plain Canvas 2D (180 x 320 canvas, integer CSS scale), **not Phaser**. Scene 2 stays on Phaser 4; the two meet through scene 1's own plug-in API, so no shared framework is needed.
+
+What scene 1 provides (read from its code):
+- Characters: 8, `LannaphaGame.characters` = นวลนภา (`nuannapa`, default) and 7 costume versions (`ramwong`, `pumpkin`, `vampire`, `slasher`, `onryo`, `mahidol`, `silpakorn`). The choice is `{ id, name }` (`LannaphaGame.selected()`).
+- Frames: 32 x 36, feet on the bottom row, drawn in code (`LannaphaGame.getSprite(id, view, frame)` returns a canvas). Side view (faces LEFT): `idle0 idle1 walk0-3 struggle0-1 scared`. Front view: `idle0 idle1 blink`. The costumes are painted into every frame, so there are no costume layers or anchors in scene 1.
+- Hand-off: on the confirm button (ยืนยัน) scene 1 fades to black and starts the scene registered as `'scene2'` with `LannaphaGame.registerScene` (or calls `LannaphaHome.onConfirm(selection)` if set; not used). Home is `LannaphaGame.goHome()` (an in-page state, no route). Scene 3 is expected as `LannaphaGame.go('scene3', data)`.
+
+How scene 2 connects:
+- `npm run scene1` (re-runnable): `tools/scene1-page.mjs` writes `game.html` (scene 1's page byte for byte plus `#game` and `src/scene1Bridge.js`), and `tools/prep-sprites.mjs scene1` (`tools/scene1-characters.mjs`) runs scene 1 in headless Chromium, reads every frame through `getSprite`, checks it (hard alpha, #00FF00, colours against scene 1's own palette: 0 off-palette pixels) and writes `src/assets/art/characters/<id>_side.png` / `<id>_front.png` at 3x (nearest neighbour) plus `characters.json`.
+- Adapter `src/integration/scene1Adapter.js` maps `{ id, name }` to CharacterData: frame 32 x 36; side `facing: 'left'` (never flipped to walk left), anims idle = idle0-1, run = walk0-3, struggle = struggle0-1, scared = scared; front idle = idle0-1, and ASSUMPTION (scene 1 has no such frames): surprised = idle0, relieved = blink, happy = idle1 idle0 idle1 idle0. Anchors (rest frame, design px): side head top (13, 8), eye (9, 13); front head top (16, 8), eye (16, 14) between the eyes. `layers` is empty. The contract itself did not need to change (the frame size was already a field); only its comments now say 32 x 36 and that `name` is passed through.
+- `src/scene1Bridge.js` registers `'scene2'` with scene 1. `enter({ id, name })` starts scene 2 in `#game` with the adapted character. Scene 2's boot loads any sheet the host has not loaded (scene 1 loads none: it draws in code), accepts sheets at 1x or 3x, and falls back to the default bird if a sheet is missing or the wrong size (`onWin` still passes on the host's character).
+- Scene 2 on its own (`index.html`) plays the default bird; `?character=<scene 1 id>` plays as that character.
+
+CharacterData (`src/interfaces.js`): sprite keys per view, frame size, FIXED anchor points for head top and eye per view (design px, pixel index inside the frame), optional costume layers.
 - Views needed: side (faces LEFT in game; flip in code if the sheet is drawn facing right) and front. The back view is no longer needed.
-- When a sprite is flipped in code, mirror the x-coordinates of the head-top and eye anchors too.
+- When a sprite is flipped in code (facing fix or `lookBack(true)` in the chase intro), the head-top and eye anchors are mirrored too (x -> frameWidth - 1 - x), and so are the layer's offset and the layer itself: the placement is the exact mirror image on integer pixels (`layerTopLeft`). Layers sit above the minigame dim layer and are included in the win silhouette.
 
 Outputs:
-- `onWin`: go to scene 3, passing the character data through.
-- `onGameOver`: go to the home page of the full game (route or function name TODO).
+- `onWin(character)`: go to scene 3 with the same character data object. In `game.html` this is `LannaphaGame.go('scene3', character)` once a scene 3 is registered with scene 1; until then scene 2's own scene 3 stub.
+- `onGameOver()`: in `game.html`, close scene 2 and `LannaphaGame.goHome()` (scene 1's home page). On its own, `HOME_ROUTE` (`/`).
 
-Scene 2 must run standalone with a placeholder bird so it can be built before scene 1 is finished.
+Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Google Fonts). Scene 2 registers its Serithai face under its own family name (`Lannapha Serithai`) so scene 1 keeps rendering exactly as delivered (Kanit) instead of switching font part way through a session. Whether scene 1 should use Serithai is open (section 11).
 
 ## 4. Global rules
 
@@ -149,8 +161,9 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 
 | File | Size per frame (design px) | Frames | Notes |
 |---|---|---|---|
-| bird_side.png / bird_front.png | 32 x 32 | 10 / 6 | From sprite_playerdemo (no green). Side faces right, flipped in code |
-| bird_krahang_cling.png | ~42 x 32 | 1 | Krahang riding the bird, used while clinging in S1 |
+| characters/<id>_side.png / _front.png | 32 x 36 | 9 / 3 | Scene 1's 8 player characters, exported from scene 1's code by `npm run scene1` (3x, nearest neighbour). Side faces left. Costumes drawn in |
+| bird_side.png / bird_front.png | 32 x 32 | 10 / 6 | Default bird (scene 2 on its own, and the fallback). From sprite_playerdemo (no green). Side faces right, flipped in code |
+| bird_krahang_cling.png | ~42 x 32 | 1 | Krahang riding the default bird, used while clinging in S1 with the default bird only (scene 1 characters get the Krahang's cling frames on their own sprite) |
 | angel_jayimpacts.png | ~34 x 64 | 9 | idle 4, talk 2, signature 1, wai 2. Halo drawn in |
 | angel_halo / glint / poof | 16 x 13, 8 x 8, 32 x 28 | 1, 3, 4 | From sprite_jayimpact_fx (no green) |
 | krahang.png | ~29 x 33 | 8 | jump-on 3, cling 2, flung 3; faces right, flipped in code |
@@ -167,7 +180,7 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 
 ## 10. Test checklist
 
-- `npm test` (date rows, meters, timer, wrapping), `npm run test:e2e -- --win` (viewports, fail path, full win path), `npm run check:dialogue` (every page fits).
+- `npm test` (date rows, meters, timer, wrapping, adapter, layer mirroring), `npm run test:e2e -- --win` (viewports, fail path, full win path), `npm run check:dialogue` (every page fits), `npm run test:flow` (scene 1 -> scene 2 -> onWin for every character; `-- --full` plays each whole run by tapping).
 - Viewports: 360 x 640, 390 x 844, 412 x 915.
 - Date logic: 29 Sep, 30 Sep, 12, 14, 15, 17, 18, 23, 24, 25 Oct, 26 Oct via the dev override.
 - Fail paths: tap game timeout, ghost jar, rude reply at stall 3 and 4, timer 0 during dialogue, timer 0 during sprint.
@@ -176,7 +189,7 @@ Sources: Drive folder เกมลานนภา/Scene_2_Sprite, downloaded unc
 
 ## 11. Open items (not decided)
 
-1. Interfaces with scene 1 developer (section 3) and framework match.
+1. Scene 1 hand-off is wired (section 3). Still to agree with the scene 1 developer: front surprised/relieved/happy frames (mapped from idle/blink for now), a 12 x 12 timer-bar icon per character (the bar still shows the default bird's icon), whether scene 1 should switch its labels to Serithai, the scene 3 hand-off (`go('scene3', character)`), and the PNG sheets scene 1's comments mention (assets/characters/, not delivered; scene 2 exports its own from scene 1's code). Scene 1's costume colours are outside the spec 2 bird palette (reported by `npm run scene1`, not changed).
 2. Serithai licence for web embedding.
 3. Name tags for stalls 1 and 2 (placeholders กระหัง, ผีในไห). Stalls 3-5: ผีนางรำสุดสวย, ซอมบี้แห่ง Cozy ราชพฤกษ์ 6, ผีกุมารตัวน้อย.
 4. Which chaser design (sprite_chasingghost_1 or _2).

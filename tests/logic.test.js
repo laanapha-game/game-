@@ -92,6 +92,57 @@ test('anchors mirror when the side sheet is flipped', async () => {
   assert.deepEqual(anchorFor(c, 'side', 'eye', true), { x: 31 - a.x, y: a.y });
 });
 
+test('layer placement is the exact mirror image when flipped, on integer pixels', async () => {
+  const { layerTopLeft } = await import('../src/interfaces.js');
+  for (const frameWidth of [32, 36]) {
+    for (const layerW of [4, 5, 9]) {
+      for (const offsetX of [-2, 0, 3]) {
+        const base = { frameLeft: 100, frameTop: 200, frameWidth, anchor: { x: 13, y: 8 }, offsetX, offsetY: 1, layerW, layerH: 6 };
+        const a = layerTopLeft({ ...base, flipped: false });
+        const b = layerTopLeft({ ...base, flipped: true });
+        assert.ok([a.x, a.y, b.x, b.y].every(Number.isInteger));
+        // [a.x, a.x + w) mirrored inside the frame is [b.x, b.x + w).
+        assert.equal(b.x - 100, frameWidth - (a.x - 100 + layerW));
+        assert.equal(a.y, b.y);
+        assert.equal(a.x, 100 + 13 + offsetX - Math.floor(layerW / 2)); // centre column on the anchor
+        assert.equal(a.y + 6, 200 + 8 + 1); // bottom edge on the anchor row (+ offset)
+      }
+    }
+  }
+});
+
+test('scene 1 adapter: every exported character maps to the CharacterData contract', async () => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const { adaptScene1Character } = await import('../src/integration/scene1Adapter.js');
+  const data = JSON.parse(readFileSync('src/assets/art/characters/characters.json', 'utf8'));
+  assert.equal(data.characters.length, 8);
+  assert.deepEqual(data.cell, { w: 32, h: 36 });
+  for (const sc of data.characters) {
+    const c = adaptScene1Character({ id: sc.id, name: sc.name }, data);
+    assert.equal(c.id, sc.id);
+    assert.equal(c.name, sc.name);
+    assert.equal(c.side.facing, 'left'); // scene 1 draws the side view facing left
+    assert.deepEqual(c.layers, {}); // costumes are drawn into the frames
+    const names = (view, a) => c[view].anims[a].map((i) => data.frames[view][i]);
+    assert.deepEqual(names('side', 'run'), ['walk0', 'walk1', 'walk2', 'walk3']);
+    assert.deepEqual(names('side', 'idle'), ['idle0', 'idle1']);
+    assert.deepEqual(names('side', 'struggle'), ['struggle0', 'struggle1']);
+    assert.deepEqual(names('side', 'scared'), ['scared']);
+    for (const a of ['surprised', 'relieved', 'happy', 'idle']) assert.ok(c.front.anims[a].every((i) => i >= 0), a);
+    for (const view of ['side', 'front']) {
+      assert.ok(existsSync(`src/assets/art/characters/${sc[view].file}`));
+      for (const n of ['headTop', 'eye']) {
+        const p = c[view].anchors[n];
+        assert.ok(p.x >= 0 && p.x < 32 && p.y >= 0 && p.y < 36, `${view} ${n}`);
+      }
+      // Off-palette pixels against scene 1's own palette must be zero (asset rules).
+      assert.deepEqual(sc.report.offPalette, {});
+      assert.equal(sc.report.softAlpha, 0);
+    }
+  }
+  assert.equal(adaptScene1Character({ id: 'nobody' }, data), null);
+});
+
 test('Latin runs such as 7-Eleven are not split', () => {
   const measure = (s) => graphemes(s).length * 6;
   const lines = wrapText('ตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภา', 90, measure);

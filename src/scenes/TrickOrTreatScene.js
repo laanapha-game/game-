@@ -57,7 +57,8 @@ export class TrickOrTreatScene extends Phaser.Scene {
 
   init(data = {}) {
     const reg = this.registry;
-    this.character = data.character ?? reg.get('character') ?? createPlaceholderCharacter();
+    this.character = data.character ?? reg.get('character') ?? createPlaceholderCharacter(); // what is drawn
+    this.passOn = data.passOn ?? this.character; // what onWin hands to scene 3 (spec 3: unchanged)
     const cb = { ...(reg.get('callbacks') ?? {}), ...(data.callbacks ?? {}) };
     this.onWin = data.onWin ?? cb.onWin;
     this.onGameOver = data.onGameOver ?? cb.onGameOver;
@@ -235,9 +236,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
     await this.tweenP({ targets: k, y: C.GROUND_Y - 80, duration: 300, ease: 'Quad.easeOut' });
     await this.tweenP({ targets: k, y: backY, duration: 300, ease: 'Quad.easeIn' });
 
-    // While clinging, show the "Krahang riding the bird" sprite if it exists;
-    // otherwise the Krahang's own cling frames on top of the struggling bird.
-    const useCombo = this.registry.get('realArt')?.has('bird_krahang_cling');
+    // While clinging, show the "Krahang riding the bird" sprite if it exists and the
+    // player is the default bird it was drawn with; otherwise (scene 1 characters) the
+    // Krahang's own cling frames on top of the player's struggling bird.
+    const useCombo = this.registry.get('realArt')?.has('bird_krahang_cling') && this.character.side.key === 'bird_side';
     let combo = null;
     if (useCombo) {
       k.setVisible(false).stop();
@@ -577,14 +579,12 @@ export class TrickOrTreatScene extends Phaser.Scene {
     // Run into the light, fade to a white silhouette, then white out.
     this.bird.play('run', 'side');
     await tw({ targets: this.bird.sprite, x: C.STALL_STOP_X, duration: 700, ease: 'Linear' });
-    const s = this.bird.sprite;
-    const sil = this.add.sprite(s.x, s.y, s.texture.key, s.frame.name).setOrigin(0.5, 1).setDepth(s.depth + 2).setFlipX(s.flipX);
-    sil.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL).setAlpha(0);
-    s.stop();
+    const sil = this.bird.silhouette(); // bird and any costume layers, same frame and mirroring
+    this.bird.sprite.stop();
     await tw({ targets: sil, alpha: 1, duration: 400 });
     const white = this.add.image(0, 0, 'fx_whiteout').setOrigin(0).setDepth(1000).setAlpha(0);
     await tw({ targets: white, alpha: 1, duration: C.WHITEOUT_MS });
-    this.onWin?.(this.character, this);
+    this.onWin?.(this.passOn, this);
   }
 
   /** Every fail path: caught sequence, then the single Game over screen. */

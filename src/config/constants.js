@@ -103,7 +103,7 @@ export const UI = {
 // (resolution 1) with smoothing off, so it scales up as crisp pixels like the art.
 // TODO(open item 2): confirm the Serithai licence allows embedding in the web game.
 export const FONT_IS_PLACEHOLDER = false;
-export const FONT_FAMILY = '"Serithai", monospace';
+export const FONT_FAMILY = '"Lannapha Serithai", monospace'; // @font-face in src/scene2.css
 export const FONT_BODY_PX = 12;
 export const FONT_TITLE_PX = 16;
 export const LINE_HEIGHT_PX = 18; // spec: 16 to 20; room for stacked vowels and tone marks

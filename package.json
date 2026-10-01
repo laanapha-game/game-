@@ -10,7 +10,9 @@
     "test:e2e": "node tests/e2e/smoke.mjs",
     "sprites": "node tools/prep-sprites.mjs",
     "build:demo": "vite build --config vite.demo.config.js",
-    "check:dialogue": "node tests/e2e/dialogue-check.mjs"
+    "check:dialogue": "node tests/e2e/dialogue-check.mjs",
+    "scene1": "node tools/scene1-page.mjs && node tools/prep-sprites.mjs scene1",
+    "test:flow": "node tests/e2e/flow.mjs"
   },
   "repository": {
     "type": "git",

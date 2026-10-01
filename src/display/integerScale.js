@@ -49,6 +49,11 @@ export function installViewScale(game) {
   apply();
   window.addEventListener('resize', apply);
   window.visualViewport?.addEventListener('resize', apply);
+  // A host can destroy scene 2 and start it again (full game: Game over -> home -> play).
+  game.events.once(Phaser.Core.Events.DESTROY, () => {
+    window.removeEventListener('resize', apply);
+    window.visualViewport?.removeEventListener('resize', apply);
+  });
   return apply;
 }
 

@@ -4,11 +4,13 @@
 //
 //   node tools/prep-sprites.mjs            # all jobs below
 //   node tools/prep-sprites.mjs chaser.png # one job
+//   node tools/prep-sprites.mjs scene1     # only the scene 1 character sheets (tools/scene1-characters.mjs)
 //
 // Add a job when a new sheet arrives. Sources live in art-src/.
 import sharp from 'sharp';
 import { mkdirSync } from 'node:fs';
 import { RENDER_SCALE } from '../src/config/constants.js';
+import { exportScene1Characters } from './scene1-characters.mjs';
 
 const OUT = 'src/assets/art';
 // Drive folder เกมลานนภา/Scene_2_Sprite, downloaded as is (originals untouched).
@@ -320,8 +322,12 @@ async function run(job) {
 const args = process.argv.slice(2);
 if (args[0] === '--compare') {
   for (const job of JOBS) if (job.orig) await compare(job);
+} else if (args[0] === 'scene1') {
+  await exportScene1Characters();
 } else {
   for (const job of JOBS) if (!args[0] || job.out === args[0]) await run(job);
   const withoutNoGreen = [...new Set(JOBS.filter((j) => !j.orig).map((j) => j.src))];
   console.log('no "no green" version (used as is):', withoutNoGreen.join(', '));
+  // Player characters come from scene 1's code (32 x 36 frames, costumes drawn in).
+  if (!args[0]) await exportScene1Characters();
 }

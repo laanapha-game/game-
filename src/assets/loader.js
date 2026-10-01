@@ -3,6 +3,7 @@
 import { MANIFEST, validateEntry } from './manifest.js';
 import { drawPlaceholderStrip } from './placeholders.js';
 import { RENDER_SCALE as R } from '../config/constants.js';
+import { scene1SheetUrl } from '../integration/scene1.js';
 
 // Only files that exist are listed, so missing art never causes 404s.
 // src/assets/art/*.png  : RENDER_SCALE x design size (tools/prep-sprites.mjs)
@@ -101,4 +102,51 @@ export function buildTextures(scene) {
 /** Frame layout actually in use for a key (may differ from the manifest for existing art). */
 export function frameCount(scene, key) {
   return scene.textures.get(key).frameTotal - 1; // minus __BASE
+}
+
+const VIEWS = ['side', 'front'];
+const inManifest = (key) => MANIFEST.some((m) => m.key === key);
+
+/** Queues the player's sheets (spec 3) unless the host already loaded them or they are manifest art. */
+export function queueCharacterSheets(scene, character) {
+  for (const view of VIEWS) {
+    const key = character?.[view]?.key;
+    if (!key || scene.textures.exists(key) || inManifest(key)) continue;
+    const url = scene1SheetUrl(key);
+    if (url) scene.load.image(key, url);
+  }
+}
+
+/**
+ * Slices and checks the player's sheets after loading. A sheet may be 1x or
+ * RENDER_SCALE x its design size (height = frameHeight x scale, width a whole number
+ * of frames covering every frame the anims use). Returns a list of problems (empty = ok).
+ */
+export function prepareCharacterSheets(scene, character) {
+  const problems = [];
+  const texScale = scene.registry.get('texScale');
+  for (const view of VIEWS) {
+    const v = character?.[view];
+    if (!v?.key) {
+      problems.push(`${view}: no sheet`);
+      continue;
+    }
+    if (inManifest(v.key)) continue; // built by buildTextures()
+    if (!scene.textures.exists(v.key)) {
+      problems.push(`${v.key}: not loaded`);
+      continue;
+    }
+    const tex = scene.textures.get(v.key);
+    const img = tex.getSourceImage();
+    const k = img.height / character.frameHeight;
+    const fw = character.frameWidth * k;
+    const needed = Math.max(...Object.values(v.anims ?? {}).flat()) + 1;
+    if ((k !== 1 && k !== R) || img.width % fw !== 0 || img.width / fw < needed) {
+      problems.push(`${v.key}: ${img.width}x${img.height} does not fit ${character.frameWidth}x${character.frameHeight} frames at 1x or ${R}x (needs ${needed} frames)`);
+      continue;
+    }
+    if (tex.frameTotal <= 1) addFrames(tex, fw, img.height, img.width / fw);
+    texScale?.set(v.key, k);
+  }
+  return problems;
 }
