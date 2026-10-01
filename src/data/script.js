@@ -1,26 +1,42 @@
 // Scene 2 script (spec 8). Exact text: do not edit without the owner.
 
 export const ANGEL_PAGES = [
-  'ยินดีต้อนรับสู่โลกหลังความตาย! คุณ dead แล้ว',
-  'รีบเดินทางไปที่ลานนภาเสียนะ ก่อนที่ลูกพี่มัจจุราชตัวม่วงของผมจะจับคุณกินเสียก่อน',
-  'ข้างหน้าเป็นซุ้มดวงวิญญาณที่เจ้าต้องฝ่าไปให้ได้',
-  'รู้หรือไม่ ในงานลานนภา Halloween Fest 24-25 ต.ค. 69 นี้ แถว BTS Bangwa',
-  'ก็จะมีซุ้ม Trick or Treat ให้เจ้าเล่นแบบนี้ด้วยนะ แล้วเจอกันที่ลานนภา!',
+  'สวัสดีครับ ยินดีต้อนรับสู่โลกหลังความตาย',
+  'คุณน่ะ รีบเดินทางไปที่ "ลานนภา" ให้ไวเสียนะ',
+  "ก่อนที่ 'ผีม่วง' จะเจอคุณก่อน",
+  'ระหว่างทางคุณต้องเจอผีประจำทาง 5 ซุ้ม ระวังไว้ด้วยนะ',
+  'และก็สำคัญมากๆ...',
+  'อย่าลืมกดติดตาม Jayimpacts ด้วยนะครับ',
+  'แล้วเจอกันที่ "ลานนภา" นะ',
 ];
 
 // Stall 1 (Krahang) and stall 2 (ghost in the jar). Verbatim from the owner.
-export const STALL1_PAGES = ['ในงานจริงซุ้มผีแบบนี้ก็มีนะ แต่ก่อนที่เจ้าจะไปถึงลานนภา มาให้ข้ากินตับซะดีดี !!!!!'];
-export const STALL2_PAGES = ['ข้าจะบอกให้ว่า ลานนภา ไปทางไหน แต่เจ้าต้องต้องหาจดหมายนำทางให้เจอ ตาดีทีรอดเว้ยเห้ย ว่าฮ่าฮ่าฮ่า อ้า..'];
+export const STALL1_PAGES = [
+  'กำลังมองลานนภาอยู่ใช่ไหม?',
+  'เจ้ารู้ไหมว่าหน้างานจริง ก็มีซุ้มผีเหมือนกันด้วยนะ',
+  'และอ่อใช่... ข้าคือกระหัง !!!',
+  'และคืนนี้ข้าชักจะกระหาย...',
+  'เลือด ของ เจ้า !!!',
+];
+export const STALL2_PAGES = [
+  'ข้าจะบอกเจ้าให้ว่า "ลานนภา" ไปทางไหน',
+  'แต่เจ้าต้องต้องหาจดหมายนำทางให้เจอ',
+  'ตาดีทีรอดเว้ยเห้ย ว่ะฮ่าๆ',
+];
 
 // Chase intro: the chasing ghost finds the player (red text, no name tag).
 export const CHASER_INTRO_PAGES = ['อยู่นี่เองเจ้าวิญญาณไร้ที่ไป'];
 
-export const LETTER_TEXT = 'เดินต่อไปตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภาอยู่ข้างหน้าท่าน';
+// Letter panel: one entry per line, shown in bold.
+export const LETTER_LINES = ['เดินต่อไปตาม "ซอยราชพฤกษ์ 6"', 'ใกล้ 7-Eleven', '"ลานนภา"', 'จะอยู่ข้างหน้าท่าน'];
 
-export const STALL3_PAGE1 = 'เดี๋ยวก่อนเจ้า! ผีไล่หลังอยู่ก็จริง แต่ข้ามีเรื่องจะบอก';
-export const STALL3_PAGE2 = 'รู้หรือไม่ ลานนภา Halloween Fest จัด 24-25 ต.ค. ค่าเข้าขึ้นเรทตามช่วงวัน';
-// Page 3 is the date-based price line, built in src/logic/ticket.js.
-export const STALL3_PAGE4 = 'ซื้อบัตรได้ที่ hellobooku.com/laanapha2026';
+// Stall 3. Page 4 = STALL3_RATE_INTRO + the date-based price line (src/logic/ticket.js).
+export const STALL3_PAGE1 = 'เดี๋ยวก่อนเจ้า!';
+export const STALL3_PAGE2 = 'ผีไล่หลังอยู่ก็จริง แต่ข้ามีเรื่องจะบอก';
+export const STALL3_PAGE3 = 'รู้หรือไม่? ลานนภา Halloween Fest เขาจัด 24-25 ต.ค. นี้';
+export const STALL3_RATE_INTRO = 'ค่าเข้าขึ้นเรทตามช่วงวัน';
+export const STALL3_PAGE5 = 'ซื้อบัตรได้ที่ hellobooku.com/laanapha2026';
+// After the event, pages 4 and 5 are replaced by this one.
 export const STALL3_AFTER_EVENT = 'อ้าว... งานจัดไปแล้วนะเจ้า ไว้พบกันปีหน้า!';
 
 export const STALL4_PAGES = [
@@ -31,10 +47,11 @@ export const STALL4_PAGES = [
 ];
 
 export const STALL5_PAGES = [
-  'ถ้าเจ้าแต่งตัวเป็นผีมางาน อย่าลืมลงแข่งแต่งตัวด้วยล่ะ มีรางวัลให้เจ้าด้วย!',
-  'พูดคุยกับคนในงานประจำซุ้มด้วยนะ เจ้าของงานและทีมงานรอคุยเล่นกับทุกคนอยู่',
-  'กดติดตาม Jayimpacts ด้วย เจ้าของงานฝากมาบอก',
-  'ผีจะตามเจ้าทันแล้ว! รัวจอเพื่อวิ่งไปให้ถึงลานนภาให้ทันล่ะ!!',
+  'ถ้าเจ้าแต่งตัวเป็นผีมางาน',
+  'อย่าลืมลงแข่งชิงเอารางวัลด้วยล่ะ',
+  'ทีมงานเขาตั้งใจเตรียมทุกอย่างเพื่อพวกนายเลยนะ',
+  'เอาล่ะ ผีจะตามเจ้าทันแล้ว!',
+  'กดจอรัวๆ เพื่อวิ่งไปให้ถึง "ลานนภา" ให้ทันล่ะ !!!',
 ];
 
 export const REPLY_POLITE = 'รับทราบ ขอบคุณมากที่บอก จะไปดูรายละเอียดต่อ';

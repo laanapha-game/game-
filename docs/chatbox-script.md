@@ -1,69 +1,81 @@
 # Scene 2 chatbox script (ลานนภา Halloween Fest)
 
-Every line shown in the game, in play order. Edit the text here and send it back; it will be copied into `src/data/script.js` and checked so no glyph leaves its box.
+Every line shown in the game, in play order. Generated from `src/data/script.js` by `node tools/export_script.mjs`. Edit and send back; the text is copied into the game and checked so no glyph leaves its box.
 
-Notes for editing:
-- Each numbered line is one page. The player taps to go to the next page.
-- The chatbox holds 2 lines, roughly 28-30 Thai characters per line. A longer page is split into extra boxes automatically (one more tap).
-- Stall 1 and stall 2 end without a tap: when the last page finishes typing, the screen shakes and the minigame starts.
-- To reorder, move whole lines; to add a page, add a numbered line.
+- Each numbered line is one page; the player taps to go to the next page.
+- The chatbox holds 2 lines (about 28-30 Thai characters each). A longer page continues in an extra box (one more tap).
+- Stalls 1 and 2 end without a tap: when the last page finishes typing, the screen shakes and the minigame starts.
+- A "quoted phrase" is never split across lines.
 
 ## S0 Angel intro
 Name tag: **Jayimpacts**
 
-1. ยินดีต้อนรับสู่โลกหลังความตาย! คุณ dead แล้ว
-2. รีบเดินทางไปที่ลานนภาเสียนะ ก่อนที่ลูกพี่มัจจุราชตัวม่วงของผมจะจับคุณกินเสียก่อน
-3. ข้างหน้าเป็นซุ้มดวงวิญญาณที่เจ้าต้องฝ่าไปให้ได้
-4. รู้หรือไม่ ในงานลานนภา Halloween Fest 24-25 ต.ค. 69 นี้ แถว BTS Bangwa
-5. ก็จะมีซุ้ม Trick or Treat ให้เจ้าเล่นแบบนี้ด้วยนะ แล้วเจอกันที่ลานนภา!
+1. สวัสดีครับ ยินดีต้อนรับสู่โลกหลังความตาย
+2. คุณน่ะ รีบเดินทางไปที่ "ลานนภา" ให้ไวเสียนะ
+3. ก่อนที่ 'ผีม่วง' จะเจอคุณก่อน
+4. ระหว่างทางคุณต้องเจอผีประจำทาง 5 ซุ้ม ระวังไว้ด้วยนะ
+5. และก็สำคัญมากๆ...
+6. อย่าลืมกดติดตาม Jayimpacts ด้วยนะครับ
+7. แล้วเจอกันที่ "ลานนภา" นะ
 
 ## S1 Stall 1: Krahang (then the tap game)
 Name tag: **กระหัง**
 
-1. ในงานจริงซุ้มผีแบบนี้ก็มีนะ แต่ก่อนที่เจ้าจะไปถึงลานนภา มาให้ข้ากินตับซะดีดี !!!!!
+1. กำลังมองลานนภาอยู่ใช่ไหม?
+2. เจ้ารู้ไหมว่าหน้างานจริง ก็มีซุ้มผีเหมือนกันด้วยนะ
+3. และอ่อใช่... ข้าคือกระหัง !!!
+4. และคืนนี้ข้าชักจะกระหาย...
+5. เลือด ของ เจ้า !!!
 
 ## S2 Stall 2: ghost in the jar (then the jar game)
 Name tag: **ผีในไห**
 
-1. ข้าจะบอกให้ว่า ลานนภา ไปทางไหน แต่เจ้าต้องต้องหาจดหมายนำทางให้เจอ ตาดีทีรอดเว้ยเห้ย ว่าฮ่าฮ่าฮ่า อ้า..
+1. ข้าจะบอกเจ้าให้ว่า "ลานนภา" ไปทางไหน
+2. แต่เจ้าต้องต้องหาจดหมายนำทางให้เจอ
+3. ตาดีทีรอดเว้ยเห้ย ว่ะฮ่าๆ
+
+## S3 Letter (parchment panel, bold, one row per line)
+
+- เดินต่อไปตาม "ซอยราชพฤกษ์ 6"
+- ใกล้ 7-Eleven
+- "ลานนภา"
+- จะอยู่ข้างหน้าท่าน
 
 ## S3 Chase intro (red text, no name tag)
 
 1. อยู่นี่เองเจ้าวิญญาณไร้ที่ไป
 
-## S3 Letter (parchment panel, not a chatbox)
-
-- เดินต่อไปตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภาอยู่ข้างหน้าท่าน
-
 ## S4 Stall 3: ticket info (then reply choice)
 Name tag: **ผีนางรำสุดสวย**
 
-1. เดี๋ยวก่อนเจ้า! ผีไล่หลังอยู่ก็จริง แต่ข้ามีเรื่องจะบอก
-2. รู้หรือไม่ ลานนภา Halloween Fest จัด 24-25 ต.ค. ค่าเข้าขึ้นเรทตามช่วงวัน
-3. *(price line, changes by date; see below)*
-4. ซื้อบัตรได้ที่ hellobooku.com/laanapha2026
+1. เดี๋ยวก่อนเจ้า!
+2. ผีไล่หลังอยู่ก็จริง แต่ข้ามีเรื่องจะบอก
+3. รู้หรือไม่? ลานนภา Halloween Fest เขาจัด 24-25 ต.ค. นี้
+4. ค่าเข้าขึ้นเรทตามช่วงวัน *(+ price line by date, below)*
+5. ซื้อบัตรได้ที่ hellobooku.com/laanapha2026
 
-After the event (from 26 Oct), pages 2 to 4 are replaced by:
+After the event (from 26 ต.ค.), pages 4 and 5 are replaced by:
 - อ้าว... งานจัดไปแล้วนะเจ้า ไว้พบกันปีหน้า!
 
-Page 3 price line by date:
+Ticket phases (from the ticket poster):
 
-| Date | Line |
+| Ticket | Selling phase | Price |
+|---|---|---|
+| Flash Ticket | 9 ต.ค. | 189 บาท |
+| Early Bird | 12 ต.ค. - 16 ต.ค. | 320 บาท |
+| General Ticket | 17 ต.ค. - 23 ต.ค. | 390 บาท |
+| At Door 1 Day Pass | 24 ต.ค. - 25 ต.ค. | 450 บาท |
+
+Page 4 as shown, by date:
+
+| Date | Page 4 |
 |---|---|
-| before 29 Sep | Flash Ticket เปิดขาย 29 ก.ย. ราคา 189 บาท |
-| 29 Sep | ตอนนี้ Flash Ticket 189 บาท (หนัง + กิจกรรม) วันนี้วันเดียวเท่านั้น! |
-| 30 Sep - 11 Oct | Flash Ticket หมดแล้ว! Early Bird เปิด 12 ต.ค. ราคา 320 บาท |
-| 12 - 14 Oct | ตอนนี้ Early Bird 320 บาท (หนัง + กิจกรรม) ขายถึง 14 ต.ค. |
-| 15 - 17 Oct | Early Bird หมดแล้ว! General Ticket เปิด 18 ต.ค. ราคา 390 บาท |
-| 18 - 23 Oct | ตอนนี้ General Ticket 390 บาท (หนัง + กิจกรรม) ขายถึง 23 ต.ค. |
-| 24 - 25 Oct | วันงานซื้อหน้างานได้ 1 Day Pass 450 บาท |
-
-Templates (prices and dates come from `src/data/ticketPhases.js`):
-- Flash day: `ตอนนี้ Flash Ticket 189 บาท (หนัง + กิจกรรม) วันนี้วันเดียวเท่านั้น!`
-- Early Bird / General: `ตอนนี้ {name} {price} บาท (หนัง + กิจกรรม) ขายถึง {end}`
-- At the door: `วันงานซื้อหน้างานได้ 1 Day Pass {price} บาท`
-- Between phases: `{prev.name} หมดแล้ว! {next.name} เปิด {next.start} ราคา {next.price} บาท`
-- Before the first phase: `{next.name} เปิดขาย {next.start} ราคา {next.price} บาท`
+| before 9 Oct | ค่าเข้าขึ้นเรทตามช่วงวัน Flash Ticket เปิดขาย 9 ต.ค. ราคา 189 บาท |
+| 9 Oct | ค่าเข้าขึ้นเรทตามช่วงวัน ตอนนี้ Flash Ticket 189 บาท (หนัง + กิจกรรม) วันนี้วันเดียวเท่านั้น! |
+| 10 - 11 Oct | ค่าเข้าขึ้นเรทตามช่วงวัน Flash Ticket หมดแล้ว! Early Bird เปิด 12 ต.ค. ราคา 320 บาท |
+| 12 - 16 Oct | ค่าเข้าขึ้นเรทตามช่วงวัน ตอนนี้ Early Bird 320 บาท (หนัง + กิจกรรม) ขายถึง 16 ต.ค. |
+| 17 - 23 Oct | ค่าเข้าขึ้นเรทตามช่วงวัน ตอนนี้ General Ticket 390 บาท (หนัง + กิจกรรม) ขายถึง 23 ต.ค. |
+| 24 - 25 Oct | ค่าเข้าขึ้นเรทตามช่วงวัน วันงานซื้อหน้างานได้ 1 Day Pass 450 บาท |
 
 ## S5 Stall 4 (then reply choice)
 Name tag: **ซอมบี้แห่ง Cozy ราชพฤกษ์ 6**
@@ -76,10 +88,11 @@ Name tag: **ซอมบี้แห่ง Cozy ราชพฤกษ์ 6**
 ## S6 Stall 5 (no choice, sprint starts after the last page)
 Name tag: **ผีกุมารตัวน้อย**
 
-1. ถ้าเจ้าแต่งตัวเป็นผีมางาน อย่าลืมลงแข่งแต่งตัวด้วยล่ะ มีรางวัลให้เจ้าด้วย!
-2. พูดคุยกับคนในงานประจำซุ้มด้วยนะ เจ้าของงานและทีมงานรอคุยเล่นกับทุกคนอยู่
-3. กดติดตาม Jayimpacts ด้วย เจ้าของงานฝากมาบอก
-4. ผีจะตามเจ้าทันแล้ว! รัวจอเพื่อวิ่งไปให้ถึงลานนภาให้ทันล่ะ!!
+1. ถ้าเจ้าแต่งตัวเป็นผีมางาน
+2. อย่าลืมลงแข่งชิงเอารางวัลด้วยล่ะ
+3. ทีมงานเขาตั้งใจเตรียมทุกอย่างเพื่อพวกนายเลยนะ
+4. เอาล่ะ ผีจะตามเจ้าทันแล้ว!
+5. กดจอรัวๆ เพื่อวิ่งไปให้ถึง "ลานนภา" ให้ทันล่ะ !!!
 
 ## Reply buttons (stalls 3 and 4)
 

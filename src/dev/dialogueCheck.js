@@ -7,7 +7,7 @@ import { ANGEL_PAGES, CHASER_INTRO_PAGES, STALL1_PAGES, STALL2_PAGES, STALL4_PAG
 import { stall3Pages } from '../logic/ticket.js';
 
 // Every stall 3 variant (spec 10 date rows).
-const DATES = ['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-12', '2026-10-14', '2026-10-15', '2026-10-17', '2026-10-18', '2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26'];
+const DATES = ['2026-10-01', '2026-10-09', '2026-10-10', '2026-10-12', '2026-10-16', '2026-10-17', '2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26'];
 
 function inkOf(t) {
   const { canvas } = t;
@@ -87,6 +87,18 @@ export function checkDialogues(scene) {
     });
   }
   scene.choices.clear();
+
+  // Letter panel: every line inside the parchment (inner area, 3 px in from the edge).
+  {
+    const P = UI.letterPanel;
+    const { panel, texts, arrow } = scene.buildLetter();
+    const r = { x0: panel.x - P.w / 2 + 3, y0: panel.y + 3, x1: panel.x + P.w / 2 - 4, y1: panel.y + P.h - 4 };
+    texts.forEach((t, li) => {
+      const ink = inkOf(t);
+      if (ink && (!inside(ink, r) || ink.clipped)) violations.push({ set: 'letter', line: li, what: 'leaves letter panel', text: t.text, ink });
+    });
+    [panel, arrow, ...texts].forEach((o) => o.destroy());
+  }
 
   const longest = [...pages].sort((a, b) => b.chars - a.chars).slice(0, 3);
   return { ok: violations.length === 0, pageCount: pages.length, maxLines: dlg.maxLines, violations, longest };

@@ -24,7 +24,15 @@ const LATIN_RUN = /^[\x21-\x7E]+$/;
 function words(text) {
   const segs = wordSeg ? Array.from(wordSeg.segment(text), (s) => s.segment) : text.split(/(\s+)/).filter(Boolean);
   const out = [];
+  let inQuote = false; // keep a "quoted phrase" in one piece
   for (const seg of segs) {
+    const quotes = (seg.match(/"/g) || []).length;
+    if (inQuote) {
+      out[out.length - 1] += seg;
+      if (quotes % 2) inQuote = false;
+      continue;
+    }
+    if (quotes % 2) inQuote = true;
     const prev = out[out.length - 1];
     // Keep Latin runs together, and an opening bracket with the word after it.
     if (out.length && ((LATIN_RUN.test(seg) && LATIN_RUN.test(prev)) || (prev.endsWith('(') && !/^\s/.test(seg)))) out[out.length - 1] += seg;

@@ -7,27 +7,27 @@ import { wrapText, graphemes, paginate } from '../src/logic/textWrap.js';
 
 const price = (d) => priceLine(ticketMode(d));
 
-test('date rows from the test checklist (spec 10)', () => {
-  assert.equal(price('2026-09-28'), 'Flash Ticket เปิดขาย 29 ก.ย. ราคา 189 บาท');
-  assert.equal(price('2026-09-29'), 'ตอนนี้ Flash Ticket 189 บาท (หนัง + กิจกรรม) วันนี้วันเดียวเท่านั้น!');
-  assert.equal(price('2026-09-30'), 'Flash Ticket หมดแล้ว! Early Bird เปิด 12 ต.ค. ราคา 320 บาท');
+test('date rows from the ticket poster', () => {
+  assert.equal(price('2026-10-01'), 'Flash Ticket เปิดขาย 9 ต.ค. ราคา 189 บาท');
+  assert.equal(price('2026-10-09'), 'ตอนนี้ Flash Ticket 189 บาท (หนัง + กิจกรรม) วันนี้วันเดียวเท่านั้น!');
+  assert.equal(price('2026-10-10'), 'Flash Ticket หมดแล้ว! Early Bird เปิด 12 ต.ค. ราคา 320 บาท');
   assert.equal(price('2026-10-11'), 'Flash Ticket หมดแล้ว! Early Bird เปิด 12 ต.ค. ราคา 320 บาท');
-  assert.equal(price('2026-10-12'), 'ตอนนี้ Early Bird 320 บาท (หนัง + กิจกรรม) ขายถึง 14 ต.ค.');
-  assert.equal(price('2026-10-14'), 'ตอนนี้ Early Bird 320 บาท (หนัง + กิจกรรม) ขายถึง 14 ต.ค.');
-  assert.equal(price('2026-10-15'), 'Early Bird หมดแล้ว! General Ticket เปิด 18 ต.ค. ราคา 390 บาท');
-  assert.equal(price('2026-10-17'), 'Early Bird หมดแล้ว! General Ticket เปิด 18 ต.ค. ราคา 390 บาท');
-  assert.equal(price('2026-10-18'), 'ตอนนี้ General Ticket 390 บาท (หนัง + กิจกรรม) ขายถึง 23 ต.ค.');
+  assert.equal(price('2026-10-12'), 'ตอนนี้ Early Bird 320 บาท (หนัง + กิจกรรม) ขายถึง 16 ต.ค.');
+  assert.equal(price('2026-10-16'), 'ตอนนี้ Early Bird 320 บาท (หนัง + กิจกรรม) ขายถึง 16 ต.ค.');
+  assert.equal(price('2026-10-17'), 'ตอนนี้ General Ticket 390 บาท (หนัง + กิจกรรม) ขายถึง 23 ต.ค.');
   assert.equal(price('2026-10-23'), 'ตอนนี้ General Ticket 390 บาท (หนัง + กิจกรรม) ขายถึง 23 ต.ค.');
   assert.equal(price('2026-10-24'), 'วันงานซื้อหน้างานได้ 1 Day Pass 450 บาท');
   assert.equal(price('2026-10-25'), 'วันงานซื้อหน้างานได้ 1 Day Pass 450 บาท');
   assert.equal(ticketMode('2026-10-26').mode, 'AFTER_EVENT');
 });
 
-test('stall 3 pages: 4 pages normally, after event replaces pages 2-4', () => {
-  assert.equal(stall3Pages('2026-10-12').length, 4);
+test('stall 3 pages: 5 pages normally, after event replaces pages 4-5', () => {
+  const pages = stall3Pages('2026-10-12');
+  assert.equal(pages.length, 5);
+  assert.equal(pages[3], 'ค่าเข้าขึ้นเรทตามช่วงวัน ตอนนี้ Early Bird 320 บาท (หนัง + กิจกรรม) ขายถึง 16 ต.ค.');
   const after = stall3Pages('2026-10-26');
-  assert.equal(after.length, 2);
-  assert.equal(after[1], 'อ้าว... งานจัดไปแล้วนะเจ้า ไว้พบกันปีหน้า!');
+  assert.equal(after.length, 4);
+  assert.equal(after[3], 'อ้าว... งานจัดไปแล้วนะเจ้า ไว้พบกันปีหน้า!');
 });
 
 test('Bangkok date and dev override', () => {
@@ -103,4 +103,10 @@ test('long URLs break after a slash, not mid-word', () => {
   const lines = wrapText('ซื้อบัตรได้ที่ hellobooku.com/laanapha2026', 120, measure);
   assert.ok(lines.includes('hellobooku.com/') || lines.some((l) => l.endsWith('hellobooku.com/')), lines.join('|'));
   assert.ok(lines.some((l) => l.startsWith('laanapha2026')), lines.join('|'));
+});
+
+test('a quoted phrase stays in one piece', () => {
+  const measure = (s) => graphemes(s).length * 6;
+  const lines = wrapText('เดินต่อไปตาม "ซอยราชพฤกษ์ 6"', 100, measure);
+  assert.deepEqual(lines, ['เดินต่อไปตาม', '"ซอยราชพฤกษ์ 6"']);
 });

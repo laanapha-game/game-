@@ -1,6 +1,6 @@
 // Stall 3 date-based ticket text (spec 7.5). Pure functions, no Phaser.
 import { PHASES, EVENT_END } from '../data/ticketPhases.js';
-import { STALL3_PAGE1, STALL3_PAGE2, STALL3_PAGE4, STALL3_AFTER_EVENT } from '../data/script.js';
+import { STALL3_PAGE1, STALL3_PAGE2, STALL3_PAGE3, STALL3_RATE_INTRO, STALL3_PAGE5, STALL3_AFTER_EVENT } from '../data/script.js';
 
 const THAI_SHORT_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -61,6 +61,7 @@ export function priceLine(state) {
 /** All stall 3 dialogue pages for a given date. */
 export function stall3Pages(today, phases = PHASES, eventEnd = EVENT_END) {
   const state = ticketMode(today, phases, eventEnd);
-  if (state.mode === 'AFTER_EVENT') return [STALL3_PAGE1, STALL3_AFTER_EVENT];
-  return [STALL3_PAGE1, STALL3_PAGE2, priceLine(state), STALL3_PAGE4];
+  const intro = [STALL3_PAGE1, STALL3_PAGE2, STALL3_PAGE3];
+  if (state.mode === 'AFTER_EVENT') return [...intro, STALL3_AFTER_EVENT];
+  return [...intro, `${STALL3_RATE_INTRO} ${priceLine(state)}`, STALL3_PAGE5];
 }

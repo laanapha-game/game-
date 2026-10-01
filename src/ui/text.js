@@ -36,22 +36,24 @@ function patchTextSmoothing() {
 }
 
 let measureCtx = null;
-export function measurer(px = FONT_BODY_PX) {
+export function measurer(px = FONT_BODY_PX, bold = false) {
   if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
   return (s) => {
-    measureCtx.font = `${px}px ${FONT_FAMILY}`;
+    measureCtx.font = `${bold ? 'bold ' : ''}${px}px ${FONT_FAMILY}`;
     return Math.ceil(measureCtx.measureText(s).width);
   };
 }
 
-export function wrap(text, width, px = FONT_BODY_PX) {
-  return wrapText(text, width, measurer(px));
+export function wrap(text, width, px = FONT_BODY_PX, bold = false) {
+  return wrapText(text, width, measurer(px, bold));
 }
 
-export function textStyle(px = FONT_BODY_PX, color = CSS.white) {
+/** bold: the font has no bold face, so the browser emboldens it (then alpha is snapped). */
+export function textStyle(px = FONT_BODY_PX, color = CSS.white, bold = false) {
   patchTextSmoothing();
   return {
     fontFamily: FONT_FAMILY,
+    fontStyle: bold ? 'bold' : 'normal',
     fontSize: `${px}px`,
     color,
     resolution: 1,
@@ -64,10 +66,10 @@ export function textStyle(px = FONT_BODY_PX, color = CSS.white) {
  * Lays out lines. align: 'left' puts x at the left edge, 'center' centres on x.
  * `y` is the top of the first line box (the canvas padding sits above it).
  */
-export function addLines(scene, x, y, count, lineHeight, { px = FONT_BODY_PX, color, align = 'left', depth = 0 } = {}) {
+export function addLines(scene, x, y, count, lineHeight, { px = FONT_BODY_PX, color, align = 'left', depth = 0, bold = false } = {}) {
   const lines = [];
   for (let i = 0; i < count; i++) {
-    const t = scene.add.text(x - (align === 'center' ? 0 : TEXT_PAD_Y), y + i * lineHeight - TEXT_PAD_Y, '', textStyle(px, color));
+    const t = scene.add.text(x - (align === 'center' ? 0 : TEXT_PAD_Y), y + i * lineHeight - TEXT_PAD_Y, '', textStyle(px, color, bold));
     t.setOrigin(align === 'center' ? 0.5 : 0, 0).setDepth(depth);
     lines.push(t);
   }

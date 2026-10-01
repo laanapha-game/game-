@@ -14,7 +14,7 @@ import { MANIFEST, FRAMES } from '../assets/manifest.js';
 import { layoutInstances, nativeLayer } from '../assets/loader.js';
 import {
   ANGEL_PAGES,
-  LETTER_TEXT,
+  LETTER_LINES,
   STALL1_PAGES,
   CHASER_INTRO_PAGES,
   STALL2_PAGES,
@@ -388,14 +388,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
   // S3: read the letter, then the chaser appears and the 2:00 timer starts.
   async s3LetterAndChase() {
     this.setState('S3');
-    const P = C.UI.letterPanel;
-    const cx = C.GAME_W / 2;
-    const top = 70;
-    const panel = this.add.image(cx, top, 'letter_panel').setOrigin(0.5, 0).setDepth(150);
-    const lines = wrap(LETTER_TEXT, P.w - P.pad * 2);
-    const texts = addLines(this, cx, top, lines.length, C.LINE_HEIGHT_PX, { align: 'center', depth: 151, color: C.CSS.black });
-    setLines(texts, lines, { top, height: P.h, lineHeight: C.LINE_HEIGHT_PX });
-    const arrow = this.add.sprite(cx + P.w / 2 - 12, top + P.h - 12, 'ui_arrow', 0).setOrigin(0).setDepth(152).play('ui_arrow_blink');
+    const { panel, texts, arrow } = this.buildLetter();
     await this.wait(400); // avoid the pick tap closing the letter at once
     await this.guard(new Promise((r) => (this.tapHandler = r)));
     this.tapHandler = null;
@@ -445,6 +438,19 @@ export class TrickOrTreatScene extends Phaser.Scene {
       duration: on ? C.MINIGAME_DIM_IN_MS : C.MINIGAME_DIM_OUT_MS,
       ease: 'Sine.easeInOut',
     });
+  }
+
+  /** Letter panel: one bold row per authored line (wrapped only if wider than the panel). */
+  buildLetter() {
+    const P = C.UI.letterPanel;
+    const cx = C.GAME_W / 2;
+    const top = C.LETTER_TOP;
+    const panel = this.add.image(cx, top, 'letter_panel').setOrigin(0.5, 0).setDepth(150);
+    const lines = LETTER_LINES.flatMap((l) => wrap(l, P.w - P.pad * 2, C.FONT_BODY_PX, true));
+    const texts = addLines(this, cx, top, lines.length, C.LINE_HEIGHT_PX, { align: 'center', depth: 151, color: C.CSS.black, bold: true });
+    setLines(texts, lines, { top, height: P.h, lineHeight: C.LINE_HEIGHT_PX });
+    const arrow = this.add.sprite(cx + P.w / 2 - 12, top + P.h - 12, 'ui_arrow', 0).setOrigin(0).setDepth(152).play('ui_arrow_blink');
+    return { panel, texts, arrow };
   }
 
   worldToScreen(obj) {

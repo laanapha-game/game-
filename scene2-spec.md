@@ -113,9 +113,9 @@ Use the device clock converted to Asia/Bangkok as a YYYY-MM-DD date. Dev builds 
 
 ```
 PHASES = [
-  {id: 'flash',   name: 'Flash Ticket',       start: '2026-09-29', end: '2026-09-29', price: 189},
-  {id: 'early',   name: 'Early Bird',         start: '2026-10-12', end: '2026-10-14', price: 320},
-  {id: 'general', name: 'General Ticket',     start: '2026-10-18', end: '2026-10-23', price: 390},
+  {id: 'flash',   name: 'Flash Ticket',       start: '2026-10-09', end: '2026-10-09', price: 189},
+  {id: 'early',   name: 'Early Bird',         start: '2026-10-12', end: '2026-10-16', price: 320},
+  {id: 'general', name: 'General Ticket',     start: '2026-10-17', end: '2026-10-23', price: 390},
   {id: 'door',    name: 'At Door 1 Day Pass', start: '2026-10-24', end: '2026-10-25', price: 450},
 ]
 EVENT_END = '2026-10-25'
@@ -124,79 +124,24 @@ today inside a phase   -> ACTIVE
 otherwise              -> GAP (prev = last phase that ended, may be none; next = first phase that starts later)
 ```
 
-Price line (page 3) per mode. Dates shown as Thai short month, for example 14 ต.ค.
+Price line per mode (stall 3 page 4 shows `ค่าเข้าขึ้นเรทตามช่วงวัน` followed by it). Dates shown as Thai short month, for example 14 ต.ค.
 - ACTIVE, Flash: `ตอนนี้ Flash Ticket 189 บาท (หนัง + กิจกรรม) วันนี้วันเดียวเท่านั้น!`
 - ACTIVE, Early Bird or General: `ตอนนี้ {name} {price} บาท (หนัง + กิจกรรม) ขายถึง {end}`
 - ACTIVE, At Door: `วันงานซื้อหน้างานได้ 1 Day Pass {price} บาท`
 - GAP with prev: `{prev.name} หมดแล้ว! {next.name} เปิด {next.start} ราคา {next.price} บาท`
 - GAP without prev: `{next.name} เปิดขาย {next.start} ราคา {next.price} บาท`
-- AFTER_EVENT: skip pages 2 to 4, show only the "event has passed" page.
+- AFTER_EVENT: pages 4 and 5 are replaced by the "event has passed" page.
 
-Note the real gaps: 30 Sep to 11 Oct, and 15 to 17 Oct. The phase table lives in `src/data/ticketPhases.js`.
+Dates from the official ticket poster. The only gap is 10-11 Oct. The phase table lives in `src/data/ticketPhases.js`.
 
 ## 8. Script (exact text)
 
-Angel Jayimpacts (S0), 5 pages:
-```
-1. ยินดีต้อนรับสู่โลกหลังความตาย! คุณ dead แล้ว
-2. รีบเดินทางไปที่ลานนภาเสียนะ ก่อนที่ลูกพี่มัจจุราชตัวม่วงของผมจะจับคุณกินเสียก่อน
-3. ข้างหน้าเป็นซุ้มดวงวิญญาณที่เจ้าต้องฝ่าไปให้ได้
-4. รู้หรือไม่ ในงานลานนภา Halloween Fest 24-25 ต.ค. 69 นี้ แถว BTS Bangwa
-5. ก็จะมีซุ้ม Trick or Treat ให้เจ้าเล่นแบบนี้ด้วยนะ แล้วเจอกันที่ลานนภา!
-```
-
-Stall 1, Krahang (S1):
-```
-ในงานจริงซุ้มผีแบบนี้ก็มีนะ แต่ก่อนที่เจ้าจะไปถึงลานนภา มาให้ข้ากินตับซะดีดี !!!!!
-```
-
-Stall 2, ghost in the jar (S2):
-```
-ข้าจะบอกให้ว่า ลานนภา ไปทางไหน แต่เจ้าต้องต้องหาจดหมายนำทางให้เจอ ตาดีทีรอดเว้ยเห้ย ว่าฮ่าฮ่าฮ่า อ้า..
-```
-
-Chase intro (S3), red text, no name tag:
-```
-อยู่นี่เองเจ้าวิญญาณไร้ที่ไป
-```
-
-Letter (S3), shown in the 140 x 100 panel:
-```
-เดินต่อไปตามซอยราชพฤกษ์ 6 ใกล้ 7-Eleven ลานนภาอยู่ข้างหน้าท่าน
-```
-
-Stall 3 (S4):
-```
-1. เดี๋ยวก่อนเจ้า! ผีไล่หลังอยู่ก็จริง แต่ข้ามีเรื่องจะบอก
-2. รู้หรือไม่ ลานนภา Halloween Fest จัด 24-25 ต.ค. ค่าเข้าขึ้นเรทตามช่วงวัน
-3. (price line from section 7.5)
-4. ซื้อบัตรได้ที่ hellobooku.com/laanapha2026
-After the event, pages 2 to 4 are replaced by: อ้าว... งานจัดไปแล้วนะเจ้า ไว้พบกันปีหน้า!
-```
-
-Stall 4 (S5):
-```
-1. เจ้าใกล้จะถึงลานนภาแล้ว!
-2. เข้าไปแล้วก็ดูด้วยว่าเขาจะฉายหนังเรื่องอะไร
-3. ห้ามพลาดนะ!
-4. กดติดตาม Jayimpacts ด้วย เจ้าของงานฝากมาบอก
-```
-Stall 4 and 5 keep these lines even after the event (parody). Do not name specific movies.
-
-Stall 5 (S6), no choice:
-```
-1. ถ้าเจ้าแต่งตัวเป็นผีมางาน อย่าลืมลงแข่งแต่งตัวด้วยล่ะ มีรางวัลให้เจ้าด้วย!
-2. พูดคุยกับคนในงานประจำซุ้มด้วยนะ เจ้าของงานและทีมงานรอคุยเล่นกับทุกคนอยู่
-3. กดติดตาม Jayimpacts ด้วย เจ้าของงานฝากมาบอก
-4. ผีจะตามเจ้าทันแล้ว! รัวจอเพื่อวิ่งไปให้ถึงลานนภาให้ทันล่ะ!!
-```
-After page 4, the final sprint starts immediately.
-
-Reply choices (stalls 3 and 4):
-```
-Polite: รับทราบ ขอบคุณมากที่บอก จะไปดูรายละเอียดต่อ
-Rude (ends the game): เรื่องของมึง จะหนีผีโว้ย!
-```
+The exact text lives in `src/data/script.js` (owner-approved, edited through `docs/chatbox-script.md`).
+`docs/chatbox-script.md` is generated from it by `node tools/export_script.mjs` and lists every page in
+play order: angel (7 pages), stall 1 Krahang (5), stall 2 jar ghost (3), the letter (4 bold rows), the
+chase intro (red), stall 3 (5 pages, page 4 = rate intro + date-based price line; after the event pages 4-5
+become the "event has passed" page), stall 4 (4), stall 5 (5), and the two reply buttons. Stall 4 and 5
+keep their lines even after the event. Do not name specific movies.
 
 ## 9. Assets
 
