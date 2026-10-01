@@ -48,3 +48,8 @@ export class ChaseTimer {
 export function chaserGapPx(birdProgress, chaserProgress, { pxPerProgress, minPx, maxPx }) {
   return Math.max(minPx, Math.min(maxPx, (birdProgress - chaserProgress) * pxPerProgress));
 }
+
+/** Caught: the chaser's progress has reached the bird's (the timer bar icons meet). */
+export function chaserCaught(birdProgress, chaserProgress) {
+  return chaserProgress >= birdProgress;
+}

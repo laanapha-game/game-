@@ -157,5 +157,19 @@ if (args.includes('--win')) {
   await ctx.close();
 }
 
+// 4. Caught: stop running in the chase and the chaser catches up (before the 2:00 is out).
+if (args.includes('--win')) {
+  const vp = PLAY_VP;
+  const { ctx, page } = await open(vp, '?today=2026-10-12');
+  const at = await playToWin(page, vp, async () => {}, {}, { stopAt: 'S4' });
+  // No more taps; fast-forward the chase clock 20x (a 2:00 timeout would take 6 s).
+  const t0 = Date.now();
+  await page.evaluate(() => window.__scene2.timer.setRate(20));
+  await page.waitForFunction(() => window.__scene2GameOver, null, { timeout: 15000 }).catch(() => {});
+  const g = await page.evaluate(() => ({ reason: window.__scene2GameOver?.reason, left: window.__scene2.timer.remainingS() }));
+  check(at === 'S4' && g.reason === 'caught' && g.left > 0, `waiting in the chase: the chaser catches up -> Game over (${g.reason}, ${g.left.toFixed(0)} s still on the clock, ${Date.now() - t0} ms)`);
+  await ctx.close();
+}
+
 await browser.close();
 process.exit(failed ? 1 : 0);

@@ -38,7 +38,7 @@ export async function toPage(page, x, y) {
  * moments worth a screenshot (walk, struggle + dim, chase intro look-back, run,
  * sprint, win silhouette). The chase runs and the sprint are tapped. Returns the final state.
  */
-export async function playToWin(page, vp, shot = async () => {}, report = {}) {
+export async function playToWin(page, vp, shot = async () => {}, report = {}, { stopAt } = {}) {
   // Idle check: with no taps the world does not move (no auto-run) and does not slide back.
   const idle = async (ms) => {
     const a = await page.evaluate(() => window.__scene2.worldX);
@@ -76,6 +76,7 @@ export async function playToWin(page, vp, shot = async () => {}, report = {}) {
   await shot('s3_lookback');
   for (const target of ['S4', 'S5', 'S6']) {
     await tapUntil(page, vp, (s) => s === target, { every: 200, timeout: 30000 });
+    if (target === stopAt) return target;
     // Tap to run across the street to the stall (no auto-run in the chase).
     if (target === 'S4') {
       await page.waitForFunction(() => !!window.__scene2.tickRun, null, { timeout: 5000 }).catch(() => {});

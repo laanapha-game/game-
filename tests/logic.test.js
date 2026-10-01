@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { stall3Pages, ticketMode, priceLine, resolveToday, bangkokDate, thaiShortDate } from '../src/logic/ticket.js';
 import { TapMeter } from '../src/logic/meter.js';
-import { ChaseTimer, chaserGapPx } from '../src/logic/chaseTimer.js';
+import { ChaseTimer, chaserGapPx, chaserCaught } from '../src/logic/chaseTimer.js';
 import { wrapText, graphemes, paginate } from '../src/logic/textWrap.js';
 
 const price = (d) => priceLine(ticketMode(d));
@@ -62,6 +62,9 @@ test('chaser distance follows the timer bar: bird progress minus chase progress'
   assert.equal(chaserGapPx(0.5, 0.48, cfg), 14); // nearly caught: on the bird's back, never past it
   assert.equal(chaserGapPx(0.4, 0.6, cfg), 14);
   assert.equal(chaserGapPx(0.9, 0.2, cfg), 100); // far ahead: off screen
+  assert.equal(chaserCaught(0.5, 0.49), false);
+  assert.equal(chaserCaught(0.5, 0.5), true); // icons meet: caught
+  assert.equal(chaserCaught(0.3, 0.6), true);
 });
 
 test('Thai wrapping keeps grapheme clusters and fits the width', () => {

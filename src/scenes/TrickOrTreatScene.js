@@ -26,7 +26,7 @@ import {
 } from '../data/script.js';
 import { resolveToday, stall3Pages } from '../logic/ticket.js';
 import { TapMeter } from '../logic/meter.js';
-import { ChaseTimer, chaserGapPx } from '../logic/chaseTimer.js';
+import { ChaseTimer, chaserGapPx, chaserCaught } from '../logic/chaseTimer.js';
 import { minHitLogical, setupScene, pointerPos } from '../display/integerScale.js';
 import { createPlaceholderCharacter } from '../interfaces.js';
 import { scene1KrahangCombo } from '../integration/scene1.js';
@@ -751,6 +751,11 @@ export class TrickOrTreatScene extends Phaser.Scene {
 
     if (this.timer.expired) {
       this.fail('chaseTimeout');
+      return;
+    }
+    // Caught: the chaser catches up with the bird (owner rule), even mid-dialogue.
+    if (chaserCaught(Math.min(1, this.worldX / FINAL_WORLD_X), 1 - remaining / C.CHASE_TIME_S)) {
+      this.fail('caught');
       return;
     }
     this.updateChaser(time, remaining, dt);
