@@ -11,8 +11,13 @@ const INK_LIFT = 2;
 // Includes Thai stacked marks so Phaser measures enough height for them.
 const TEST_STRING = '|MÉqgปั้ฐู้ญ';
 
-// Kept for the view scaler; pixel text always renders at 1 canvas px per design px.
-export function setTextResolution() {}
+// Text is rasterised at the device's resolution (set by the view scaler) so it
+// stays sharp and readable on phones; the pixel font keeps its blocky shapes and
+// alpha is snapped to 0/255, so edges stay crisp (no blur).
+let textResolution = 3;
+export function setTextResolution(n) {
+  textResolution = Math.max(1, Math.min(8, n));
+}
 
 let patched = false;
 function patchTextSmoothing() {
@@ -56,7 +61,7 @@ export function textStyle(px = FONT_BODY_PX, color = CSS.white, bold = false) {
     fontStyle: bold ? 'bold' : 'normal',
     fontSize: `${px}px`,
     color,
-    resolution: 1,
+    resolution: textResolution,
     testString: TEST_STRING,
     padding: { top: TEXT_PAD_Y, bottom: TEXT_PAD_Y, left: TEXT_PAD_Y, right: TEXT_PAD_Y },
   };

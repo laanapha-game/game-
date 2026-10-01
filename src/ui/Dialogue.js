@@ -8,7 +8,7 @@ import { addNineSlice, sizeNineSlice } from '../display/integerScale.js';
 
 const DEPTH = 100;
 const TAG_TOP = -8; // name tag straddles the box top edge
-const TEXT_TOP = 10; // first line box starts below the name tag
+const TEXT_TOP = 12; // first line box starts below the name tag
 
 export class Dialogue {
   constructor(scene) {

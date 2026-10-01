@@ -447,8 +447,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
     const top = C.LETTER_TOP;
     const panel = this.add.image(cx, top, 'letter_panel').setOrigin(0.5, 0).setDepth(150);
     const lines = LETTER_LINES.flatMap((l) => wrap(l, P.w - P.pad * 2, C.FONT_BODY_PX, true));
-    const texts = addLines(this, cx, top, lines.length, C.LINE_HEIGHT_PX, { align: 'center', depth: 151, color: C.CSS.black, bold: true });
-    setLines(texts, lines, { top, height: P.h, lineHeight: C.LINE_HEIGHT_PX });
+    const lh = C.LETTER_LINE_HEIGHT_PX;
+    const texts = addLines(this, cx, top, lines.length, lh, { align: 'center', depth: 151, color: C.CSS.black, bold: true });
+    setLines(texts, lines, { top, height: P.h, lineHeight: lh });
     const arrow = this.add.sprite(cx + P.w / 2 - 12, top + P.h - 12, 'ui_arrow', 0).setOrigin(0).setDepth(152).play('ui_arrow_blink');
     return { panel, texts, arrow };
   }

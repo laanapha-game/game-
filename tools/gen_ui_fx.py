@@ -301,5 +301,13 @@ def fog():
     return a
 
 
+def whiteout():
+    """180x320 solid white: the final fade into scene 3 (light path)."""
+    a = canvas(180, 320)
+    a[...] = C['w']
+    return a
+
+
+save('fx_whiteout.png', whiteout())
 save('fx_vignette.png', vignette())
 save('fx_fog.png', fog())

@@ -25,10 +25,12 @@ function inkOf(t) {
         maxY = Math.max(maxY, y);
       }
   if (maxX < 0) return null;
+  // Canvas px -> design px (text is rasterised at `resolution` canvas px per design px).
+  const k = t.style.resolution || 1;
   const ox = t.x - t.displayOriginX;
   const oy = t.y - t.displayOriginY;
   const clipped = minX === 0 || minY === 0 || maxX === canvas.width - 1 || maxY === canvas.height - 1;
-  return { x0: ox + minX, y0: oy + minY, x1: ox + maxX, y1: oy + maxY, clipped };
+  return { x0: ox + minX / k, y0: oy + minY / k, x1: ox + (maxX + 1) / k - 1, y1: oy + (maxY + 1) / k - 1, clipped };
 }
 
 const inside = (ink, r) => ink.x0 >= r.x0 && ink.y0 >= r.y0 && ink.x1 <= r.x1 && ink.y1 <= r.y1;

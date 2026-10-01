@@ -87,10 +87,11 @@ export const JAR_TABLE_Y = GROUND_Y - 24 + 2; // jar bottom sits on stall 2's co
 export const SHAKE_INTENSITY = 0.006; // ~1 px at 180 px wide
 
 export const LETTER_TOP = 70; // top of the letter panel
+export const LETTER_LINE_HEIGHT_PX = 16; // 5 bold rows with margin inside the torn edge
 export const UI = {
   timerBar: { x: 30, y: 8, w: 120, h: 8 },
   chatbox: { x: 8, y: 24, w: 164, h: 60, pad: 6, arrowW: 10 }, // text area sits below the name tag, arrow gets its own column
-  nametag: { h: 18, padX: 6 },
+  nametag: { h: 20, padX: 6 },
   choices: { x: 8, y: 88, w: 164, h: 38, gap: 2, lineHeight: 16 }, // 2 lines of 12 px Thai incl. stacked marks
   meter: { x: 30, y: 270, w: 120, h: 10 },
   tapButton: { x: 90, y: 298 },

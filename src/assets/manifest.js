@@ -65,7 +65,7 @@ export const MANIFEST = [
   { key: 'bg_alley_exit', file: 'bg_alley_exit.png', frameWidth: 360, frameHeight: 320, frames: 1 },
   { key: 'bg_street', file: 'bg_street.png', frameWidth: 360, frameHeight: 320, frames: 1 },
   { key: 'bg_light_end', file: 'bg_light_end.png', frameWidth: 360, frameHeight: 320, frames: 1 },
-  { key: 'fx_whiteout', file: 'fx_whiteout.png', frameWidth: 180, frameHeight: 320, frames: 1 },
+  { key: 'fx_whiteout', file: 'fx_whiteout.png', native: 'ui', frameWidth: 180, frameHeight: 320, frames: 1 },
 
   // UI and small FX: generated at 1x by tools/gen_ui_fx.py (assets/ui/).
   { key: 'chatbox_9slice', file: 'chatbox_9slice.png', native: 'ui', frameWidth: 24, frameHeight: 24, frames: 1 },

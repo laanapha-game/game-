@@ -137,7 +137,10 @@ if (args.includes('--win')) {
   }
   await tapUntil(page, vp, (s) => s === 'S7', { every: 200, timeout: 30000 });
   await shot(page, 's7');
-  const final = await tapUntil(page, vp, (s) => s === 'SCENE3' || s === 'GAME_OVER_SCREEN', { every: 40, timeout: 60000 });
+  await tapUntil(page, vp, (s) => s === 'WIN' || s === 'SCENE3' || s === 'GAME_OVER_SCREEN', { every: 40, timeout: 60000 });
+  await page.waitForTimeout(1500);
+  await shot(page, 'win_whiteout');
+  const final = await tapUntil(page, vp, (s) => s === 'SCENE3' || s === 'GAME_OVER_SCREEN', { every: 200, timeout: 20000 });
   check(final === 'SCENE3', `full run reaches scene 3 (${final})`);
   await shot(page, 'scene3');
   check(errors.length === 0, `no console errors on win path (${errors.join(' | ')})`);
