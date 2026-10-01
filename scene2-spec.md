@@ -149,7 +149,7 @@ Dates from the official ticket poster. The only gap is 10-11 Oct. The phase tabl
 ### 7.6 Sound
 
 All sound is synthesized in the browser with Web Audio (`src/audio/`): no audio files, nothing to license, nothing to download. One engine per page, shared by scene 1's page and scene 2.
-- Switches: sound starts OFF, as scene 1 does ("silent until the player taps the speaker icon"). Scene 1's speaker is the master switch; scene 2 shows the same speaker top right (all sound) and a note top left (music on/off). Switching in scene 2 also switches scene 1's speaker when the player goes back home. Buttons have 44 CSS px hit areas and are not game taps.
+- Switches: sound is ON by default (owner's call; scene 1 on its own starts silent). Browsers only let audio start in a tap, so it is heard from the player's first tap anywhere; in the full game that first tap also switches scene 1's speaker on, so its own button sounds play. Scene 1's speaker is the master switch; scene 2 shows the same speaker top right (all sound) and a note top left (music on/off). Switching in scene 2 also switches scene 1's speaker when the player goes back home. Buttons have 44 CSS px hit areas and are not game taps.
 - Channels: effects, music, ambience, through one limiter. Jumpscares dip the music and ambience.
 - Ambience: night wind and crickets on every screen until the whiteout.
 - Music (A minor pentatonic music box): `title` on scene 1's home and select, `calm` for the angel, walks and stalls 1-2, silence for the chase intro scare, then `chase` (tempo 128 rising to 160 as the 2:00 runs out, lead melody after a third of the chase). No music on the Game over screen or after the light.

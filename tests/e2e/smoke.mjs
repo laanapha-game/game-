@@ -69,10 +69,13 @@ for (const [query, want] of [['', 'placeholder-bird'], ['?character=pumpkin', 'p
   const levels = await page.evaluate(() => window.__audio.selfTest());
   const bad = Object.entries(levels).filter(([, v]) => v.peak < 0.02 || v.peak > 1);
   check(bad.length === 0, `sound: ${Object.keys(levels).length} effects and music loops render in range${bad.length ? ' (' + JSON.stringify(bad) + ')' : ''}`);
-  // Sound buttons: start off (like scene 1), speaker turns sound on, note turns music off;
-  // tapping them is not a game tap (the angel's first page keeps typing).
-  const before = await page.evaluate(() => ({ on: window.__audio.audio.sound, page: window.__scene2.dialogue.pageIndex, shown: window.__scene2.dialogue.shown }));
+  // Sound is on by default and starts on the first tap; the speaker turns it off and on,
+  // the note turns music off; tapping them is not a game tap.
+  const before = await page.evaluate(() => ({ on: window.__audio.audio.sound, page: window.__scene2.dialogue.pageIndex, frame: window.__scene2.soundButtons.speaker.frame.name }));
+  check(before.on && before.frame === 0, 'sound is on by default (speaker shows on)');
   const spk = await toPage(page, 168, 8);
+  await page.touchscreen.tap(spk.x, spk.y);
+  check((await page.evaluate(() => window.__audio.audio.sound)) === false, 'speaker button turns sound off');
   await page.touchscreen.tap(spk.x, spk.y);
   const note = await toPage(page, 13, 8);
   await page.touchscreen.tap(note.x, note.y);
@@ -86,7 +89,7 @@ for (const [query, want] of [['', 'placeholder-bird'], ['?character=pumpkin', 'p
     page: window.__scene2.dialogue.pageIndex,
     complete: window.__scene2.dialogue.complete,
   }));
-  check(!before.on && after.on && after.running === 'running' && after.mood === 'calm', `speaker button turns sound on (${JSON.stringify(after)})`);
+  check(after.on && after.running === 'running' && after.mood === 'calm', `speaker button turns sound back on, audio running (${JSON.stringify(after)})`);
   check(after.music === false && after.frames.join() === '0,1', `note button turns music off, icons follow`);
   check(after.page === before.page, `sound buttons are not game taps`);
   await page.touchscreen.tap(note.x, note.y);
@@ -119,8 +122,7 @@ const PLAY_VP = { width: 390, height: 844, dpr: 1 };
 if (args.includes('--win')) {
   const vp = PLAY_VP;
   const { ctx, page, errors } = await open(vp, '?today=2026-10-12');
-  const spk = await toPage(page, 168, 8);
-  await page.touchscreen.tap(spk.x, spk.y); // sound on for the whole run
+  // Sound is on by default; the run's first tap starts it.
   const moods = [];
   const watch = setInterval(async () => {
     const m = await page.evaluate(() => window.__audio?.audio.currentMood).catch(() => null);

@@ -9,9 +9,9 @@
 //   audio.intensity(x)   0..1, chase tempo and lead
 //   audio.duck(ms)       dip music and ambience (jumpscares)
 //
-// One instance per page, shared by scene 1's bridge and scene 2. Sound starts OFF,
-// like scene 1 ("silent until the player taps the speaker icon"); browsers only
-// allow audio after a tap anyway.
+// One instance per page, shared by scene 1's bridge and scene 2. Sound is ON by
+// default (SOUND_ON_AT_START); browsers only let audio start in a tap, so it is
+// heard from the player's first tap anywhere (unlock()).
 import { SFX, INSTRUMENTS, noiseBuffer } from './synth.js';
 import { MOODS } from './music.js';
 
@@ -19,8 +19,9 @@ const AC = typeof window !== 'undefined' ? window.AudioContext || window.webkitA
 const LOOKAHEAD_S = 0.15;
 const TICK_MS = 25;
 const LEVEL = { sfx: 0.9, music: 0.32, ambient: 0.5 };
+export const SOUND_ON_AT_START = true;
 
-const state = { sound: false, music: true, mood: null, moodOpts: {}, ambient: null, intensity: 0 };
+const state = { sound: SOUND_ON_AT_START, music: true, mood: null, moodOpts: {}, ambient: null, intensity: 0 };
 const listeners = new Set();
 let ctx = null;
 let bus = null;
@@ -201,7 +202,13 @@ export const audio = {
 
   /** Unlock after a user gesture (mobile autoplay rules). Safe to call often. */
   unlock() {
-    if (state.sound && ctx && ctx.state !== 'running') ctx.resume?.().then(() => restartLayers(), () => {});
+    if (!state.sound) return;
+    if (!ctx) {
+      if (!ensureContext()) return;
+      bus.master.gain.value = 1;
+      startScheduler();
+    }
+    if (ctx.state !== 'running') ctx.resume?.().then(() => restartLayers(), () => {});
   },
 
   sfx(name, o) {

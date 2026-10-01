@@ -237,10 +237,11 @@ const scene1Oscillators = (page) =>
 // switches scene 1's off too, so its own button sounds stop.
 if (!only) {
   const { ctx, page, errors } = await open();
-  await tap1(page, 168, 8); // scene 1's speaker
+  // Sound is on by default: the first tap anywhere starts it and switches scene 1's speaker on.
+  await tap1(page, 60, 300);
   await page.waitForTimeout(400);
-  const s1 = await page.evaluate(() => ({ on: window.__audio.audio.sound, mood: window.__audio.audio.currentMood }));
-  check(s1.on && s1.mood === 'title' && (await scene1Oscillators(page)) > 0, `scene 1 speaker: sound on, title music, scene 1's own jingle (${JSON.stringify(s1)})`);
+  const s1 = await page.evaluate(() => ({ on: window.__audio.audio.sound, mood: window.__audio.audio.currentMood, ctx: window.__audio.ctx?.state }));
+  check(s1.on && s1.ctx === 'running' && s1.mood === 'title' && (await scene1Oscillators(page)) > 0, `sound on from the first tap: title music, scene 1's speaker on (its jingle) (${JSON.stringify(s1)})`);
   const loud = await scene1Oscillators(page);
   await tap1(page, 90, 225); // the bird hops with scene 1's own sound (control for the silent check below)
   await page.waitForTimeout(300);
@@ -269,6 +270,9 @@ if (!only) {
   await page.waitForTimeout(300);
   const after = await page.evaluate(() => ({ on: window.__audio.audio.sound, mood: window.__audio.audio.currentMood }));
   check(!after.on && after.mood === 'title' && (await scene1Oscillators(page)) === quiet, `scene 1's speaker follows scene 2's switch (silent home tap, ${JSON.stringify(after)})`);
+  await tap1(page, 168, 8); // scene 1's speaker back on
+  await page.waitForTimeout(300);
+  check((await page.evaluate(() => window.__audio.audio.sound)) && (await scene1Oscillators(page)) > quiet, "scene 1's speaker turns everything back on");
   if (shots) await page.screenshot({ path: `${shots}/home_after_gameover.png` });
   await page.evaluate(() => {
     window.__scene2 = undefined;

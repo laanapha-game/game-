@@ -88,6 +88,19 @@ function syncScene1Speaker() {
   scene1Sound = audio.sound;
 }
 
+// Sound is on from the start, but scene 1 starts silent and audio may only start in
+// a tap: on the player's first tap, switch scene 1's speaker on too (before scene 1
+// handles that tap, so a first tap on the speaker itself still turns sound off).
+document.addEventListener(
+  'pointerdown',
+  function firstTap(e) {
+    if (!e.isTrusted) return;
+    document.removeEventListener('pointerdown', firstTap, true);
+    if (!inScene2) syncScene1Speaker();
+  },
+  true,
+);
+
 function scene1Audio() {
   audio.ambient('night');
   audio.mood('title');

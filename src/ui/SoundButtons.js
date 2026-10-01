@@ -19,12 +19,15 @@ export class SoundButtons {
       audio.sfx(audio.musicOn ? 'ui_on' : 'ui_off');
     });
     const sync = () => {
+      if (!this.speaker.scene) return; // scene gone (scene 2 closed by the host)
       this.speaker.setFrame(audio.sound ? 0 : 1);
       this.note.setFrame(audio.musicOn ? 0 : 1);
     };
     sync();
     const off = audio.onChange(sync);
+    // Shut down (scene change) or destroyed (the host closes the whole game).
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
+    scene.events.once(Phaser.Scenes.Events.DESTROY, off);
   }
 
   button(scene, at, onTap) {
