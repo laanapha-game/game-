@@ -138,6 +138,9 @@ if (args.includes('--win')) {
   const report = {};
   const final = await playToWin(page, vp, (name) => shot(page, name), report);
   check(report.runIdle && report.runIdle.after === report.runIdle.before, `chase run: no taps, no movement (tap to run) ${JSON.stringify(report.runIdle)}`);
+  const r = report.runIdle ?? {};
+  check(r.chaserAfter < r.chaserBefore, `chaser creeps closer while the bird waits (x ${r.chaserBefore} -> ${r.chaserAfter})`);
+  check(report.chaserAfterRun > r.chaserAfter && report.chaserAfterRun <= 180, `chaser falls back when the bird runs ahead, staying in view (x ${r.chaserAfter} -> ${report.chaserAfterRun})`);
   check(report.sprintIdle && report.sprintIdle.before > 0 && report.sprintIdle.after === report.sprintIdle.before, `final sprint: progress does not drain when not tapping ${JSON.stringify(report.sprintIdle)}`);
   check(report.sprint?.eyes === 'chaser_red' && report.sprint?.rate === 1.5, `final sprint: red-eyed chaser, chase clock 1.5x ${JSON.stringify(report.sprint)}`);
   clearInterval(watch);

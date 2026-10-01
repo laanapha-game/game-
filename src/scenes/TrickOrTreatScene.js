@@ -26,7 +26,7 @@ import {
 } from '../data/script.js';
 import { resolveToday, stall3Pages } from '../logic/ticket.js';
 import { TapMeter } from '../logic/meter.js';
-import { ChaseTimer, chaserStage } from '../logic/chaseTimer.js';
+import { ChaseTimer, chaserGapPx } from '../logic/chaseTimer.js';
 import { minHitLogical, setupScene, pointerPos } from '../display/integerScale.js';
 import { createPlaceholderCharacter } from '../interfaces.js';
 import { scene1KrahangCombo } from '../integration/scene1.js';
@@ -72,7 +72,6 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.worldX = 0;
     this.running = false;
     this.meter = null;
-    this.stage = -1;
     this.timer = new ChaseTimer(C.CHASE_TIME_S);
   }
 
@@ -410,7 +409,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
       this.bird.play('scared', 'side');
       const cam = this.cameras.main;
       cam.flash(200, 240, 45, 240);
-      cam.shake(C.JUMP_SCARE_MS, 0.02);
+      cam.shake(C.JUMP_SCARE_MS, C.JUMP_SCARE_SHAKE);
       burst(this, 'fx_splat', at.x, at.y - 30, { depth: 60 });
       await this.wait(C.JUMP_SCARE_MS);
       return this.fail('ghostJar');
@@ -449,11 +448,11 @@ export class TrickOrTreatScene extends Phaser.Scene {
     audio.intensity(0);
     audio.mood('chase');
     audio.duck(1500);
-    cam.shake(450, 0.015);
+    cam.shake(450, C.CHASER_INTRO_SHAKE);
     this.bird.lookBack(true);
     this.bird.play('scared', 'side');
     this.time.delayedCall(450, () => this.chaser.active && this.chaser.play('chaser_float'));
-    this.tweens.add({ targets: this.chaser, x: C.CHASER_X_BY_STAGE[0], duration: C.CHASER_INTRO_FLOAT_MS, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: this.chaser, x: C.CHASER_START_X, duration: C.CHASER_INTRO_FLOAT_MS, ease: 'Sine.easeInOut' });
     this.introFloat = true; // update() bobs the chaser while it floats in
     await this.talk(CHASER_INTRO_PAGES, { color: C.CHASER_TEXT_COLOR });
 
@@ -462,7 +461,8 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.timer.start();
     audio.mood('chase'); // already playing since the chaser appeared
     this.timerBar.setVisible(true);
-    this.stage = 0;
+    // Scale for the chaser's distance: at this moment it is at CHASER_START_X.
+    this.chasePx = (C.CHASER_START_X - C.BIRD_X) / Math.max(0.01, this.worldX / FINAL_WORLD_X);
     await this.wait(200);
   }
 
@@ -709,7 +709,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.tweens.add({ targets: this.chaser, x: C.BIRD_X + 8, y: C.PLAYER_Y - 30, duration: C.CAUGHT_MS * 0.6, ease: 'Quad.easeIn' });
     this.time.delayedCall(C.CAUGHT_MS * 0.6, () => {
       this.cameras.main.flash(150, 240, 45, 240);
-      this.cameras.main.shake(250, 0.01);
+      this.cameras.main.shake(250, C.CAUGHT_SHAKE);
       // Caught: the chaser's bite. Softer right after the ghost-jar scare.
       audio.sfx('jumpscare', { level: reason === 'ghostJar' ? 0.6 : 1 });
       audio.duck(1000);
@@ -753,7 +753,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
       this.fail('chaseTimeout');
       return;
     }
-    this.updateChaser(time, remaining);
+    this.updateChaser(time, remaining, dt);
     this.chaseSound(remaining);
   }
 
@@ -763,6 +763,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     if (remaining <= C.SHAKE_LAST_S && this.time.now - (this.lastBeat ?? 0) >= C.HEARTBEAT_MS) {
       this.lastBeat = this.time.now;
       audio.sfx('heartbeat');
+      this.cameras.main.shake(150, C.SHAKE_INTENSITY); // one small pulse per heartbeat
     }
     const sec = Math.ceil(remaining);
     if (remaining <= C.TICK_LAST_S && sec !== this.lastTickSec) {
@@ -771,21 +772,34 @@ export class TrickOrTreatScene extends Phaser.Scene {
     }
   }
 
-  updateChaser(time, remaining) {
+  /** The chaser glides to its distance from the chase progress (see chaserGapPx). */
+  updateChaser(time, remaining, dt) {
     const c = this.chaser;
     if (!c) return;
     this.introFloat = false;
-    const stage = chaserStage(remaining, C.CHASER_STAGE_REMAINING_S);
-    if (stage > this.stage && this.stage >= 0) {
-      this.stage = stage;
-      this.tweens.add({ targets: c, x: C.CHASER_X_BY_STAGE[stage], duration: 600, ease: 'Quad.easeOut' });
+    const gap = chaserGapPx(Math.min(1, this.worldX / FINAL_WORLD_X), 1 - remaining / C.CHASE_TIME_S, {
+      pxPerProgress: this.chasePx,
+      minPx: C.CHASER_MIN_GAP_PX,
+      maxPx: C.CHASER_MAX_X - C.BIRD_X,
+    });
+    // Glide on an exact position; draw on whole pixels.
+    this.chaserX ??= c.x;
+    this.chaserX += (C.BIRD_X + gap - this.chaserX) * Math.min(1, dt * C.CHASER_FOLLOW_PER_S);
+    c.x = Math.round(this.chaserX);
+    // Growl each time it gets another 10 px closer.
+    const band = Math.floor(gap / 10);
+    if (this.gapBand !== undefined && band < this.gapBand && time - (this.lastGrowl ?? 0) > 1500) {
+      this.lastGrowl = time;
       audio.sfx('chaser_closer');
-      if (stage === C.CHASER_STAGE_REMAINING_S.length) c.stop().setFrame(FRAMES.chaser.openMouth);
     }
+    this.gapBand = band;
+    // Open mouth when it is close, or in the last seconds.
+    const mouth = gap <= C.CHASER_MOUTH_GAP_PX || remaining <= C.SHAKE_LAST_S;
+    if (mouth && !this.mouthOpen) c.stop().setFrame(FRAMES.chaser.openMouth);
+    if (!mouth && this.mouthOpen) c.play(this.redEyes ? 'chaser_red_float' : 'chaser_float');
+    this.mouthOpen = mouth;
     c.y = C.CHASER_HOVER_Y + Math.round(Math.sin(time / 300) * 2);
     this.chaserShadow?.setX(c.x);
-    if (remaining <= C.SHAKE_LAST_S && !this.cameras.main.shakeEffect.isRunning) {
-      this.cameras.main.shake(250, C.SHAKE_INTENSITY);
-    }
   }
+
 }

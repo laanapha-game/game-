@@ -73,8 +73,8 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 | JAR_SWAPS | 6 | ASSUMPTION |
 | JAR_SWAP_MS_START / END | 500 / 350 | Speeds up. ASSUMPTION |
 | TYPEWRITER_CPS | 30 | Characters per second |
-| CHASER_STAGE_REMAINING_S | 90, 60, 30, 15 | Thresholds at which the chaser moves closer |
-| SHAKE_LAST_S | 15 | Small screen shake in the final seconds |
+| CHASER_START_X / MIN_GAP / MAX_X | 170 / 14 / 180 | Chaser distance follows the chase (see 7.4), starting at x 170, never past the bird, centre at most on the screen edge |
+| SHAKE_LAST_S | 15 | Final seconds: heartbeat with one small shake pulse per beat |
 
 ## 6. State machine
 
@@ -119,7 +119,7 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 - Stalls 1 to 5 use stall art A, B, A, B, C. Draw order: stall, (stall 1 Krahang behind the counter), stall_front, then the stall 2 jar on the counter or the stall 3-5 ghost standing on the ground to the stall's right. Stalls stop at x 44.
 - Atmosphere: drifting fog over the ground band and a black gradient from the top and bottom edges, leaving the centre third of the screen (y 107-213) at normal lighting (fx_fog, fx_vignette). During the stall 1 and 2 minigames the scene fades dark (MINIGAME_DIM_*) with the characters lit above it, and fades back when the minigame ends.
 - Background follows the real route (ASSUMPTION for the split): inside the soi until stall 4, then the soi exit and the street with a 7-Eleven-style shop for stall 5 and the sprint, then the white light entrance.
-- The chaser is behind the player on the RIGHT and faces left, closes in by position at the CHASER_STAGE_REMAINING_S thresholds; below 15 s it switches to the open-mouth frame and the screen shakes.
+- The chaser is behind the player on the RIGHT and faces left. Its distance follows the chase, from the same two progressions as the timer bar: the bird's run progress minus the chaser's (elapsed chase time), scaled so it starts at x 170. Tapping ahead pushes it back (its centre stops at the screen edge, so it stays in view); waiting or reading lets it creep up, at most onto the bird's back. It glides to its distance, growls each time it gets 10 px closer, and opens its mouth when within 28 px or in the last 15 s. Camera shakes are gentle (constants: 0.25-0.8% of the screen width); in the last 15 s one small pulse per heartbeat.
 - Final sprint: the chaser switches to its red-eyed sheet (chaser_red.png, `tools/chaser_red_eyes.py` recolours only the pupils and the dark sockets around them) and the chase clock runs FINAL_CHASE_SPEED (1.5x), so the chaser closes in and the time runs out 1.5x faster. Progress maps to scroll; full progress reaches the light; bird fades to a white silhouette, whiteout (about 1 s), then scene 3.
 - Timer bar (120 x 8) with chaser icon (moves with time) and bird icon (moves with run progress).
 

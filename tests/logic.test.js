@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { stall3Pages, ticketMode, priceLine, resolveToday, bangkokDate, thaiShortDate } from '../src/logic/ticket.js';
 import { TapMeter } from '../src/logic/meter.js';
-import { ChaseTimer, chaserStage } from '../src/logic/chaseTimer.js';
+import { ChaseTimer, chaserGapPx } from '../src/logic/chaseTimer.js';
 import { wrapText, graphemes, paginate } from '../src/logic/textWrap.js';
 
 const price = (d) => priceLine(ticketMode(d));
@@ -55,22 +55,13 @@ test('tap meter fills, decays, clamps', () => {
   assert.equal(m.value, 1, 'no decay once full');
 });
 
-test('chase timer never pauses and chaser stages', () => {
-  let t = 0;
-  const timer = new ChaseTimer(120, () => t);
-  assert.equal(timer.remainingS(), 120);
-  timer.start();
-  t = 30_000;
-  assert.equal(timer.remainingS(), 90);
-  t = 130_000;
-  assert.equal(timer.remainingS(), 0);
-  assert.ok(timer.expired);
-  const th = [90, 60, 30, 15];
-  assert.equal(chaserStage(120, th), 0);
-  assert.equal(chaserStage(90, th), 1);
-  assert.equal(chaserStage(59, th), 2);
-  assert.equal(chaserStage(20, th), 3);
-  assert.equal(chaserStage(15, th), 4);
+test('chaser distance follows the timer bar: bird progress minus chase progress', () => {
+  const cfg = { pxPerProgress: 400, minPx: 14, maxPx: 100 };
+  assert.equal(chaserGapPx(0.13, 0, cfg), 52); // chase start
+  assert.equal(chaserGapPx(0.5, 0.375, cfg), 50); // ahead: further back
+  assert.equal(chaserGapPx(0.5, 0.48, cfg), 14); // nearly caught: on the bird's back, never past it
+  assert.equal(chaserGapPx(0.4, 0.6, cfg), 14);
+  assert.equal(chaserGapPx(0.9, 0.2, cfg), 100); // far ahead: off screen
 });
 
 test('Thai wrapping keeps grapheme clusters and fits the width', () => {

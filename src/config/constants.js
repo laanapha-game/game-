@@ -48,7 +48,6 @@ export const JAR_SWAP_MS_START = 500; // ASSUMPTION
 export const JAR_SWAP_MS_END = 350; // ASSUMPTION
 export const JAR_PICK_TIME_LIMIT_S = null; // ASSUMPTION: no time limit on picking (open item 6)
 export const TYPEWRITER_CPS = 30; // counted in grapheme clusters so Thai marks never appear alone
-export const CHASER_STAGE_REMAINING_S = [90, 60, 30, 15];
 export const SHAKE_LAST_S = 15;
 export const HEARTBEAT_MS = 800; // heartbeat sound in the last SHAKE_LAST_S seconds
 export const TICK_LAST_S = 10; // clock ticks in the last seconds of the chase
@@ -64,7 +63,7 @@ export const RUN_SPEED_PX_S = 48; // ASSUMPTION: world scroll speed during auto-
 export const WALK_SPEED_PX_S = 24; // ASSUMPTION: slower walk before stalls 1 and 2 (no timer, no fail)
 export const WALK_SEGMENT_S = 6;
 export const PRE_GAME_SHAKE_MS = 500; // shake after stall 1/2 dialogue, then the minigame starts
-export const PRE_GAME_SHAKE_INTENSITY = 0.012;
+export const PRE_GAME_SHAKE_INTENSITY = 0.005; // shakes: fraction of the screen width, kept gentle (owner)
 
 // Atmosphere: dark alley with fog; the minigames at stalls 1 and 2 dim the scene
 // while the characters stay lit above the dim layer.
@@ -84,9 +83,14 @@ export const STALL_GHOST_OFFSET_X = 42; // stalls 3-5: ghost centre this far rig
 export const GHOST_SINK = 12; // ghost bottom this far below the counter top: head and shoulders show above it
 export const FAR_PARALLAX = 0.5; // ASSUMPTION: far layer scroll factor
 export const SPRINT_DISTANCE_PX = 360; // ASSUMPTION: scroll covered by a full sprint meter
-// Chaser centre x per stage (stage 0 = > 90 s left). It starts close to the bird
-// after the intro cutscene, then creeps closer at each threshold. ASSUMPTION, tune.
-export const CHASER_X_BY_STAGE = [170, 165, 160, 155, 150];
+// Chaser x follows the chase (chaserGapPx): the gap between the timer bar's bird and
+// chaser icons, scaled so it starts at CHASER_START_X (where the intro floats it).
+// Tap ahead and it falls back; linger and it creeps up, at most onto the bird's back.
+export const CHASER_START_X = 170;
+export const CHASER_MIN_GAP_PX = 14; // on the bird's back; it never passes the bird
+export const CHASER_MAX_X = GAME_W; // furthest back: centre on the screen edge, so it stays in view
+export const CHASER_MOUTH_GAP_PX = 28; // closer than this: open mouth (also in the last SHAKE_LAST_S)
+export const CHASER_FOLLOW_PER_S = 3; // how quickly it glides to its new distance
 export const CHASER_INTRO_FROM_X = GAME_W + 10; // jumpscare: pops in here, then floats to stage 0
 export const CHASER_INTRO_FLOAT_MS = 1400;
 export const CHASER_TEXT_COLOR = '#FF2A2A'; // scary red for the chaser's line
@@ -96,7 +100,10 @@ export const CLING_COMBO_ORIGIN_X = 0.35; // ASSUMPTION, tune visually
 export const CLING_COMBO_KRAHANG = { x: 10, y: -18 }; // Krahang centre from the default bird's feet (land / fling)
 export const JAR_XS = [STALL_STOP_X - 20, STALL_STOP_X + 20]; // 40 px apart, on stall 2's counter
 export const JAR_TABLE_Y = GROUND_Y - 24 + 2; // jar bottom sits on stall 2's counter top
-export const SHAKE_INTENSITY = 0.006; // ~1 px at 180 px wide
+export const SHAKE_INTENSITY = 0.0025; // last seconds: one small pulse per heartbeat
+export const CHASER_INTRO_SHAKE = 0.006;
+export const JUMP_SCARE_SHAKE = 0.008;
+export const CAUGHT_SHAKE = 0.005;
 
 export const LETTER_TOP = 70; // top of the letter panel
 export const LETTER_LINE_HEIGHT_PX = 16; // 5 bold rows with margin inside the torn edge

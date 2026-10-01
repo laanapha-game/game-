@@ -42,8 +42,10 @@ export async function playToWin(page, vp, shot = async () => {}, report = {}) {
   // Idle check: with no taps the world does not move (no auto-run) and does not slide back.
   const idle = async (ms) => {
     const a = await page.evaluate(() => window.__scene2.worldX);
+    const ca = await page.evaluate(() => window.__scene2.chaser?.x);
     await page.waitForTimeout(ms);
-    return { before: a, after: await page.evaluate(() => window.__scene2.worldX) };
+    const [b, cb] = await page.evaluate(() => [window.__scene2.worldX, window.__scene2.chaser?.x]);
+    return { before: a, after: b, chaserBefore: ca, chaserAfter: cb };
   };
   await shot('s0');
   await tapUntil(page, vp, (s) => s === 'WALK1', { every: 120 });
@@ -88,6 +90,10 @@ export async function playToWin(page, vp, shot = async () => {}, report = {}) {
         await shot('s4_run');
         ranShot = true;
       }
+    }
+    if (target === 'S4') {
+      await page.waitForTimeout(800); // let it glide to its new distance
+      report.chaserAfterRun = await page.evaluate(() => window.__scene2.chaser.x);
     }
     await shot(`${target}_dialogue`);
     if (target !== 'S6') {

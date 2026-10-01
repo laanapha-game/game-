@@ -39,9 +39,12 @@ export class ChaseTimer {
   }
 }
 
-/** Chaser stage 0..thresholds.length from the remaining seconds. */
-export function chaserStage(remainingS, thresholds) {
-  let stage = 0;
-  for (const t of thresholds) if (remainingS <= t) stage++;
-  return stage;
+/**
+ * How far behind the bird the chaser floats (design px), from the same two
+ * progressions the timer bar shows: the bird's run progress and the chaser's
+ * (elapsed chase time), both 0..1. Ahead -> further back; idle -> it creeps closer.
+ * Clamped: never past the bird (minPx, on its back), at most off screen (maxPx).
+ */
+export function chaserGapPx(birdProgress, chaserProgress, { pxPerProgress, minPx, maxPx }) {
+  return Math.max(minPx, Math.min(maxPx, (birdProgress - chaserProgress) * pxPerProgress));
 }
