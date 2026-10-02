@@ -7,7 +7,7 @@ Read this whole file before writing code. Anything marked TODO or ASSUMPTION is 
 - Promo game for ลานนภา Halloween Fest, 24-25 October 2026, 5 PM till late, at Laanapha (near BTS Bangwa).
 - Portrait mobile browser game. The player is a chubby seagull chick, chosen and customised in scene 1 (built by another developer).
 - This file covers scene 2 only. Scene 3 (event layout, microcinema, trailers) is out of scope.
-- Story: an angel greets the player in the afterlife, the player walks past two ghost stalls (Krahang tap game, jar game), then a chasing ghost forces a 2 minute dash past three more stalls to a white, bright path of light that leads into Laanapha. There is NO gate or arch: the ending is a glowing white entrance.
+- Story: an angel greets the player in the afterlife, the player walks past two ghost stalls (Krahang tap game, jar game), then a chasing ghost forces a dash (about 2 minutes) past three more stalls to a white, bright path of light that leads into Laanapha. There is NO gate or arch: the ending is a glowing white entrance.
 - Direction (mirrors the real venue): the player always moves from RIGHT to LEFT: from inside the soi, out of the soi, past the 7-Eleven, to the white light path into Laanapha. Everything ahead of the player is on the left. The chasing ghost is behind, on the right.
 
 ## 2. Tech constraints
@@ -49,7 +49,7 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 
 - Every fail path goes to one Game over screen, which has a single button to the home page. No retry.
 - Fail conditions: tap game timeout, picking the ghost jar, a rude reply, chase timer reaching 0, final sprint meter not full at 0, the chaser catching up (owner rule: its progress, elapsed chase time, reaches the bird's run progress; the timer bar icons meet), at any moment including mid-dialogue.
-- The 2:00 chase timer starts when the chase starts, right after the chase intro cutscene (after the letter) and NEVER pauses (not during dialogue or reply choices). WALK segments come before it: no timer, no fail.
+- The chase timer (6:00 of chase time, run at 3x: about 2:00 real, faster in the final sprint) starts when the chase starts, right after the chase intro cutscene (after the letter) and NEVER pauses (not during dialogue or reply choices). WALK segments come before it: no timer, no fail.
 - If the timer reaches 0 at any moment in the chase (including mid-dialogue), cut to the caught sequence, then Game over.
 - Winning the final sprint with time left goes to scene 3.
 
@@ -57,14 +57,15 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 
 | Constant | Value | Notes |
 |---|---|---|
-| CHASE_TIME_S | 120 | Never pauses |
+| CHASE_TIME_S | 360 | Chase clock, never pauses. Owner: the ghost chases 3x faster (CHASE_SPEED = 3), so 6:00 of chase time is about 2:00 real |
+| CHASE_SPEED | 3 | Chase clock rate from the chase start (the ghost's speed) |
 | TAP_GAME_TIME_S | 10 | Stall 1 |
 | TAP_GAME_GAIN | 0.06 | Meter gain per tap (0 to 1) |
 | TAP_GAME_DECAY_PER_S | 0.10 | Meter drains when not tapping |
 | SPRINT_GAIN | 0.03 | ASSUMPTION, tune |
 | SPRINT_DECAY_PER_S | 0 | Owner: escape progress no longer drains over time |
 | CHASE_TAP_PX | 12 | ASSUMPTION. Chase runs to stalls 3-5: px run per tap (world catches up at CHASE_RUN_PX_S = 120) |
-| FINAL_CHASE_SPEED | 3 | Final sprint (owner): red-eyed chaser comes 3x faster (the chase clock runs 3x) |
+| FINAL_CHASE_SPEED | 5 | Final sprint (owner): red-eyed chaser comes 5x faster (the chase clock runs 5x) |
 | WALK_SPEED_PX_S | 24 | ASSUMPTION. Walk before stalls 1 and 2 (run frames, slower) |
 | WALK_SEGMENT_S | 6 | |
 | RUN_SEGMENT_S | 10 | Sets the distance between stalls 3, 4, 5 (10 s x 48 px/s = 480 px); the player taps to cover it |
@@ -85,11 +86,11 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 | S1 Stall 1 (Krahang) | Dialogue; when the last page finishes typing, shake ~0.5 s, then the tap game starts by itself: the Krahang leaps from its stall onto the bird's back, tap to fill the meter within TAP_GAME_TIME_S | WALK2 (Krahang flung away) | GAME_OVER |
 | WALK2 | As WALK1, to stall 2 | S2 | none |
 | S2 Stall 2 (jar ghost) | Dialogue while the jar shows its open-with-ghost frames; shake ~0.5 s, then the jar game on the stall counter: two jars, one ghost, one letter; reveal, shuffle, pick. No pick time limit (ASSUMPTION) | Letter jar: S3 | Ghost jar: jump scare, GAME_OVER |
-| S3 Letter and chase start | Letter panel is read. Chase intro cutscene: the chaser jumps in (open mouth, red flash, shake), says the red line, the bird looks back scared, the ghost floats in close (stage 0). Then the chase starts and the 2:00 timer starts | S4 | timer 0: GAME_OVER |
+| S3 Letter and chase start | Letter panel is read. Chase intro cutscene: the chaser jumps in (open mouth, red flash, shake), says the red line, the bird looks back scared, the ghost floats in close (stage 0). Then the chase starts and the chase timer starts (3x) | S4 | timer 0: GAME_OVER |
 | S4 Stall 3 | Tap to run across the street to stall 3, ticket dialogue (date-based), reply choice | Polite: S5 | Rude or timer 0: GAME_OVER |
 | S5 Stall 4 | Tap to run, "almost there" dialogue, reply choice | Polite: S6 | Rude or timer 0: GAME_OVER |
 | S6 Stall 5 | Tap to run, costume contest dialogue, urgent call to tap. No choice | After last page: S7 | timer 0: GAME_OVER |
-| S7 Final sprint | The chaser's eyes turn red and it comes 3x faster; tap to run to the white light path | Meter full with time left: run into the light, whiteout, scene 3 | Timer 0: GAME_OVER |
+| S7 Final sprint | The chaser's eyes turn red and it comes 5x faster; tap to run to the white light path | Meter full with time left: run into the light, whiteout, scene 3 | Timer 0: GAME_OVER |
 | GAME_OVER | Caught sequence (chaser open-mouth frame, about 1 s), then Game over screen with one button | home page | |
 
 ## 7. Mechanics
@@ -120,7 +121,7 @@ Fonts: scene 1's Thai labels list "Serithai" first and fall back to Kanit (Googl
 - Atmosphere: drifting fog over the ground band and a black gradient from the top and bottom edges, leaving the centre third of the screen (y 107-213) at normal lighting (fx_fog, fx_vignette). During the stall 1 and 2 minigames the scene fades dark (MINIGAME_DIM_*) with the characters lit above it, and fades back when the minigame ends.
 - Background follows the real route (ASSUMPTION for the split): inside the soi until stall 4, then the soi exit and the street with a 7-Eleven-style shop for stall 5 and the sprint, then the white light entrance.
 - The chaser is behind the player on the RIGHT and faces left. Its distance follows the chase, from the same two progressions as the timer bar: the bird's run progress minus the chaser's (elapsed chase time), scaled so it starts at x 170. Tapping ahead pushes it back (its centre stops at the screen edge, so it stays in view); waiting or reading lets it creep up onto the bird's back; when its progress reaches the bird's, the bird is caught (Game over). It glides to its distance, growls each time it gets 10 px closer, and opens its mouth when within 28 px or in the last 15 s. Camera shakes are gentle (constants: 0.25-0.8% of the screen width); in the last 15 s one small pulse per heartbeat.
-- Final sprint: the chaser switches to its red-eyed sheet (chaser_red.png, `tools/chaser_red_eyes.py` recolours only the pupils and the dark sockets around them) and the chase clock runs FINAL_CHASE_SPEED (3x), so the chaser closes in and the time runs out 3x faster: about 5 taps a second keeps level with it. Progress maps to scroll; full progress reaches the light; bird fades to a white silhouette, whiteout (about 1 s), then scene 3.
+- Final sprint: the chaser switches to its red-eyed sheet (chaser_red.png, `tools/chaser_red_eyes.py` recolours only the pupils and the dark sockets around them) and the chase clock runs FINAL_CHASE_SPEED (5x, up from the chase's 3x), so the chaser closes in and the time runs out faster. The last-seconds effects (heartbeat, ticks, open mouth) use real seconds. Progress maps to scroll; full progress reaches the light; bird fades to a white silhouette, whiteout (about 1 s), then scene 3.
 - Timer bar (120 x 8) with chaser icon (moves with time) and bird icon (moves with run progress).
 
 ### 7.5 Stall 3 ticket text by date
@@ -155,7 +156,7 @@ All sound is synthesized in the browser with Web Audio (`src/audio/`): no audio 
 - Switches: sound is ON by default (owner's call; scene 1 on its own starts silent). Browsers only let audio start in a tap, so it is heard from the player's first tap anywhere; in the full game that first tap also switches scene 1's speaker on, so its own button sounds play. Scene 1's speaker is the master switch; scene 2 shows the same speaker top right (all sound) and a note top left (music on/off). Switching in scene 2 also switches scene 1's speaker when the player goes back home. Buttons have 44 CSS px hit areas and are not game taps.
 - Channels: effects, music, ambience, through one limiter. Jumpscares dip the music and ambience.
 - Ambience: night wind and crickets on every screen until the whiteout.
-- Music (A minor pentatonic music box): `title` on scene 1's home and select, `calm` for the angel and the first walk, `funky` from stall 1 (fun horror funk: swung bassline, clav, organ lick, theremin) through stall 2, then `chase` from the moment the chaser appears: scary and intense (tritone drone, Phrygian bass pulse, four-on-the-floor, dissonant stabs, diminished choir, screech lead), tempo 140 rising to 172 and more drums as the 2:00 runs out. No music on the Game over screen or after the light.
+- Music (A minor pentatonic music box): `title` on scene 1's home and select, `calm` for the angel and the first walk, `funky` from stall 1 (fun horror funk: swung bassline, clav, organ lick, theremin) through stall 2, then `chase` from the moment the chaser appears: scary and intense (tritone drone, Phrygian bass pulse, four-on-the-floor, dissonant stabs, diminished choir, screech lead), tempo 140 rising to 172 and more drums as the chase clock runs out. No music on the Game over screen or after the light.
 - Effects: buttons (click, reply buttons, sound buttons), taps (pitch rises with the meter), chatbox (open whoosh, typewriter voice per speaker: angel, stall ghosts, the chaser, and a page click), Jayimpacts (poof in and out, sparkle arpeggio, and while she is on screen a faint, quiet aura shimmer under the music; the glints themselves are silent), foley (footsteps on the run animation's foot frames, slower when walking; pre-game shake rumble; Krahang leap, landing, fling and feathers; jar rattles, swaps and ghost moan; letter chime and paper), chase (chaser closing in, heartbeat in the last 15 s, clock ticks in the last 10 s), jumpscares (ghost jar, the chaser's entrance, caught), endings (light swell, Game over stinger, scene 3 chime). Scene 1 keeps its own button sounds.
 
 ## 8. Script (exact text)

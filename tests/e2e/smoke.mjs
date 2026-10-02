@@ -142,7 +142,7 @@ if (args.includes('--win')) {
   check(r.chaserAfter < r.chaserBefore, `chaser creeps closer while the bird waits (x ${r.chaserBefore} -> ${r.chaserAfter})`);
   check(report.chaserAfterRun > r.chaserAfter && report.chaserAfterRun <= 180, `chaser falls back when the bird runs ahead, staying in view (x ${r.chaserAfter} -> ${report.chaserAfterRun})`);
   check(report.sprintIdle && report.sprintIdle.before > 0 && report.sprintIdle.after === report.sprintIdle.before, `final sprint: progress does not drain when not tapping ${JSON.stringify(report.sprintIdle)}`);
-  check(report.sprint?.eyes === 'chaser_red' && report.sprint?.rate === 3, `final sprint: red-eyed chaser, chase clock 3x ${JSON.stringify(report.sprint)}`);
+  check(report.sprint?.eyes === 'chaser_red' && report.sprint?.rate === 5, `final sprint: red-eyed chaser, chase clock 5x ${JSON.stringify(report.sprint)}`);
   clearInterval(watch);
   const heard = new Set(await page.evaluate(() => window.__audio.log));
   const want = ['angel_poof', 'angel_appear', 'aura', 'chat_open', 'type_blip', 'page_next', 'step', 'shake_rumble', 'krahang_leap', 'krahang_land',

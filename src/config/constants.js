@@ -29,7 +29,11 @@ export const CSS = {
 };
 
 // ---- Section 5 constants ----
-export const CHASE_TIME_S = 120; // never pauses
+// Chase clock (owner): the ghost chases CHASE_SPEED (3x) faster all chase and
+// FINAL_CHASE_SPEED (5x) in the final sprint, so the clock is 6:00 of chase time
+// (about 2:00 real at 3x). Never pauses.
+export const CHASE_TIME_S = 360;
+export const CHASE_SPEED = 3;
 export const TAP_GAME_TIME_S = 10;
 export const TAP_GAME_GAIN = 0.06;
 export const TAP_GAME_DECAY_PER_S = 0.1;
@@ -40,7 +44,7 @@ export const SPRINT_DECAY_PER_S = 0; // owner: escape progress no longer drains 
 // progress never goes back. ASSUMPTION, tune.
 export const CHASE_TAP_PX = 12;
 export const CHASE_RUN_PX_S = 120;
-export const FINAL_CHASE_SPEED = 3; // final sprint (owner): red-eyed chaser comes 3x faster, the chase clock runs 3x
+export const FINAL_CHASE_SPEED = 5; // final sprint (owner): red-eyed chaser comes 5x faster, the chase clock runs 5x
 export const RUN_SEGMENT_S = 10;
 export const JAR_REVEAL_MS = 1200;
 export const JAR_SWAPS = 6; // ASSUMPTION
@@ -48,9 +52,9 @@ export const JAR_SWAP_MS_START = 500; // ASSUMPTION
 export const JAR_SWAP_MS_END = 350; // ASSUMPTION
 export const JAR_PICK_TIME_LIMIT_S = null; // ASSUMPTION: no time limit on picking (open item 6)
 export const TYPEWRITER_CPS = 30; // counted in grapheme clusters so Thai marks never appear alone
-export const SHAKE_LAST_S = 15;
+export const SHAKE_LAST_S = 15; // real seconds left (heartbeat, open mouth)
 export const HEARTBEAT_MS = 800; // heartbeat sound in the last SHAKE_LAST_S seconds
-export const TICK_LAST_S = 10; // clock ticks in the last seconds of the chase
+export const TICK_LAST_S = 10; // clock ticks in the last real seconds of the chase
 
 // ---- Layout (spec 7.4, all ASSUMPTIONS, tune visually) ----
 export const GROUND_Y = 240; // same in every background: stalls and stall ghosts stand here (the gutter line)

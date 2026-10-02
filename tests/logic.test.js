@@ -186,6 +186,7 @@ test('chase timer: setRate makes the rest of the time run faster, time spent is 
   assert.equal(t.remainingS(), 60);
   now += 20_000; // 20 s at 1.5x = 30 s of chase time
   assert.equal(t.remainingS(), 30);
+  assert.equal(t.remainingRealS(), 20); // 30 s of chase time left at 1.5x = 20 real s
   now += 20_000;
   assert.equal(t.remainingS(), 0);
   assert.ok(t.expired);

@@ -459,6 +459,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     // The chase starts: bird faces forward, 2:00 timer starts (same rule, never pauses).
     this.bird.lookBack(false);
     this.timer.start();
+    this.timer.setRate(C.CHASE_SPEED); // the ghost chases 3x faster (owner); clock is 6:00 of chase time
     audio.mood('chase'); // already playing since the chaser appeared
     this.timerBar.setVisible(true);
     // Scale for the chaser's distance: at this moment it is at CHASER_START_X.
@@ -607,7 +608,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     return this.win();
   }
 
-  /** Final sprint: the chaser's eyes turn red and it comes FINAL_CHASE_SPEED (3x) faster (the clock runs 3x). */
+  /** Final sprint: the chaser's eyes turn red and it comes FINAL_CHASE_SPEED (5x) faster (the clock runs 5x). */
   finalChase() {
     this.redEyes = true;
     this.timer.setRate(C.FINAL_CHASE_SPEED);
@@ -759,19 +760,19 @@ export class TrickOrTreatScene extends Phaser.Scene {
       return;
     }
     this.updateChaser(time, remaining, dt);
-    this.chaseSound(remaining);
+    this.chaseSound(remaining, this.timer.remainingRealS());
   }
 
   /** Chase music speeds up as time runs out; heartbeat in the last 15 s, ticks in the last 10. */
-  chaseSound(remaining) {
+  chaseSound(remaining, realLeft) {
     audio.intensity(1 - remaining / C.CHASE_TIME_S);
-    if (remaining <= C.SHAKE_LAST_S && this.time.now - (this.lastBeat ?? 0) >= C.HEARTBEAT_MS) {
+    if (realLeft <= C.SHAKE_LAST_S && this.time.now - (this.lastBeat ?? 0) >= C.HEARTBEAT_MS) {
       this.lastBeat = this.time.now;
       audio.sfx('heartbeat');
       this.cameras.main.shake(150, C.SHAKE_INTENSITY); // one small pulse per heartbeat
     }
-    const sec = Math.ceil(remaining);
-    if (remaining <= C.TICK_LAST_S && sec !== this.lastTickSec) {
+    const sec = Math.ceil(realLeft);
+    if (realLeft <= C.TICK_LAST_S && sec !== this.lastTickSec) {
       this.lastTickSec = sec;
       audio.sfx('timer_tick');
     }
@@ -799,7 +800,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     }
     this.gapBand = band;
     // Open mouth when it is close, or in the last seconds.
-    const mouth = gap <= C.CHASER_MOUTH_GAP_PX || remaining <= C.SHAKE_LAST_S;
+    const mouth = gap <= C.CHASER_MOUTH_GAP_PX || this.timer.remainingRealS() <= C.SHAKE_LAST_S;
     if (mouth && !this.mouthOpen) c.stop().setFrame(FRAMES.chaser.openMouth);
     if (!mouth && this.mouthOpen) c.play(this.redEyes ? 'chaser_red_float' : 'chaser_float');
     this.mouthOpen = mouth;

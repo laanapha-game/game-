@@ -134,5 +134,5 @@ Another host can still embed scene 2 with `startScene2({ parent, character, onWi
 - The chase timer starts when the chaser appears, after the letter is read (state table S3). It uses wall-clock time, so it keeps running even when the tab is in the background.
 - Timer bar: the chaser icon moves with time, the bird icon moves with run progress, and the goal is the left end.
 - Soi exit is placed between stalls 4 and 5. The chase runs to stalls 3-5 and the final sprint are tapped (12 px per tap,
-  10.8 in the sprint, no drain over time); in the sprint the chaser has red eyes and the chase clock runs 3x.
+  10.8 in the sprint, no drain over time); the chase clock (6:00) runs 3x, 5x in the sprint, where the chaser has red eyes.
 - Reply order is fixed (polite on top). The jar pick has no time limit.
