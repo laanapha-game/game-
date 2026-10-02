@@ -228,6 +228,26 @@ for (const id of ids) {
   await ctx.close();
 }
 
+// Home screen links (owner edit): the event's Instagram, Jayimpacts' and tickets.
+if (!only) {
+  const { ctx, page, errors } = await open();
+  await page.evaluate(() => {
+    window.__opened = [];
+    window.open = (u) => (window.__opened.push(u), { opener: 1 });
+  });
+  for (const [x, y] of [[46, 278], [134, 278], [152, 255]]) {
+    await tap1(page, x, y);
+    await page.waitForTimeout(250);
+  }
+  const opened = await page.evaluate(() => window.__opened);
+  check(
+    JSON.stringify(opened) === JSON.stringify(['https://www.instagram.com/laanapha/', 'https://www.instagram.com/jayimpacts/', 'https://www.hellobooku.com/laanapha2026']),
+    `home: IG LAANAPHA, IG JAYIMPACTS and tickets open their links (${opened.join(', ')})`,
+  );
+  check(errors.length === 0, `no console errors on home links (${errors.join(' | ')})`);
+  await ctx.close();
+}
+
 // Scene 1's own sounds: oscillators on contexts other than scene 2's engine.
 const scene1Oscillators = (page) =>
   page.evaluate(() => [...window.__osc.entries()].filter(([c]) => c !== window.__audio.ctx).reduce((n, [, v]) => n + v, 0));
