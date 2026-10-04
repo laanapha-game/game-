@@ -21,7 +21,11 @@ function walk(from, to) {
   const p = { ...from };
   for (const wp of path) {
     for (let i = 0; i < 2000 && L.dist(p, wp) > 0.6; i++) {
+      // Line up on a nearly reached axis, as the autopilot does (World.autoStep).
+      if (Math.abs(wp.x - p.x) < 0.5 && L.boxFree(wp.x, p.y, PLAYER_BOX)) p.x = wp.x;
+      if (Math.abs(wp.y - p.y) < 0.5 && L.boxFree(p.x, wp.y, PLAYER_BOX)) p.y = wp.y;
       const d = L.dist(p, wp);
+      if (d <= 0.6) break;
       const step = Math.min(0.5, d);
       if (!slide(p, ((wp.x - p.x) / d) * step, ((wp.y - p.y) / d) * step, PLAYER_BOX)) break;
     }
@@ -87,7 +91,7 @@ test('spread: positions move by LS, sizes do not', () => {
 });
 
 test('talk targets (the team, Jayimpacts and the stall row): each opens its dialogue and counts once; no coupon per talk', () => {
-  assert.deepEqual(TALK_TARGETS, ['po', 'kaiching', 'peay', 'aomsin', 'nemo', 'jay', STALL_ROW.key]);
+  assert.deepEqual(TALK_TARGETS, ['po', 'kaiching', 'peay', 'aomsin', 'nemo', 'nuea', 'jay', STALL_ROW.key]);
   const w = new World({ skipWelcome: true });
   for (const key of TALK_TARGETS) {
     const t = w.startTalk(key);
@@ -271,13 +275,14 @@ test('after all seven places: allGoals once, and finish() ends without the exit 
 });
 
 test('only people and the player: Jayimpacts and the team in his model, no birds, no band', () => {
-  assert.deepEqual(NPCS.map((n) => n.costume), ['team_po', 'team_kaiching', 'team_peay', 'team_aomsin', 'team_nemo', 'jayimpacts']);
+  assert.deepEqual(NPCS.map((n) => n.costume), ['team_po', 'team_kaiching', 'team_peay', 'team_aomsin', 'team_nemo', 'team_nuea', 'jayimpacts']);
   const team = JSON.parse(readFileSync('src/assets/art/characters/team.json', 'utf8'));
   const jay = JSON.parse(readFileSync('src/assets/art/characters/jayimpacts.json', 'utf8'));
   assert.deepEqual(team.cell, jay.cell, 'same cell as Jayimpacts');
   assert.deepEqual(team.frames, jay.frames, 'same frames');
   assert.deepEqual(team.anim, jay.anim, 'same anims');
-  assert.deepEqual(team.characters.map((c) => c.id), ['team_po', 'team_peay', 'team_kaiching', 'team_aomsin', 'team_nemo']);
+  assert.deepEqual(team.characters.map((c) => c.id), ['team_po', 'team_peay', 'team_kaiching', 'team_aomsin', 'team_nemo', 'team_nuea']);
+  for (const c of team.characters) assert.ok(c.source?.startsWith('assets/incoming/scene_3_sprite/'), `${c.id}: from the owner's Drive art`);
   assert.deepEqual(MUSICIANS, []);
 });
 

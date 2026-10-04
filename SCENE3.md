@@ -63,27 +63,30 @@ stall touch point and the exit can still be reached by walking.
 
 ## Characters
 
-Only people and the player (owner): Jayimpacts (beside the Rotary stall) and the team from the owner's
-Drive folder "Team Asset", drawn in Jayimpacts' model by `tools/team_sprite.py` (same 40 x 56 cell,
-frames, anims, outline and 3/4 side view; looks per person in `tools/team_specs.py`, read off their
-photos; the photos are waist-up, so trousers and shoes are a guess). Each also has a 64 x 64 portrait
-(neutral, talk) shown over their dialogue, like Jayimpacts'. Preview: `docs/scene3/team_contact_sheet.png`.
+Only people and the player (owner): Jayimpacts (beside the Rotary stall) and the team. The team's sprites are the
+owner's art from the Drive folder เกมลานนภา/scene_3_sprite (downloaded unchanged to `assets/incoming/scene_3_sprite/`),
+cut into Jayimpacts' model by `tools/team_from_drive.py`: the same 40 x 56 cell, frames and anims (side idle x2, walk x4,
+wave x2, facing left; front idle x2, blink, wave x2), the figure 51 px tall with its feet on the bottom row, and a
+64 x 64 portrait (neutral, talk; one portrait in four of the sheets, so it is used for both) shown over their dialogue.
+Preview: `docs/scene3/team_contact_sheet.png`.
 
-| Who | Where | Look |
+| Who | Where | Drive sheet |
 |---|---|---|
-| Po | behind the registration desk | fringe, round gold glasses, light grey tee |
-| Kaiching | east of the desk | messy black hair, black tee |
-| Peay | between the drinks and pizza stalls | low bun, brown polo |
-| Aomsin | the banquet tables' middle aisle | short crop, grey long-sleeve with a white print, cross necklace |
-| Nemo | the beanbags in front of the screen | thick curtain bangs, white shirt |
+| Po | behind the registration desk | sprite_Po.png |
+| Kaiching | east of the desk | sprite_Kaiching.png |
+| Peay | between the drinks and pizza stalls | sprite_Peay.png |
+| Aomsin | the banquet tables' middle aisle | sprite_Aomsin.png |
+| Nemo | the beanbags in front of the screen | sprite_Nemo.png |
+| Nuea | the band corner's rug (added with the Drive art) | sprite_Nuea.png |
 
-Talk targets: the five, Jayimpacts and the lane stall row. Each counts once; talking with all seven gives one
+Talk targets: the six, Jayimpacts and the lane stall row. Each counts once; talking with all eight gives one
 special-prize coupon (owner; no coupon per talk), and the team announces later what it is. Nemo tells players the
 game keeps improving during ticket sales and asks for feedback by DM; his last page has an IG button to @laanapha.
-Po, Peay and Aomsin's lines and roles are placeholders (`TODO(owner)` in `src/scene3/data/script.js`); Kaiching keeps
+Po, Peay, Aomsin and Nuea's lines and roles are placeholders (`TODO(owner)` in `src/scene3/data/script.js`); Kaiching keeps
 the prototype's lines. The ghosts outside talk too (they do not count). The bird-costume staff and the band were removed earlier; their lines are still in `NPC_LINES`.
 
-Regenerate the team: `python3 tools/team_sprite.py --sheet docs/scene3/team_contact_sheet.png`.
+Regenerate the team after new Drive art: `pip install pillow numpy scipy && python3 tools/team_from_drive.py`
+(`tools/team_sprite.py`, the earlier drawn versions, would overwrite them).
 
 ## After all seven places
 

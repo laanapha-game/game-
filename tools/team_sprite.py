@@ -1,4 +1,7 @@
-"""Team characters in Jayimpacts' model (owner: PO, PEAY, KAICHING, AOMSIN, NEMO from the
+"""SUPERSEDED: the team now uses the owner's Drive art (tools/team_from_drive.py). Running this
+overwrites those sheets with the earlier drawn versions.
+
+Team characters in Jayimpacts' model (owner: PO, PEAY, KAICHING, AOMSIN, NEMO from the
 Drive folder "Team Asset"). Same cell (40 x 56 design px, feet on row 55), same frames and
 anims as tools/jayimpacts_sprite.py, same proportions (head rows 7-33, face rows 18-32,
 eyes on rows 24-27, top rows 33-46, legs 46-55, the "side" view a 3/4 turn to the left)

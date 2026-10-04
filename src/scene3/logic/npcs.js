@@ -2,9 +2,10 @@
 // Positions are base units (see layout.js) and spread like every other anchor.
 // Speaker tags, dialogue and costumes (scene 1's birds) follow the prototype's NPC_DEFS.
 // Owner: the bird-costume characters are gone; only people and the player remain: Jayimpacts
-// and the team (Po, Peay, Kaiching, Aomsin, Nemo), drawn in his model by tools/team_sprite.py.
+// and the team (Po, Peay, Kaiching, Aomsin, Nemo, Nuea), from the owner's Drive art
+// (scene_3_sprite) by tools/team_from_drive.py, in his model.
 // The birds' lines stay in data/script.js (NPC_LINES) in case they come back.
-import { SHOPS, DESK, TABLES, LANE_TOUCH, LANE_STALLS, GHOST_SPOTS, spread } from './layout.js';
+import { SHOPS, DESK, TABLES, BAND, LANE_TOUCH, LANE_STALLS, GHOST_SPOTS, spread } from './layout.js';
 import { NPC_LINES, NPC_NAMES, STALL_ROW_PAGES, STALL_ROW_SPEAKER, GHOST_NAMES, GHOST_PAGES } from '../data/script.js';
 
 /**
@@ -18,6 +19,7 @@ export const NPCS = [
   { key: 'peay', name: 'Peay', costume: 'team_peay', at: { x: SHOPS[1].x + 22, y: SHOPS[1].y - 3 } }, // between the drinks and pizza stalls
   { key: 'aomsin', name: 'Aomsin', costume: 'team_aomsin', at: { x: (TABLES[1].x + TABLES[2].x) / 2, y: TABLES[5].y + 6 } }, // the banquet tables' middle aisle
   { key: 'nemo', name: 'Nemo', costume: 'team_nemo', at: spread({ x: 150, y: 132 }), link: 'eventInstagram' }, // the beanbags in front of the screen; feedback by DM to the event's IG
+  { key: 'nuea', name: 'Nuea', costume: 'team_nuea', at: { x: BAND.rug.x + 14, y: BAND.rug.y - 2 } }, // the band corner's rug (owner's Drive art)
   { key: 'jay', name: 'Jayimpacts', costume: 'jayimpacts', at: { x: SHOPS[4].x + 20, y: SHOPS[4].y - 3 }, link: 'instagram' }, // beside the Rotary stall
 ].map((n) => ({ ...n, short: n.name, name: NPC_NAMES[n.key], pages: NPC_LINES[n.key] })); // short: the name plate over the head
 

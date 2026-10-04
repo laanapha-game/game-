@@ -194,11 +194,13 @@ if (PROD) {
     });
   /** The act button is AUTO only when no one is in talk range: step away first (hold-to-walk). */
   async function resumeAuto() {
-    for (let i = 0; i < 8 && (await s3()).talkable; i++) {
+    const away = [[0.5, 0.85], [0.15, 0.5], [0.85, 0.5], [0.5, 0.2], [0.2, 0.8], [0.8, 0.8]];
+    for (let i = 0; i < away.length * 2 && (await s3()).talkable; i++) {
       const r = await page.evaluate(() => document.querySelector('#game canvas').getBoundingClientRect());
-      await page.mouse.move(r.left + r.width * (i % 2 ? 0.25 : 0.75), r.top + r.height * (i % 4 < 2 ? 0.7 : 0.4));
+      const [fx, fy] = away[i % away.length];
+      await page.mouse.move(r.left + r.width * fx, r.top + r.height * fy);
       await page.mouse.down();
-      await page.waitForTimeout(600);
+      await page.waitForTimeout(1000);
       await page.mouse.up();
     }
     await tapG(111, 309); // AUTO
@@ -299,7 +301,7 @@ if (PROD) {
   let walked = 0;
   let placed = 0;
   const targets = await page.evaluate(() => window.__scene3.world.progress.targets);
-  for (const key of ['stallRow', 'po', 'kaiching', 'peay', 'jay', 'aomsin', 'nemo'].filter((k) => targets.includes(k))) {
+  for (const key of ['stallRow', 'po', 'kaiching', 'peay', 'jay', 'aomsin', 'nemo', 'nuea'].filter((k) => targets.includes(k))) {
     if ((await s3()).talked.includes(key)) continue;
     const p = await where(key);
     let ok = false;
@@ -326,7 +328,19 @@ if (PROD) {
     }
     if (ok) walked++;
     else {
-      await page.evaluate((s) => window.__scene3.teleport(s.x, s.y), p.stand);
+      // Next to them on free ground: the first spot the player can move from.
+      await page.evaluate((s) => {
+        const w = window.__scene3.world;
+        for (const [dx, dy] of [[0, 0], [-14, -8], [14, -8], [0, -18], [-12, 4], [12, 4]]) {
+          window.__scene3.teleport(s.x + dx, s.y + dy);
+          const at = { x: w.player.x, y: w.player.y };
+          w.update(0.05, { dir: { x: 0, y: 1 } });
+          w.update(0.05, { dir: { x: 0, y: -1 } });
+          const moved = w.player.x !== at.x || w.player.y !== at.y;
+          window.__scene3.teleport(at.x, at.y);
+          if (moved) return;
+        }
+      }, p.stand);
       await page.waitForTimeout(300);
       await tapG(111, 309); // TALK
       await page.waitForTimeout(200);

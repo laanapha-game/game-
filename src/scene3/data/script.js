@@ -80,6 +80,7 @@ export const NPC_NAMES = {
   peay: 'Peay · ทีมงานลานนภา',
   aomsin: 'Aomsin · ทีมงานลานนภา',
   nemo: 'Nemo · ทีมงานลานนภา',
+  nuea: 'Nuea · ทีมงานลานนภา',
   captain: 'Captain',
 };
 export const NPC_LINES = {
@@ -101,6 +102,7 @@ export const NPC_LINES = {
   aomsin: ['หวัดดีครับ Aomsin ทีมงานลานนภาครับ', 'อย่าลืมแวะซุ้มผีด้านนอกงานด้วยนะ มีผีรอทักทายอยู่'],
   // owner: Nemo tells players the game keeps improving; the last page gets the IG button (laanapha).
   nemo: ['สวัสดีครับ Nemo ทีมงานลานนภาครับ', 'เกมนี้จะยังถูกพัฒนาขึ้นเรื่อยๆ ระหว่างช่วงขายบัตรนี้นะครับ', 'สามารถเข้าไป Feedback กันได้ผ่าน DM Instagram Laanapha เลยครับ'],
+  nuea: ['สวัสดีครับ Nuea ทีมงานลานนภาครับ', 'เดินสำรวจให้ครบทุกจุด แล้วคุยกับทีมงานให้ครบนะครับ'], // TODO(owner): Nuea's own lines
   captain: ['Captain รายงานตัว! ข้าเดินตรวจงานอยู่', 'โปรแกรมหลักเริ่ม 1 ทุ่มครึ่ง ห้ามพลาด', 'บัตรราคาขึ้นตามช่วงวัน จองเร็วถูกกว่านะ'],
 };
 
@@ -134,6 +136,7 @@ export const CREDITS = [
   { p: true, who: 'team_peay', n: 'Peay', r: 'ทีมงาน' },
   { p: true, who: 'team_aomsin', n: 'Aomsin', r: 'ทีมงาน' },
   { p: true, who: 'team_nemo', n: 'Nemo', r: 'ทีมงาน' },
+  { p: true, who: 'team_nuea', n: 'Nuea', r: 'ทีมงาน' },
   { p: true, who: 'slasher', acc: 'cap', n: 'Captain', r: 'ทีมงาน' },
   { t: 'น้องบาส · ดีเจต้น · เชฟตูน' },
   { t: 'น้าเบียร์ · น้องข้าวปั้น · น้องกอล์ฟ' },
