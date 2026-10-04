@@ -89,13 +89,13 @@ for (const size of [
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${OUT}/first_screen_day.png` });
   let pages = 0;
-  for (let i = 0; i < 12 && (await state(page)).dlg; i++) {
+  for (let i = 0; i < 14 && (await state(page)).dlg; i++) {
     const st = await state(page);
     ok(st.lines.length <= 3, `welcome box ${i + 1}: ${st.lines.length} lines`);
     pages++;
     await tapDesign(page, 90, 260);
   }
-  ok(pages === 6, `six welcome pages (${pages})`);
+  ok(pages === 7, `seven welcome pages (${pages})`);
   s = await state(page);
   ok(s.welcome === 'walkOut', 'Jayimpacts walks back out');
   await tapDesign(page, 90, 160);

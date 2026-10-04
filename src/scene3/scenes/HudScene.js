@@ -9,7 +9,7 @@ import { Dialogue } from '../ui/Dialogue.js';
 import { GOALS, LABELS, chipText, CHIP_DONE, WELCOME_PAGES, WELCOME_SPEAKER, AFTER_WELCOME_BANNER, VOUCHER_BANNER, PRIZE_BANNER, PRIZE_CHECK } from '../data/script.js';
 import { ZOOM_LEVELS, MIN_TOUCH_CSS_PX, PLATE_RANGE, URLS, STALL_BOOKING, TALK_RANGE } from '../config.js';
 import { ZONES, dist, inZone } from '../logic/layout.js';
-import { STALL_ROW } from '../logic/npcs.js';
+import { STALL_ROW, GHOSTS } from '../logic/npcs.js';
 import { audio } from '../../audio/engine.js';
 import { openUrl } from '../ui/openUrl.js';
 
@@ -40,6 +40,7 @@ export class HudScene extends Phaser.Scene {
     };
     fit();
     this.registry.events.on('changedata-viewZoom', fit);
+    cam.fadeIn(1600, 255, 255, 255); // the white light of scene 2 fades off
 
     this.g = this.add.graphics().setDepth(10);
     this.texts = {};
@@ -189,6 +190,10 @@ export class HudScene extends Phaser.Scene {
       const cy = n.y - 6; // body centre
       const d = Math.hypot(wp.x - cx, wp.y - cy);
       if (d <= 9 && (!best || d < best.hd)) best = { key: n.key, x: n.x, y: n.y, hd: d, d: dist(w.player, n) };
+    }
+    for (const g of GHOSTS) {
+      const d = Math.hypot(wp.x - g.x, wp.y - (g.y - 7));
+      if (d <= 9 && (!best || d < best.hd)) best = { key: g.key, x: g.x, y: g.y, hd: d, d: dist(w.player, g) };
     }
     if (!best) {
       for (const t of STALL_ROW.touch) {
@@ -395,13 +400,14 @@ export class HudScene extends Phaser.Scene {
       .filter((t) => t.key !== STALL_ROW.key && t.d <= PLATE_RANGE)
       .sort((a, b) => a.d - b.d)[0];
     if (near) {
-      const n = w.npc(near.key);
+      const n = w.npc(near.key) ?? GHOSTS.find((g) => g.key === near.key);
+      const plateText = n.def ? n.def.short : n.short;
       const ws = this.worldScene();
       const cam = ws.cameras.main;
       const z = ws.designZoom;
       const sx = (n.x - cam.worldView.x) * z;
       const sy = (n.y - 14 - cam.worldView.y) * z;
-      this.plate.setText(n.def.short).setPosition(Math.round(sx), Math.round(sy - 16 - (z >= 2 ? 6 : 0))).setVisible(sy > 24 && sy < 290);
+      this.plate.setText(plateText).setPosition(Math.round(sx), Math.round(sy - 16 - (z >= 2 ? 6 : 0))).setVisible(sy > 24 && sy < 290);
       if (this.plate.visible) {
         const pw = Math.ceil(this.plate.width) - 8 + 6;
         g.fillStyle(0x000000, 0.75).fillRect(Math.round(sx - pw / 2), this.plate.y + 4, pw, 13);

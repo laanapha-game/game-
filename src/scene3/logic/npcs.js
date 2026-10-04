@@ -2,8 +2,8 @@
 // Positions are base units (see layout.js) and spread like every other anchor.
 // Speaker tags, dialogue and costumes (scene 1's birds) follow the prototype's NPC_DEFS.
 // TODO(owner): real looks for the team (the costumes are still placeholders).
-import { spread, SHOPS, DESK, BAND, LANE_TOUCH, LANE_STALLS, TABLES, R } from './layout.js';
-import { NPC_LINES, NPC_NAMES, STALL_ROW_PAGES, STALL_ROW_SPEAKER } from '../data/script.js';
+import { spread, SHOPS, DESK, BAND, LANE_TOUCH, LANE_STALLS, TABLES, R, GHOST_SPOTS } from './layout.js';
+import { NPC_LINES, NPC_NAMES, STALL_ROW_PAGES, STALL_ROW_SPEAKER, GHOST_NAMES, GHOST_PAGES } from '../data/script.js';
 
 const staff = (shop) => ({ x: shop.x, y: shop.y - shop.staffDy }); // feet on the counter top, inside the opening
 const base = (x, y) => spread({ x, y });
@@ -58,6 +58,9 @@ export const STALL_ROW = {
   touch: LANE_TOUCH,
   bangAt: { x: LANE_STALLS[2].x, y: LANE_STALLS[2].y - 30 },
 };
+
+/** The ghosts beside the stalls outside: talkable, but no voucher (not talk targets). */
+export const GHOSTS = GHOST_SPOTS.map((g) => ({ key: `ghost${g.number}`, number: g.number, name: GHOST_NAMES[g.number], short: GHOST_NAMES[g.number], pages: GHOST_PAGES, x: g.x, y: g.y }));
 
 /** The 14 talk targets: the thirteen characters and the stall row. */
 export const TALK_TARGETS = [...NPCS.map((n) => n.key), STALL_ROW.key];

@@ -2,7 +2,7 @@
 // canvas per look; everything else is a sprite sorted by its foot y. Camera follows the
 // player at one of five zoom levels. Input arrives from the HUD scene (HudScene.js).
 import Phaser from 'phaser';
-import { WORLD, OBJECTS, GUIDE_PATH, EXIT_ARROW, HOUSE_BASE, BAND, spread, dist } from '../logic/layout.js';
+import { WORLD, OBJECTS, GUIDE_PATH, EXIT_ARROW, HOUSE_BASE, BAND, GHOST_SPOTS, spread, dist } from '../logic/layout.js';
 import { MUSICIANS, STALL_ROW } from '../logic/npcs.js';
 import { drawGround } from '../ground.js';
 import { COSTUMES, GHOSTS, R, animKey } from '../assets.js';
@@ -116,6 +116,8 @@ export class WorldScene extends Phaser.Scene {
 
     this.applyNight(S.night);
     this.applyZoom(true);
+    // Arriving from scene 2's white light: the screen starts white and fades off.
+    this.cameras.main.fadeIn(1600, 255, 255, 255);
     this.registry.events.on('changedata-viewZoom', () => this.applyZoom(true));
     this.events.on('shutdown', () => this.registry.events.removeAllListeners('changedata-viewZoom'));
     this.time0 = 0;
@@ -141,19 +143,16 @@ export class WorldScene extends Phaser.Scene {
     void n;
   }
 
-  /** Scene 2 stall (back), its ghost inside the opening (cropped at the counter), the counter in front. */
+  /** Scene 2 stall, and its ghost standing beside it (to the right) with a small idle bob. */
   addGhostStall(o) {
     const g = GHOSTS[o.number];
     const s = 1 / CHAR_PX_PER_UNIT; // 1x design textures
-    this.add.image(o.x, o.y, `gs_stall_${g.stall}`).setOrigin(0.5, 1).setScale(s).setDepth(o.y - 0.3);
-    const ghost = this.add.sprite(o.x, 0, `ghost_${g.key}`, g.loop[0]).setOrigin(0.5, 0).setScale(CH_SCALE).setDepth(o.y - 0.2);
+    this.add.image(o.x, o.y, `gs_stall_${g.stall}`).setOrigin(0.5, 1).setScale(s).setDepth(o.y);
+    const spot = GHOST_SPOTS.find((x) => x.number === o.number);
+    const ghost = this.add.sprite(spot.x, spot.y, `ghost_${g.key}`, g.loop[0]).setOrigin(0.5, 1).setScale(CH_SCALE).setDepth(spot.y);
     ghost.play(`ghost_${g.key}`);
-    const top = o.y - 64 * DESIGN + 24 * DESIGN; // the top of the stall's opening
-    ghost.y = top;
-    const texH = ghost.frame.height;
-    ghost.setCrop(0, 0, ghost.frame.width, Math.min(texH, 40 * R)); // nothing below the stall's bottom edge
-    ghost.bob = { top, phase: o.number };
-    this.add.image(o.x, o.y, `gs_stall_${g.stall}_front`).setOrigin(0.5, 1).setScale(s).setDepth(o.y);
+    ghost.bob = { top: spot.y, phase: o.number };
+    this.add.image(spot.x, spot.y - 0.4, 'c_shadow').setScale(CH_SCALE).setDepth(-500);
     (this.ghosts ??= []).push(ghost);
   }
 

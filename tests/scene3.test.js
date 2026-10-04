@@ -132,7 +132,8 @@ test('welcome: plays once, tap skips the walk-in and the walk-out, Rotary Jayimp
   assert.equal(w.welcome.jay.anim, 'wave');
   assert.ok(Math.abs(L.dist(w.welcome.jay, w.player) - L.WELCOME.stopDistance) < 0.01, 'stops 17 units from the player');
   assert.equal(w.welcome.pages, WELCOME_PAGES);
-  assert.equal(WELCOME_PAGES.length, 6);
+  assert.equal(WELCOME_PAGES.length, 7);
+  assert.equal(WELCOME_PAGES[0], "เจ้าได้มาถึงแล้วที่ 'ลานนภา'");
   w.welcome.onPage(1);
   assert.equal(w.welcome.jay.anim, 'idle');
   w.welcome.dialogueDone();
@@ -159,6 +160,31 @@ test('welcome without taps: walks in, talks, walks back out of sight', () => {
   w.welcome.dialogueDone();
   for (let i = 0; i < 600 && r !== 'done'; i++) r = w.welcome.update(1 / 60);
   assert.equal(r, 'done');
+});
+
+test('the ghosts outside stand beside their stalls and talk, without vouchers', async () => {
+  const { GHOSTS } = await import('../src/scene3/logic/npcs.js');
+  const { GHOST_PAGES } = await import('../src/scene3/data/script.js');
+  assert.equal(GHOSTS.length, 5);
+  const w = new World({ skipWelcome: true });
+  for (const g of GHOSTS) {
+    const stall = L.GHOST_STALLS.find((s) => s.number === g.number);
+    assert.ok(g.x - stall.x >= stall.w / 2, 'beside the stall, not inside');
+    const end = walk(L.START, { x: g.x, y: g.y + 14 });
+    assert.ok(end && L.dist(end, g) <= TALK_RANGE, `ghost ${g.number} reachable`);
+    w.player.x = end.x;
+    w.player.y = end.y;
+    assert.equal(w.talkable()?.key, g.key);
+    const t = w.startTalk(g.key);
+    assert.deepEqual(t.pages, GHOST_PAGES);
+    assert.deepEqual(w.endTalk(), []);
+  }
+  assert.equal(w.progress.vouchers, 0);
+});
+
+test('the player starts on the soi in front of the entrance', () => {
+  assert.ok(L.START.x > L.R.lane[0] && L.START.x < L.R.lane[2]);
+  assert.ok(L.START.y > L.R.soi[1] && L.START.y < L.R.soi[3]);
 });
 
 test('special prize only after the last of the 14 targets, after its voucher', () => {

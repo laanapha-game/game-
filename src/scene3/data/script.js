@@ -7,6 +7,7 @@
 // ---- Opening welcome (final, Jay laughs โฮะๆ at the end) ----
 export const WELCOME_SPEAKER = 'Jayimpacts';
 export const WELCOME_PAGES = [
+  "เจ้าได้มาถึงแล้วที่ 'ลานนภา'", // owner: the player has arrived
   'สวัสดีครับ! ผม Jayimpacts ยินดีต้อนรับสู่งาน ลานนภา Halloween Fest ครับ',
   'เกมนี้เป็นส่วนหนึ่งของงานลานนภา Halloween Fest ที่จะจัด 24-25 ต.ค. นี้ครับ',
   'ขอบคุณที่มาเล่นกับเรานะครับ',
@@ -47,6 +48,11 @@ export const LABELS = {
 // ---- Lane stall row: one interaction for the five stalls (final) ----
 export const STALL_ROW_SPEAKER = 'ซุ้มเปิดจองพื้นที่';
 export const STALL_ROW_PAGES = ['ใครอยากมาเป็นส่วนหนึ่งของงาน สามารถจับจองพื้นที่เปิดซุ้มกับเราได้เลยครับ'];
+
+// ---- Ghosts at the stalls outside the entrance (owner): talkable, not part of the 14 talk targets ----
+// Names from scene 2 (scene2-spec open item 3).
+export const GHOST_NAMES = { 1: 'กระหัง', 2: 'ผีในไห', 3: 'ผีนางรำสุดสวย', 4: 'ซอมบี้แห่ง Cozy ราชพฤกษ์ 6', 5: 'ผีกุมารตัวน้อย' };
+export const GHOST_PAGES = ['จริงๆแล้วมีผีมากกว่านี้อีกนะ แต่เจ้าต้องมางานจริงจะได้เจอผีอีกเยอะเลย ชวนเพื่อนๆมากันด้วยนะ!'];
 
 // ---- Characters' dialogue and speaker tags: copied exactly from the prototype's NPC_DEFS ----
 export const NPC_NAMES = {

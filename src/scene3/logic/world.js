@@ -2,7 +2,7 @@
 // characters, talk targets, goal zones, exit, autopilot tour and the opening welcome.
 // The Phaser scene feeds input and draws the state; tests drive it directly.
 import { boxFree, ZONES, EXIT, START, WELCOME, dist, inZone, R, DESK, LANE_STALLS, SHOPS, TABLES, BAND, HOUSE_BASE, spread } from './layout.js';
-import { NPCS, STALL_ROW, TALK_TARGETS } from './npcs.js';
+import { NPCS, STALL_ROW, TALK_TARGETS, GHOSTS } from './npcs.js';
 import { Progress } from './progress.js';
 import { Welcome } from './welcome.js';
 import { findPath } from './pathfind.js';
@@ -86,6 +86,7 @@ export class World {
       if (!best || d < best.d) best = { key: STALL_ROW.key, x: t.x, y: t.y, d };
     }
     out.push(best);
+    for (const g of GHOSTS) out.push({ key: g.key, x: g.x, y: g.y, d: dist(this.player, g) });
     return out;
   }
 
@@ -101,7 +102,8 @@ export class World {
     const n = this.npc(key);
     if (n) n.paused = true;
     this.stopAuto();
-    const def = key === STALL_ROW.key ? STALL_ROW : n.def;
+    const def = key === STALL_ROW.key ? STALL_ROW : n ? n.def : GHOSTS.find((g) => g.key === key);
+    if (!def) return null;
     this.talking = { key, speaker: def.name, pages: def.pages, ig: !!def.ig };
     if (n) this.faceEachOther(n);
     return this.talking;

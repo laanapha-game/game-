@@ -170,8 +170,10 @@ export const LANE_TOUCH = LANE_STALLS.map((s) => ({ x: s.x - 26, y: s.y + 2 }));
 // The soi: ghost stalls (scene 2 sprites) right of the entrance, the COZY sign at the
 // west corner of the lane mouth.
 export const GHOST_STALLS = [1, 2, 3, 4, 5].map((n, i) =>
-  add(obj('ghostStall', `ghost_stall_${n}`, { x: 307 + i * 26.6, y: row(46) + 1 }, { blockWD: [20, 3], number: n })),
+  add(obj('ghostStall', `ghost_stall_${n}`, { x: 305 + i * 26.6, y: row(46) + 1 }, { blockWD: [20, 3], number: n })),
 );
+// Each stall's ghost stands beside it, to its right, on the soi's edge (talkable).
+export const GHOST_SPOTS = GHOST_STALLS.map((s) => ({ number: s.number, x: s.x + 16, y: s.y + 2 }));
 add(obj('sign', 'cozy_sign', { x: col(19) - 5, y: row(46) - 1 }, { blockWD: [3, 2] }));
 
 // Surroundings: the town (three columns of houses), forest, far tree line, trees south of the soi.
@@ -198,10 +200,11 @@ export const ZONES = {
 export const EXIT = { rect: [WORLD.w - 14, R.soi[1], WORLD.w, R.soi[3]] };
 
 // ---------------------------------------------------------------- start, welcome, guides
-export const START = { x: WORLD.w - 40, y: R.soi[1] + 22 };
+// The player has arrived: they start on the soi in front of the entrance (the lane mouth).
+export const START = { x: (R.lane[0] + R.lane[2]) / 2, y: R.soi[1] + 22 };
 export const WELCOME = { from: { x: START.x - 90, y: START.y }, stopDistance: 17 };
 // Guide arrows: along the soi, up the lane, to the registration desk.
-export const GUIDE_PATH = [START, { x: (R.lane[0] + R.lane[2]) / 2, y: START.y }, { x: (R.lane[0] + R.lane[2]) / 2, y: R.hall[3] + 10 }, { x: DESK.x - 22, y: DESK.y + 10 }];
+export const GUIDE_PATH = [START, { x: START.x, y: R.hall[3] + 10 }, { x: DESK.x - 22, y: DESK.y + 10 }]; // up the lane to the desk
 export const EXIT_ARROW = { x: WORLD.w - 10, y: START.y - 14 };
 
 // ---------------------------------------------------------------- collision
