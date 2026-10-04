@@ -1,8 +1,11 @@
 // Shared Playwright helpers that play scene 2 like a player (taps only).
-// Used by smoke.mjs (scene 2 on its own) and flow.mjs (scene 1 -> scene 2).
+// Used by smoke.mjs (scene 2 on its own), flow.mjs (scene 1 -> scene 2) and fullgame.mjs (the whole game).
 
+// SCENE3: scene 2's own scene 3 stub (scene 2 on its own) or the real scene 3 (game.html).
 export const state = (page) =>
-  page.evaluate(() => (window.__scene2GameOver ? 'GAME_OVER_SCREEN' : window.__scene2Won ? 'SCENE3' : window.__scene2?.state));
+  page.evaluate(() =>
+    window.__scene2GameOver ? 'GAME_OVER_SCREEN' : window.__scene2Won || window.__scene3?.S?.character ? 'SCENE3' : window.__scene2?.state,
+  );
 export const tapCenter = (page, vp) => page.touchscreen.tap(vp.width / 2, vp.height / 2);
 
 export async function tapUntil(page, vp, pred, { every = 60, timeout = 60000 } = {}) {

@@ -15,7 +15,11 @@
     "test:flow": "node tests/e2e/flow.mjs",
     "test:scene3": "node tests/e2e/scene3.mjs",
     "scene3:art": "python3 tools/scene3_art.py --sheet docs/scene3/props_contact_sheet.png",
-    "build:demo:scene3": "DEMO=scene3 vite build --config vite.demo.config.js"
+    "build:demo:scene3": "DEMO=scene3 vite build --config vite.demo.config.js",
+    "build:site": "vite build --config vite.site.config.js",
+    "preview:site": "vite preview --config vite.site.config.js --host",
+    "site:assets": "node tools/site-assets.mjs",
+    "test:full": "node tests/e2e/fullgame.mjs"
   },
   "repository": {
     "type": "git",

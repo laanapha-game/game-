@@ -7,3 +7,4 @@ dist-demo-scene3/
 lannapha-scene2-demo.html
 tools/seam_*.png
 __pycache__/
+dist-site/
