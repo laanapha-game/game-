@@ -8,12 +8,13 @@ small fallback first: when window.open is refused, the link opens through a real
 <a target="_blank"> click (scenes 1 and 2 use window.open for tickets and Instagram; scene 3
 already opens its links that way).
 
-  npm run build:demo && python3 tools/artifact_page.py OUT.html ["Title"]
+  npm run build:demo && python3 tools/artifact_page.py OUT.html ["Title"] [SOURCE.html]
+  npm run build:demo:scene3 && python3 tools/artifact_page.py OUT.html "Title" dist-demo-scene3/scene3.html
 """
 import re
 import sys
 
-src = open('dist-demo/game.html', encoding='utf-8').read()
+src = open(sys.argv[3] if len(sys.argv) > 3 else 'dist-demo/game.html', encoding='utf-8').read()
 head = re.search(r'<head>(.*?)</head>', src, re.S).group(1)
 body = re.search(r'<body>(.*)</body>', src, re.S).group(1)
 head = re.sub(r'<meta[^>]*>\s*', '', head)  # the skeleton brings charset + viewport (viewport-fit=cover)

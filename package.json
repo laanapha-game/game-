@@ -14,7 +14,8 @@
     "scene1": "node tools/scene1-page.mjs && node tools/prep-sprites.mjs scene1 && python3 tools/krahang_combo.py",
     "test:flow": "node tests/e2e/flow.mjs",
     "test:scene3": "node tests/e2e/scene3.mjs",
-    "scene3:art": "python3 tools/scene3_art.py --sheet docs/scene3/props_contact_sheet.png"
+    "scene3:art": "python3 tools/scene3_art.py --sheet docs/scene3/props_contact_sheet.png",
+    "build:demo:scene3": "DEMO=scene3 vite build --config vite.demo.config.js"
   },
   "repository": {
     "type": "git",

@@ -3,6 +3,7 @@ dist/
 test-results/
 *.log
 dist-demo/
+dist-demo-scene3/
 lannapha-scene2-demo.html
 tools/seam_*.png
 __pycache__/
