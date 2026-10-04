@@ -1,4 +1,4 @@
-// Full game page (game.html): scene 1 -> scene 2 -> scene 3 (spec 3).
+// Full game page (game.html): scene 1 -> scene 2 -> scene 3 (spec 3; scene 3 at the end of this file).
 //
 // Scene 1 (plain Canvas 2D, assets/incoming/scene1/) draws home and character
 // select into its own canvas and exposes window.LannaphaGame. This plugs scene 2
@@ -14,6 +14,7 @@
 import { startScene2 } from './scene2.js';
 import { characterFromScene1 } from './integration/scene1.js';
 import { audio } from './audio/engine.js';
+import { startScene3 } from './scene3/index.js';
 
 const G = window.LannaphaGame;
 const box = document.getElementById('game');
@@ -153,3 +154,54 @@ G.registerScene('scene2', {
   onTap() {},
   exit: stopScene2,
 });
+
+// ---------- scene 3: event exploration and the ending (src/scene3/) ----------
+// Scene 2's onWin calls LannaphaGame.go('scene3', character); scene 3 runs in #game like
+// scene 2. Back -> character select, home (ending) -> scene 1's home page.
+// Dev: game.html?scene=scene3&char=ramwong&night=1&today=2026-10-12 opens it directly.
+let game3 = null;
+function stopScene3() {
+  const wasRunning = !!game3;
+  game3?.destroy(true);
+  game3 = null;
+  box.hidden = true;
+  inScene2 = false;
+  if (wasRunning) {
+    scene1Audio();
+    setTimeout(syncScene1Speaker, 450);
+  }
+}
+G.registerScene('scene3', {
+  async enter(selection) {
+    box.hidden = false;
+    inScene2 = true; // scene 1's canvas is under #game: its taps are not scene 1's now
+    const q = new URLSearchParams(window.location.search);
+    game3 = await startScene3({
+      parent: box,
+      character: { id: selection?.id, name: selection?.name },
+      onBack: () => {
+        stopScene3();
+        (G.goSelect ?? (() => G.go('select')))();
+      },
+      onHome: () => {
+        stopScene3();
+        G.goHome();
+      },
+      dev: import.meta.env.DEV ? { night: q.get('night') === '1', skipWelcome: q.get('skip') === '1' } : {},
+    });
+  },
+  draw() {
+    G.ctx.fillStyle = '#000000';
+    G.ctx.fillRect(0, 0, G.W, G.H);
+  },
+  onTap() {},
+  exit: stopScene3,
+});
+if (import.meta.env.DEV) {
+  const q = new URLSearchParams(window.location.search);
+  if (q.get('scene') === 'scene3') {
+    const id = q.get('char') ?? 'nuannapa';
+    const c = G.characters.find((x) => x.id === id) ?? G.characters[0];
+    G.go('scene3', { id: c.id, name: c.name });
+  }
+}

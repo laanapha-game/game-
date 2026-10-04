@@ -219,9 +219,9 @@ for (const id of ids) {
     check(final === 'SCENE3', `${id}: full run reaches scene 3 (${final})`);
   } else {
     await page.evaluate(() => window.__scene2.win());
-    await page.waitForFunction(() => window.__scene2Won, null, { timeout: 10000 }).catch(() => {});
+    await page.waitForFunction(() => window.__scene2Won || window.__scene3?.S?.character, null, { timeout: 10000 }).catch(() => {});
   }
-  const won = await page.evaluate(() => ({ same: window.__flow.won === window.__flow.character, id: window.__flow.won?.id, name: window.__flow.won?.name, stub: window.__scene2Won?.character?.id }));
+  const won = await page.evaluate(() => ({ same: window.__flow.won === window.__flow.character, id: window.__flow.won?.id, name: window.__flow.won?.name, stub: window.__scene2Won?.character?.id ?? window.__scene3?.S?.character?.id })); // scene 3 (or its stub) received the character
   check(won.same && won.id === id && won.stub === id, `${id}: onWin(character) passes the same character on (${won.id}, ${won.name})`);
   if (shots && full) await page.screenshot({ path: `${shots}/${id}_scene3.png` });
   check(errors.length === 0, `${id}: no console errors (${errors.join(' | ')})`);

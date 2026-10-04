@@ -1,4 +1,6 @@
-# ลานนภา Halloween Fest: scene 2 (Trick or Treat run)
+# ลานนภา Halloween Fest: scene 2 (Trick or Treat run) and scene 3 (event exploration)
+
+Scene 3 (the event map, vouchers, the ending and credits) is documented in [`SCENE3.md`](SCENE3.md).
 
 The source of truth is [`scene2-spec.md`](scene2-spec.md).
 
