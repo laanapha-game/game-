@@ -1,357 +1,117 @@
-"""Jayimpacts dialogue portrait, chibi, Stardew Valley inspired, face after the Drive art (owner)
--> src/assets/art/portraits/jayimpacts_portrait.png (64 x 64 design px, 2 frames:
-neutral, talk) at RENDER_SCALE x, nearest neighbour.
+"""Jayimpacts dialogue portrait -> src/assets/art/portraits/jayimpacts_portrait.png
+(64 x 64 design px, 2 frames: neutral, talk) at RENDER_SCALE x, nearest neighbour.
 
-Bust portrait like the Stardew Valley portraits: head and shoulders, light from the
-upper left, near-black tinted outline around the silhouette, 4-6 tones per material,
-hand-placed face after the Drive avatar: calm heavy-lidded eyes with dark irises, thick
-straight brows, a small one-sided smile, no blush; near-black hair parted on one side and
-swept over, with a lock falling beside one eye.
-Look from the Drive avatar: spiky black hair swept to one side, houndstooth jacket over
-a black tee, a thin chain, white wings with yellow tips behind the shoulders and a gold
-halo ring (plain ring, not the Drive gear).
+Owner: the face must look as close as possible to the original. So the portrait is not
+drawn: it is the front figure of the Drive avatar (sprite_jayimpacts_avatar no green),
+head and shoulders with the halo, box-downsampled with premultiplied alpha, reduced to
+an adaptive palette, cleaned of chroma-key green specks and given a 1 px dark outline.
+The talk frame adds a small open mouth on the original's mouth line.
 
     python3 tools/jayimpacts_portrait.py [--preview out.png]
 """
-import math
 import sys
 from pathlib import Path
 
 from PIL import Image
 
+AVATAR = Path('assets/incoming/Scene_2_Sprite/sprite_jayimpacts_avatar_no_green.png')
 OUT = Path('src/assets/art/portraits')
 R = 3
 N = 64
-FRAMES = ['neutral', 'talk']
-
-C = {
-    # skin ramp (outline .. highlight)
-    'k0': '#4A2418', 'k1': '#B06A4C', 'k2': '#D88C68', 'k3': '#EAA67C', 'k4': '#F6C094', 'k5': '#FFDDB4',
-    # hair ramp
-    'h0': '#0A0807', 'h1': '#16120F', 'h2': '#221C18', 'h3': '#332B26', 'h4': '#48403A', 'h5': '#605852',
-    # jacket houndstooth (light, mid, dark, shade) + outline
-    'j0': '#141218', 'j1': '#D6D2CC', 'j2': '#9A9694', 'j3': '#5E5A5E', 'j4': '#3C383E',
-    # tee
-    't1': '#1E1A24', 't2': '#2E2A36', 't3': '#423C4C',
-    # chain
-    'c1': '#B8B4BC', 'c2': '#F4F2F6',
-    # eyes
-    'e0': '#0E0A0A', 'e1': '#2E2220', 'e2': '#4E3A30', 'ew': '#FFFFFF', 'es': '#E8DCD4',
-    # mouth, blush
-    'm1': '#9A4A3C', 'm2': '#6A2A22', 'bl': '#F0A088',
-    # wings
-    'w0': '#5E5468', 'w1': '#FFFFFF', 'w2': '#E6E4F2', 'w3': '#C4C0D8', 'y1': '#FFE070', 'y2': '#F0B030',
-    # halo
-    'g0': '#6A420A', 'g1': '#FFF486', 'g2': '#F4C838', 'g3': '#C8901C',
-}
+CROP = (10, 45, 510, 545)   # front figure: halo, head and shoulders (500 x 500 source px)
+COLOURS = 48
+OUTLINE = (10, 8, 7, 255)
+MOUTH_OPEN = (106, 42, 34, 255)
 
 
-def rgb(h):
-    return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5)) + (255,)
+def downsample(img, n, thr=120):
+    """Box filter with premultiplied alpha; pixels under thr alpha become transparent."""
+    w, h = img.size
+    src = img.load()
+    out = Image.new('RGBA', (n, n))
+    o = out.load()
+    for Y in range(n):
+        for X in range(n):
+            x0, x1 = X * w // n, (X + 1) * w // n
+            y0, y1 = Y * h // n, (Y + 1) * h // n
+            r = g = b = a = 0
+            for yy in range(y0, y1):
+                for xx in range(x0, x1):
+                    pr, pg, pb, pa = src[xx, yy]
+                    r += pr * pa; g += pg * pa; b += pb * pa; a += pa
+            if a / ((x1 - x0) * (y1 - y0)) > thr:
+                o[X, Y] = (r // a, g // a, b // a, 255)
+    return out
 
 
-class Canvas:
-    def __init__(self):
-        self.px = [[None] * N for _ in range(N)]
-        self.mat = [[None] * N for _ in range(N)]  # material per pixel, for the outline colour
-
-    def set(self, x, y, col, mat=None):
-        if 0 <= x < N and 0 <= y < N:
-            self.px[y][x] = col
-            if mat:
-                self.mat[y][x] = mat
-
-    def get(self, x, y):
-        return self.px[y][x] if 0 <= x < N and 0 <= y < N else None
-
-    def fill(self, inside, colour, mat):
-        for y in range(N):
-            for x in range(N):
-                if inside(x, y):
-                    self.set(x, y, colour(x, y), mat)
-
-    def outline(self, colours):
-        add = []
-        for y in range(N):
-            for x in range(N):
-                if self.px[y][x] is not None:
-                    continue
-                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                    m = self.mat[y + dy][x + dx] if 0 <= x + dx < N and 0 <= y + dy < N else None
-                    if m:
-                        add.append((x, y, colours.get(m, 'h0')))
-                        break
-        for x, y, c in add:
-            self.set(x, y, c)
-
-    def stamp(self, x0, y0, rows, legend):
-        for j, row in enumerate(rows):
-            for i, ch in enumerate(row):
-                if ch != '.':
-                    self.set(x0 + i, y0 + j, legend[ch])
-
-    def image(self):
-        im = Image.new('RGBA', (N, N))
-        for y in range(N):
-            for x in range(N):
-                if self.px[y][x]:
-                    im.putpixel((x, y), rgb(C[self.px[y][x]]))
-        return im
+def quantize(img):
+    alpha = img.getchannel('A')
+    q = img.convert('RGB').quantize(COLOURS, method=Image.Quantize.MEDIANCUT).convert('RGBA')
+    q.putalpha(alpha.point(lambda v: 255 if v else 0))
+    return q
 
 
-def ramp(v, names):
-    """v in 0..1 -> one of the names (dark to light)."""
-    i = max(0, min(len(names) - 1, int(v * len(names))))
-    return names[i]
+def clean_green(img):
+    """Chroma-key leftovers: a greenish pixel takes the colour of its most common non-green neighbour."""
+    px = img.load()
+    w, h = img.size
+    green = lambda c: c[3] and c[1] > c[0] + 12 and c[1] > c[2] + 12
+    for y in range(h):
+        for x in range(w):
+            if not green(px[x, y]):
+                continue
+            nb = [px[x + dx, y + dy] for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                  if (dx or dy) and 0 <= x + dx < w and 0 <= y + dy < h and px[x + dx, y + dy][3] and not green(px[x + dx, y + dy])]
+            px[x, y] = max(set(nb), key=nb.count) if nb else (0, 0, 0, 0)
+    return img
 
 
-HOUNDSTOOTH = ['XX..', 'XXX.', '..XX', '.X.X']  # 4 x 4 tile
+def outline(img):
+    px = img.load()
+    w, h = img.size
+    out = img.copy()
+    o = out.load()
+    for y in range(h):
+        for x in range(w):
+            if px[x, y][3]:
+                continue
+            if any(0 <= x + dx < w and 0 <= y + dy < h and px[x + dx, y + dy][3] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                o[x, y] = OUTLINE
+    return out
 
 
-def checker(x, y):
-    return HOUNDSTOOTH[y % 4][x % 4] == 'X'
+def mouth_line(img):
+    """The original's mouth: the reddest pixels in the lower face."""
+    px = img.load()
+    best = []
+    for y in range(46, 56):                                  # below the eyes, above the collar
+        for x in range(22, 38):
+            r, g, b, a = px[x, y]
+            if a and r > 150 and r - g > 40 and r - b > 40:
+                best.append((r - g, x, y))
+    best.sort(reverse=True)
+    return [(x, y) for _, x, y in best[:4]]
 
 
-# ---------------------------------------------------------------- shapes
-HX, HY = 32, 27          # face centre
-def face_half_width(y):
-    """Face half width per row: round chibi face, full cheeks, a small round chin at row 45."""
-    if y < 12 or y > 45:
-        return -1
-    if y <= 32:
-        return 13.5
-    t = (y - 32) / 13.5
-    return 13.5 * math.sqrt(max(0.0, 1 - t ** 2)) + 0.5
-
-
-def in_face(x, y):
-    return abs(x + 0.5 - HX) <= face_half_width(y)
-
-
-def in_ear(x, y):
-    for cx in (18.5, 45.5):
-        if ((x - cx) / 2.6) ** 2 + ((y - 30) / 4.2) ** 2 <= 1:
-            return True
-    return False
-
-
-def in_neck(x, y):
-    return 28 <= x <= 35 and 40 <= y <= 50
-
-
-def in_shoulders(x, y):
-    if y < 47:
-        return False
-    # sloped shoulders out to the frame edges
-    half = 14 + (y - 47) * 2.6
-    return abs(x + 0.5 - 32) <= min(half, 31)
-
-
-# Hair = a cap over the crown plus tapered clumps (root -> tip, root half-width).
-# Spikes on top, tufts at the sides, and a fringe that falls over the forehead swept
-# to the viewer's right. Each pixel belongs to its nearest clump; clump centres are
-# lit, the seams between clumps are dark: that gives the Stardew strand look.
-CLUMPS = [
-    # crown spikes
-    ((24, 12), (17, 6), 4.6), ((28, 11), (24, 4), 4.6), ((32, 11), (32, 3), 4.6), ((36, 11), (40, 4), 4.6),
-    ((40, 12), (46, 6), 4.6), ((43, 15), (51, 11), 4.4), ((21, 15), (12, 12), 4.4),
-    # sides and sideburns
-    ((20, 18), (12, 22), 4.0), ((44, 18), (52, 21), 4.0), ((19, 22), (17, 31), 3.4), ((45, 22), (47, 31), 3.4),
-    # parted on the viewer's left and swept over to the right (forehead open on the
-    # left), with one long lock falling beside the right eye, as in the Drive art
-    ((23, 15), (20, 19), 3.0), ((27, 14), (30, 18), 3.4), ((31, 14), (36, 20), 3.6),
-    ((35, 14), (40, 22), 3.6), ((39, 15), (42, 24), 3.2), ((42, 16), (44, 28), 2.4), ((24, 15), (24, 20), 2.6),
-]
-
-
-def seg(px, py, a, b):
-    (ax, ay), (bx, by) = a, b
-    vx, vy = bx - ax, by - ay
-    t = max(0.0, min(1.0, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy)))
-    return math.hypot(px - (ax + vx * t), py - (ay + vy * t)), t
-
-
-def hair_hit(x, y):
-    """(clump index, normalized distance 0 centre .. 1 edge) or None. -1 = the cap."""
-    px, py = x + 0.5, y + 0.5
-    best = None
-    for i, (root, tip, w) in enumerate(CLUMPS):
-        d, t = seg(px, py, root, tip)
-        width = w * (1 - t) + 1.3 * t                    # rounded tips
-        if d <= width:
-            n = d / width
-            if best is None or n < best[1]:
-                best = (i, n)
-    cap = ((px - 32) / 15.5) ** 2 + ((py - 16) / 9) ** 2
-    if cap <= 1 and not (in_face(x, y) and y >= 16):
-        if best is None or cap < best[1]:
-            best = (-1, cap * 0.8)
-    return best
-
-
-def in_hair(x, y):
-    if in_ear(x, y) and y > 27:
-        return False
-    return hair_hit(x, y) is not None
-
-
-def hairline(x):
-    """Lowest hair row over the forehead at column x (for the fringe shadow)."""
-    y = 16
-    for yy in range(16, 30):
-        if in_hair(x, yy):
-            y = yy
-    return y
-
-
-def hair_colour(x, y):
-    i, n = hair_hit(x, y)
-    light = -((x + 0.5 - 30) * 0.5 + (y + 0.5 - 10) * 0.8) / 22 + 0.45
-    v = light + (1 - n) * 0.35 - (0.35 if n > 0.82 and i >= 0 else 0)
-    if 6 <= y <= 12 and i >= 0 and 0.15 < n < 0.55 and (x + 2 * y) % 4:
-        v += 0.25                                         # sheen strands on the crown
-    return ramp(v, ['h0', 'h1', 'h1', 'h2', 'h2', 'h3', 'h4'])
-
-
-def skin_colour(x, y):
-    dx = x + 0.5 - HX
-    # anime flat shading: one light tone, a soft shadow under the fringe and at the far cheek
-    v = 0.7
-    if y <= hairline(x) + 1:
-        v -= 0.3                                          # shadow under the fringe
-    if dx > face_half_width(y) - 3 or (y >= 42):
-        v -= 0.22                                         # far cheek and under the chin
-    if dx < -6 and 30 <= y <= 36:
-        v += 0.12                                         # lit cheek
-    return ramp(v, ['k1', 'k2', 'k3', 'k4', 'k4', 'k5'])
-
-
-def neck_colour(x, y):
-    v = 0.5 - (0.3 if y < 47 else 0)
-    return ramp(v, ['k1', 'k2', 'k3', 'k4'])
-
-
-def jacket_colour(x, y):
-    shade = (x > 42) or y > 59 or (y < 50 and abs(x - 32) > 16)
-    if checker(x, y):
-        return 'j3' if shade else 'j2'
-    return 'j2' if shade else 'j1'
-
-
-def in_tee(x, y):
-    # V opening between the lapels
-    half = 4 + (y - 47) * 0.55
-    return y >= 47 and abs(x + 0.5 - 32) <= min(half, 9)
-
-
-def in_lapel_edge(x, y):
-    half = 4 + (y - 47) * 0.55
-    return y >= 47 and half < 9 and abs(abs(x + 0.5 - 32) - half) < 1.0
-
-
-# ---------------------------------------------------------------- features
-EYE_L = [  # calm heavy-lidded eye (Drive art), 9 x 6: thick upper lid, dark iris, small catchlight
-    '..aaaaaa.',
-    'aaaaaaaaa',
-    '.sddwdis.',
-    '.sdddiis.',
-    '..siiis..',
-    '...kkk...',
-]
-EYE_R = [r[::-1] for r in EYE_L]
-EYE_R[2] = '.siwddds.'  # catchlight stays on the upper left of the iris
-EYE_LEG = {'a': 'e0', 's': 'es', 'w': 'ew', 'd': 'e0', 'i': 'e1', 'l': 'e2', 'k': 'k2'}
-BROW_L = ['..aaaaa', 'aaaaaaa', 'aa.....']   # thick, straight, outer end slightly down
-BROW_R = [r[::-1] for r in BROW_L]
-MOUTH = {
-    'neutral': (['.....m', '.mmmm.'], (29, 40)),        # small smile, one corner up
-    'talk': (['.mmmmm', '.mrrm.'], (29, 40)),
-}
-
-
-# Viewer's left wing, hand drawn (mirrored for the right): it rises from behind the
-# shoulder up and out, with feathers whose tips turn yellow (as in the Drive art).
-WING_L = [
-    '......oo......',
-    '.....oWWo.....',
-    '....oWWWWo....',
-    '...oWWWWWLo...',
-    '..oYWWWWWLLo..',
-    '.oYGoWWWWWLo..',
-    '.oYGoWWWWWLLo.',
-    'oYYGoWWWWWLLo.',
-    'oYGooWWWWWWLLo',
-    '.oo.oWWWWWWLLo',
-    '..oYGoWWWWWLLo',
-    '.oYYGoWWWWWLLo',
-    '.oYGooWWWWWLLo',
-    '..oo.oWWWWWWLo',
-    '...oYGoWWWWWLo',
-    '..oYYGoWWWWWLo',
-    '..oYGooWWWWWLo',
-    '...oo.oWWWWWLo',
-    '....oYGoWWWWLo',
-    '...oYYGoWWWWLo',
-    '...oYGooWWWLo.',
-    '....oo..oWWLo.',
-    '.........oLo..',
-    '..........o...',
-]
-WING_LEG = {'o': 'w0', 'W': 'w1', 'L': 'w2', 'S': 'w3', 'Y': 'y1', 'G': 'y2'}
-
-
-def wings(cv):
-    for j, row in enumerate(WING_L):
-        for i, ch in enumerate(row):
-            if ch != '.':
-                cv.set(1 + i, 30 + j, WING_LEG[ch], 'wing')
-                cv.set(N - 2 - i, 30 + j, WING_LEG[ch], 'wing')
-
-
-def halo(cv):
-    for y in range(0, 7):
-        for x in range(N):
-            a = ((x + 0.5 - 33) / 15) ** 2 + ((y + 0.5 - 3.2) / 2.6) ** 2
-            b = ((x + 0.5 - 33) / 12) ** 2 + ((y + 0.5 - 3.2) / 1.2) ** 2
-            if a <= 1 and b > 1:
-                col = 'g1' if y <= 2 else ('g2' if y <= 4 else 'g3')
-                cv.set(x, y, col, 'halo')
-
-
-def portrait(frame):
-    cv = Canvas()
-    wings(cv)
-    cv.fill(in_shoulders, jacket_colour, 'jacket')
-    cv.fill(lambda x, y: in_shoulders(x, y) and in_tee(x, y),
-            lambda x, y: 't2' if (x + y) % 5 else 't3', 'jacket')
-    cv.fill(lambda x, y: in_shoulders(x, y) and in_lapel_edge(x, y), lambda x, y: 'j0', 'jacket')
-    cv.fill(in_neck, neck_colour, 'skin')
-    # chain: a soft U across the collarbone
-    for x in range(27, 37):
-        y = round(48 + 2.6 * (1 - ((x - 31.5) / 5) ** 2))
-        cv.set(x, y, 'c2' if x % 3 == 0 else 'c1')
-    cv.fill(in_ear, lambda x, y: 'k3' if x < 32 else 'k2', 'skin')
-    cv.fill(in_face, skin_colour, 'skin')
-    cv.fill(in_hair, hair_colour, 'hair')
-    halo(cv)
-    cv.outline({'skin': 'k0', 'hair': 'h0', 'jacket': 'j0', 'wing': 'w0', 'halo': 'g0'})
-    # inner lines: jaw under the chin onto the neck, ear detail
-    pass
-    cv.set(18, 30, 'k1'); cv.set(18, 31, 'k1'); cv.set(45, 30, 'k1'); cv.set(45, 31, 'k1')
-    # face
-    cv.stamp(20, 24, BROW_L, {'a': 'h0'})
-    cv.stamp(37, 24, BROW_R, {'a': 'h0'})
-    cv.stamp(20, 28, EYE_L, EYE_LEG)
-    cv.stamp(35, 28, EYE_R, EYE_LEG)
-    cv.set(33, 35, 'k2'); cv.set(33, 36, 'k1'); cv.set(32, 37, 'k1')   # nose: a soft shade line
-    rows, (mx, my) = MOUTH[frame]
-    cv.stamp(mx, my, rows, {'m': 'm1', 'r': 'm2', 'k': 'k1'})
-    return cv.image()
+def portrait():
+    src = Image.open(AVATAR).convert('RGBA').crop(CROP)
+    neutral = outline(clean_green(quantize(downsample(src, N))))
+    talk = neutral.copy()
+    pts = mouth_line(neutral)
+    if pts:
+        xs = sorted(x for x, _ in pts)
+        y = max(y for _, y in pts)
+        cx = (xs[0] + xs[-1]) // 2
+        t = talk.load()
+        for dx in (-1, 0, 1):
+            t[cx + dx, y + 1] = MOUTH_OPEN
+        t[cx, y + 2] = MOUTH_OPEN
+    return [neutral, talk]
 
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    frames = [portrait(f) for f in FRAMES]
+    frames = portrait()
     sheet = Image.new('RGBA', (N * len(frames), N))
     for i, im in enumerate(frames):
         sheet.alpha_composite(im, (i * N, 0))

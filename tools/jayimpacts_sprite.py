@@ -84,6 +84,15 @@ class Grid:
         for x, y in pts:
             self.set(x, y, colour(x, y) if callable(colour) else colour, mat)
 
+    def paste(self, img, x0, y0):
+        """Paste an RGBA image (hex colours stored directly)."""
+        px = img.load()
+        for y in range(img.height):
+            for x in range(img.width):
+                r, g_, b, a = px[x, y]
+                if a:
+                    self.set(x0 + x, y0 + y, '#%02X%02X%02X' % (r, g_, b), 'head')
+
     def stamp(self, x0, y0, rows, legend, mat=None):
         for j, row in enumerate(rows):
             for i, ch in enumerate(row):
@@ -107,8 +116,10 @@ def jacket(x, y):
 
 
 def halo(g, cx, cy):
+    """The original's halo is a gold gear: a ring with small teeth on top."""
     ring = lambda x, y: ell(cx, cy, 5.2, 1.7)(x, y) and not ell(cx, cy, 3.4, 0.6)(x, y)
-    g.part(ring, lambda x, y: 'g1' if y + 0.5 < cy else 'g2', 'halo', over=False)
+    teeth = lambda x, y: round(y + 0.5 - (cy - 2.2)) == 0 and round(x + 0.5 - cx) in (-4, 0, 4)
+    g.part(lambda x, y: ring(x, y) or teeth(x, y), lambda x, y: 'g1' if y + 0.5 < cy else 'g2', 'halo', over=False)
 
 
 def wing(g, side, x0, y0):
@@ -136,6 +147,94 @@ def hair_colour(cy, x0, x1):
 
 def blobs(X, Y, pts, rx, ry):
     return any(((X - px) / rx) ** 2 + ((Y - py) / ry) ** 2 <= 1 for px, py in pts)
+
+
+# ---------------------------------------------------------------- heads from the original art
+# Owner: the face must look as close as possible to the original. So the head is not
+# drawn: it is the original's head, box-downsampled (premultiplied alpha) to chibi size,
+# every pixel snapped to a palette sampled from the original, with a 1 px dark outline.
+#   front: the game's angel_jayimpacts.png (from sprite_jayimpacts_character), frame 0
+#          (idle) and frame 8 (closed-eye smile, used for the blink)
+#   side:  the 3/4 figure of sprite_jayimpacts_avatar, mirrored to face left
+ANGEL = Path('src/assets/art/angel_jayimpacts.png')       # 9 frames of 102 x 192 (3x)
+AVATAR = Path('assets/incoming/Scene_2_Sprite/sprite_jayimpacts_avatar_no_green.png')
+HEAD_PAL = ['#0A0807', '#1C1714', '#2C2520', '#3E342C', '#54463A',      # hair
+            '#5C3024', '#C07A5A', '#E8A47E', '#F8C8A0', '#FFE2C4',      # skin
+            '#2E2220', '#FFFFFF', '#C05848']                            # iris, white, lips
+HEAD_W = {'front': 26, 'side': 24}
+
+
+def _rgb(h):
+    return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+
+
+def _downsample(img, size, thr=120):
+    w, h = img.size
+    src = img.load()
+    out = Image.new('RGBA', size)
+    o = out.load()
+    for Y in range(size[1]):
+        for X in range(size[0]):
+            x0, x1 = X * w // size[0], max(X * w // size[0] + 1, (X + 1) * w // size[0])
+            y0, y1 = Y * h // size[1], max(Y * h // size[1] + 1, (Y + 1) * h // size[1])
+            r = g = b = a = 0
+            for yy in range(y0, y1):
+                for xx in range(x0, x1):
+                    pr, pg, pb, pa = src[xx, yy]
+                    r += pr * pa; g += pg * pa; b += pb * pa; a += pa
+            n = (x1 - x0) * (y1 - y0)
+            if a / n > thr:
+                o[X, Y] = (r // a, g // a, b // a, 255)
+    return out
+
+
+def _snap_outline(img):
+    pal = [_rgb(h) for h in HEAD_PAL]
+    px = img.load()
+    w, h = img.size
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if a:
+                px[x, y] = min(pal, key=lambda c: (c[0] - r) ** 2 + (c[1] - g) ** 2 + (c[2] - b) ** 2) + (255,)
+    out = img.copy()
+    o = out.load()
+    for y in range(h):
+        for x in range(w):
+            if px[x, y][3]:
+                continue
+            if any(0 <= x + dx < w and 0 <= y + dy < h and px[x + dx, y + dy][3] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                o[x, y] = _rgb('#0A0807') + (255,)
+    # clear wing or collar specks in the bottom rows outside the chin
+    for y in range(h - 3, h):
+        for x in range(w):
+            if not w * 0.25 <= x <= w * 0.75:
+                o[x, y] = (0, 0, 0, 0)
+    return out
+
+
+_HEADS = {}
+
+
+def head(kind):
+    """'front', 'blink' or 'side' -> RGBA head image (no halo)."""
+    if kind not in _HEADS:
+        if kind == 'side':
+            from PIL import ImageOps
+            src = ImageOps.mirror(Image.open(AVATAR).convert('RGBA').crop((535, 170, 1010, 512)))
+        else:
+            fi = 8 if kind == 'blink' else 0
+            src = Image.open(ANGEL).convert('RGBA').crop((fi * 102, 30, fi * 102 + 102, 97))  # below the halo, to the chin
+        px = src.load()                                     # drop the gold halo where it overlaps the hair
+        for y in range(src.height):
+            for x in range(src.width):
+                r, g_, b, a = px[x, y]
+                if a and r > 150 and g_ > 100 and b < 90 and r - b > 90 and g_ - b > 50:
+                    px[x, y] = (0, 0, 0, 0)
+        src = src.crop(src.getbbox())
+        w = HEAD_W['side' if kind == 'side' else 'front']
+        _HEADS[kind] = _snap_outline(_downsample(src, (w, round(src.height * w / src.width))))
+    return _HEADS[kind]
 
 
 # ---------------------------------------------------------------- front
@@ -173,29 +272,9 @@ def front(frame):
         g.part(ell(23, 27.6, 1.6, 1.3), 'k2', 'skin', over=False)
     wing(g, -1, 7, 21)
     wing(g, 1, 24, 21)
-    # head
-    cy = 14 + hb
-    g.part(ell(16, cy, 9.6, 8.4), lambda x, y: 'k3' if y < cy - 3 and x < 13 else ('k1' if y > cy + 5 else 'k2'), 'skin')
-    # hair: rounded cap, soft tufts on top, a fringe of round clumps, sides to the cheeks
-    def in_hair(x, y):
-        X, Y = x + 0.5, y + 0.5
-        cap = ((X - 16) / 10.4) ** 2 + ((Y - (cy - 4)) / 6.2) ** 2 <= 1 and Y <= cy - 3
-        tufts = blobs(X, Y, ((10.5, cy - 8.6), (14.5, cy - 9.4), (19, cy - 9.2), (22.5, cy - 7.8)), 2.2, 1.6)
-        fringe = blobs(X, Y, ((12.4, cy - 3.6), (16, cy - 3.0), (19.6, cy - 2.4), (22.6, cy - 1.6)), 2.2, 1.9)
-        fringe = fringe or (22.4 <= X <= 24.2 and cy - 2 <= Y <= cy + 2.4)   # lock beside his left eye
-        sides = (6.2 <= X <= 8.2 or 23.8 <= X <= 25.8) and Y <= cy + 3 and ell(16, cy, 9.9, 8.7)(x, y)
-        return cap or tufts or fringe or sides
-    g.part(in_hair, hair_colour(cy, 10, 21), 'hair', over=False)
-    # face
-    ey = cy + 1
-    eye = EYE_SHUT if frame == 'blink' else EYE
-    g.stamp(9, ey, eye, EYE_LEG)
-    g.stamp(19, ey, eye, EYE_LEG)
-    g.stamp(9, ey - 2, ['.aaa'], {'a': 'h0'})                # straight brows, a skin row above the lids
-    g.stamp(19, ey - 2, ['aaa.'], {'a': 'h0'})
-    g.set(15, ey + 5, 'm1')                                  # small smile, one corner up
-    g.set(16, ey + 5, 'm1')
-    g.set(17, ey + 4, 'm1')
+    # head: the original's (see head())
+    hd = head('blink' if frame == 'blink' else 'front')
+    g.paste(hd, 16 - hd.width // 2, 4 + hb)
     if wave is not None:
         # his right arm raised (viewer's right): sleeve going up and out, round hand
         o = wave
@@ -206,7 +285,7 @@ def front(frame):
             return xl <= x <= xl + 1
         g.part(arm, jacket, 'jacket')
         g.part(ell(26 + o, 13.6, 1.9, 1.7), 'k2', 'skin')
-    halo(g, 16, 1.4 + hb)
+    halo(g, 16, 2 + hb)
     return g
 
 
@@ -256,35 +335,20 @@ def side(frame):
         s = p['arm']
         g.part(lambda x, y: ty + 1 <= y <= ty + 4 and 14 + s * (y - ty) // 3 <= x <= 15 + s * (y - ty) // 3, jacket, 'jacket')
         g.part(ell(15 + s * 1.7, ty + 5.6, 1.6, 1.3), 'k2', 'skin', over=False)
-    # head, face to the left
-    cy = 14 - up + hb
-    g.part(ell(15, cy, 9.2, 8.4), lambda x, y: 'k3' if y < cy - 2 and x < 12 else ('k1' if y > cy + 5 or x > 18 else 'k2'), 'skin')
-    def in_hair(x, y):
-        X, Y = x + 0.5, y + 0.5
-        cap = ((X - 16) / 9.8) ** 2 + ((Y - (cy - 4)) / 6.2) ** 2 <= 1 and (Y <= cy - 3 or X >= 15.5)
-        back = X >= 15.5 and Y <= cy + 5 and ell(15, cy, 9.6, 9)(x, y)
-        tufts = blobs(X, Y, ((11, cy - 8.6), (15.5, cy - 9.4), (20, cy - 8.8), (23.6, cy - 5.8)), 2.2, 1.6)
-        fringe = blobs(X, Y, ((7.4, cy - 2.6), (10.8, cy - 3), (14.4, cy - 2.6)), 2.2, 1.9)
-        ear = ((X - 17.2) / 1.6) ** 2 + ((Y - (cy + 1.6)) / 2) ** 2 <= 1
-        return (cap or back or tufts or fringe) and not ear
-    g.part(in_hair, hair_colour(cy, 9, 21), 'hair', over=False)
-    g.set(17, cy + 1, 'k1')                                   # ear detail
-    ey = cy + 1
-    g.stamp(7, ey, ['ooo', 'ewA', '.A.'], EYE_LEG)
-    g.stamp(6, ey - 2, ['aaaa'], {'a': 'h0'})               # brow
-    g.set(7, ey + 5, 'm1')
-    g.set(8, ey + 4, 'm1')
+    # head: the original's 3/4 view, mirrored to face left (see head())
+    hd = head('side')
+    g.paste(hd, 15 - hd.width // 2, 3 - up + hb)
     if p['arm'] is None:
         o = int(frame[-1])
         # near arm raised in front of him: sleeve up and forward, round hand
         def arm(x, y):
-            if not ty - 6 <= y <= ty + 2:
+            if not ty - 3 <= y <= ty + 2:
                 return False
-            xl = 9 - o - (ty + 2 - y) // 3
+            xl = 8 - o - (ty + 2 - y)
             return xl <= x <= xl + 2 + (2 if y >= ty else 0)
         g.part(arm, jacket, 'jacket')
-        g.part(ell(5.6 - o, ty - 7.4, 1.9, 1.7), 'k2', 'skin')
-    halo(g, 16, 1.4 - up + hb)
+        g.part(ell(2.6 - o, ty - 4.4, 1.9, 1.7), 'k2', 'skin')
+    halo(g, 17, 1.6 - up + hb)
     return g
 
 
@@ -295,7 +359,7 @@ def to_image(g):
         for x in range(CW):
             c = g.px[y][x]
             if c:
-                h = C[c]
+                h = c if c.startswith('#') else C[c]
                 im.putpixel((x, y), tuple(int(h[i:i + 2], 16) for i in (1, 3, 5)) + (255,))
     return im
 
