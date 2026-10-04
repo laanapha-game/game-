@@ -6,8 +6,8 @@
 import Phaser from 'phaser';
 import { label, wrap } from '../ui/text.js';
 import { Dialogue } from '../ui/Dialogue.js';
-import { GOALS, LABELS, chipText, CHIP_DONE, WELCOME_PAGES, WELCOME_SPEAKER, AFTER_WELCOME_BANNER, VOUCHER_BANNER, PRIZE_BANNER, PRIZE_CHECK } from '../data/script.js';
-import { ZOOM_LEVELS, MIN_TOUCH_CSS_PX, PLATE_RANGE, URLS, STALL_BOOKING, TALK_RANGE } from '../config.js';
+import { GOALS, LABELS, chipText, CHIP_DONE, WELCOME_PAGES, WELCOME_SPEAKER, AFTER_WELCOME_BANNER, ZOOM_HINT, VOUCHER_BANNER, PRIZE_BANNER, PRIZE_CHECK } from '../data/script.js';
+import { ZOOM_LEVELS, MIN_TOUCH_CSS_PX, PLATE_RANGE, URLS, STALL_BOOKING, TALK_RANGE, ZOOM_HINT_MS } from '../config.js';
 import { ZONES, dist, inZone } from '../logic/layout.js';
 import { STALL_ROW, GHOSTS } from '../logic/npcs.js';
 import { audio } from '../../audio/engine.js';
@@ -49,6 +49,8 @@ export class HudScene extends Phaser.Scene {
     }
     this.chip = label(this, W / 2, 0, '', { depth: 11, align: 'center' });
     this.plate = label(this, 0, 0, '', { depth: 12, align: 'center', color: '#FFFF4F' });
+    this.hintTexts = ZOOM_HINT.map((t, i) => label(this, 0, 0, t, { depth: 12, align: 'center', color: i ? '#FFFFFF' : '#FFFF4F', px: 10 }).setVisible(false));
+    this.hintUntil = 0;
     this.place = label(this, W / 2, 0, '', { depth: 12, align: 'center', color: '#FFFFFF', px: 10 });
     this.bannerG = this.add.graphics().setDepth(150);
     this.bannerTexts = [0, 1].map(() => label(this, W / 2, 0, '', { depth: 151, align: 'center', color: '#FFFF4F' }));
@@ -229,6 +231,8 @@ export class HudScene extends Phaser.Scene {
     const S = this.S;
     if (S.mapOpen) return;
     S.zoom = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, S.zoom + d));
+    S.zoomHinted = true;
+    this.hintUntil = 0;
     this.worldScene().applyZoom(true);
   }
 
@@ -357,8 +361,35 @@ export class HudScene extends Phaser.Scene {
       if (pt && pt.d <= TALK_RANGE) this.talk(pt.key);
       else if (dist(w.player, this.walkTo) < 2) this.walkTo = null;
     } else if (!this.down) S.input.target = null;
+    // Once per session, after the welcome: point at the +/- buttons.
+    if (!S.zoomHinted && !w.welcome.locked && !this.dialogue.open && !this.overlay) {
+      S.zoomHinted = true;
+      this.hintUntil = time + ZOOM_HINT_MS;
+    }
     this.dialogue.tick(time);
     this.drawHud(time);
+  }
+
+  /** A pulsing callout left of the +/- buttons: "you can zoom". */
+  drawZoomHint(g, time, hidden) {
+    const on = !hidden && time < this.hintUntil;
+    this.hintTexts.forEach((t) => t.setVisible(on));
+    if (!on) return;
+    const blink = Math.floor(time / 400) % 2 === 0;
+    const col = blink ? 0xffffff : 0xffff4f;
+    for (const k of ['zoomIn', 'zoomOut']) {
+      const r = BTN[k];
+      g.lineStyle(1, col, 1).strokeRect(r[0] - 1.5, r[1] - 1.5, r[2] + 3, r[3] + 3);
+    }
+    const nudge = blink ? 0 : 1;
+    const bx = 96 - nudge;
+    const by = 122;
+    const bw = 56;
+    const bh = 30;
+    g.fillStyle(0x000000, 0.9).fillRect(bx, by, bw, bh).lineStyle(1, 0xffff4f, 1).strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+    // Arrow to the buttons.
+    g.fillStyle(0xffff4f, 1).fillTriangle(bx + bw, by + bh / 2 - 4, bx + bw, by + bh / 2 + 4, bx + bw + 5, by + bh / 2);
+    this.hintTexts.forEach((t, i) => t.setOrigin(0.5, 0).setPosition(bx + bw / 2, by - 3 + i * 13));
   }
 
   drawHud(time) {
@@ -381,6 +412,7 @@ export class HudScene extends Phaser.Scene {
       box(r, active ? 0x8f2f20 : 0x000000, locked ? 0x666666 : 0xffff4f);
       t.setOrigin(0.5, 0.5).setPosition(Math.round(r[0] + r[2] / 2), Math.round(r[1] + r[3] / 2) - 1).setColor(locked ? '#777777' : k === 'act' && talkable ? '#FFFF4F' : '#FFFFFF');
     }
+    this.drawZoomHint(g, time, hidden || this.dialogue.open);
     // Progress chip.
     const done = w.progress.allGoals;
     const chip = done ? CHIP_DONE : chipText(w.progress.goalCount, w.progress.vouchers);

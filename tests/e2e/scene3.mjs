@@ -141,9 +141,9 @@ for (const size of [
 
   // zoom and MAP
   await tapDesign(page, 169, 149);
-  ok((await state(page)).zoom === 1, 'the - button zooms out');
+  ok((await state(page)).zoom === 3, 'the - button zooms out');
   await tapDesign(page, 169, 127);
-  ok((await state(page)).zoom === 0, 'the + button zooms in');
+  ok((await state(page)).zoom === 2, 'the + button zooms in');
   await tapDesign(page, 23, 309);
   ok((await state(page)).mapOpen, 'MAP opens the whole map');
   await page.screenshot({ path: `${OUT}/map_day.png` });

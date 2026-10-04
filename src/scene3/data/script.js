@@ -16,6 +16,7 @@ export const WELCOME_PAGES = [
   'ถ้าคุยครบทุกคน จะมีรางวัลพิเศษให้ด้วย โฮะๆ',
 ];
 export const AFTER_WELCOME_BANNER = 'เปิดรายการภารกิจได้ที่ปุ่ม ภารกิจ';
+export const ZOOM_HINT = ['กด + / -', 'ซูมเข้า-ออก'];
 
 // ---- Goals: six places (final names and facts) ----
 export const GOALS = [

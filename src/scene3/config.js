@@ -13,7 +13,8 @@ export const BASE_H = 640;
 
 // ---- Camera and zoom (design px per map unit) ----
 export const ZOOM_LEVELS = [3, 2, 1.2, 0.65, 'fit']; // 'fit' = the whole map width in the window
-export const ZOOM_START = 0; // index into ZOOM_LEVELS
+export const ZOOM_START = 2; // index into ZOOM_LEVELS: 1.2, the lane and its stalls in view
+export const ZOOM_HINT_MS = 9000; // the +/- hint after the welcome, until the first zoom
 export const SMOOTH_BELOW = 1; // the world is drawn with smoothing below this zoom, nearest-neighbour above
 
 // ---- Characters ----

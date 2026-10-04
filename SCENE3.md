@@ -89,6 +89,8 @@ word boundaries (Intl.Segmenter).
 Hold a finger anywhere to walk toward it (a cross marks the target), or arrows/WASD. Tap a character to
 talk (or walk to it, then talk). TALK replaces AUTO when someone is within 16 units. The chip at the top
 opens the checklist; MAP shows the whole map with the camera frame; DAY/NIGHT; + and - (also the + and -
-keys, the mouse wheel, pinch) step through zoom 3, 2, 1.2, 0.65 and the whole map width. AUTO walks the
+keys, the mouse wheel, pinch) step through zoom 3, 2, 1.2, 0.65 and the whole map width. The
+scene starts at 1.2 (the lane and its stalls in view); after the welcome a callout points at + and - once
+(about 9 s, or until the first zoom). AUTO walks the
 tour (lane, desk, shops, tables, cinema, haunted house view, band corner, back to the soi), pausing a
 second at each stop; any touch or key stops it.
