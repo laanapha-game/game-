@@ -170,6 +170,15 @@ for (const size of [
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${OUT}/thanks_day.png` });
   const b = await page.evaluate(() => window.__scene3.game.scene.getScene('S3Hud').thanksBtns);
+  ok(b.url === 'https://www.hellobooku.com/laanapha2026', 'page 1: booking');
+  ok((await page.evaluate(() => window.__scene3.game.scene.getScene('S3Hud').dim.alpha)) > 0.4, 'the game dims behind the panel');
+  const pageUrl = () => page.evaluate(() => window.__scene3.game.scene.getScene('S3Hud').thanksBtns.url);
+  await tapDesign(page, b.next[0] + 8, b.next[1] + 26);
+  ok((await pageUrl()) === 'https://www.instagram.com/laanapha/', 'next: IG laanapha');
+  await tapDesign(page, b.next[0] + 8, b.next[1] + 26);
+  ok((await pageUrl()) === 'https://maps.app.goo.gl/XxkVruXCpHoy5VWr5', 'next: Google Map');
+  await tapDesign(page, b.prev[0] + 8, b.prev[1] + 26);
+  ok((await pageUrl()) === 'https://www.instagram.com/laanapha/', 'back: IG');
   await tapDesign(page, b.more[0] + b.more[2] / 2, b.more[1] + 9);
   ok(!(await page.evaluate(() => window.__scene3.game.scene.getScene('S3Hud').overlay)), 'คุยกับทีมงานต่อ closes it');
   await page.evaluate(() => window.__scene3.game.scene.getScene('S3Hud').openThanks());

@@ -59,6 +59,8 @@ export class HudScene extends Phaser.Scene {
     this.dialogue = new Dialogue(this);
     this.overlay = null; // 'missions' | 'map'
     this.overlayG = this.add.graphics().setDepth(300);
+    // Dims the game while a dialogue or panel is up, so the UI stands out.
+    this.dim = this.add.rectangle(-20, -20, W + 40, H + 40, 0x000000, 1).setOrigin(0, 0).setDepth(100).setAlpha(0);
     this.overlayTexts = [];
 
     // Input: pointer (hold to walk), keys, wheel, pinch.
@@ -149,7 +151,12 @@ export class HudScene extends Phaser.Scene {
     if (this.down && p.isDown) this.S.input.target = this.toWorld(p);
   }
 
-  onUp() {
+  onUp(p) {
+    if (this.overlay === 'thanks' && this.thanksSwipe != null && p) {
+      const dx = this.design(p).x - this.thanksSwipe;
+      if (Math.abs(dx) > 20) this.showThanksPage(this.thanksPage + (dx < 0 ? 1 : -1));
+    }
+    this.thanksSwipe = null;
     this.down = false;
     this.pinch = null;
     this.S.input.target = null;
@@ -158,6 +165,11 @@ export class HudScene extends Phaser.Scene {
   onKey(e) {
     const k = e.key;
     if (this.dialogue.open && (k === ' ' || k === 'Enter')) return this.dialogue.next();
+    if (this.overlay === 'thanks') {
+      if (k === 'ArrowLeft') this.showThanksPage(this.thanksPage - 1);
+      if (k === 'ArrowRight') this.showThanksPage(this.thanksPage + 1);
+      return;
+    }
     if (this.overlay && (k === 'Escape' || k === 'm' || k === 'M')) return this.closeOverlay();
     if (this.world.welcome.locked && (k === ' ' || k === 'Enter')) {
       const r = this.world.welcome.tap();
@@ -345,7 +357,10 @@ export class HudScene extends Phaser.Scene {
     this.overlayTexts.push(label(this, W / 2, 0, LABELS.map, { depth: 301, align: 'center', color: '#FFFF4F' }));
   }
 
-  /** All six places explored: thank you, book, IG, Google Map; then end the game or keep talking. */
+  /**
+   * All six places explored: a small card that pages book -> IG -> map (arrows, dots, swipe),
+   * with จบเกม / คุยกับทีมงานต่อ always at the bottom.
+   */
   openThanks() {
     const w = this.world;
     if (w.ended) return;
@@ -357,53 +372,127 @@ export class HudScene extends Phaser.Scene {
     this.hintUntil = 0;
     this.overlay = 'thanks';
     const g = this.overlayG.clear().setVisible(true);
-    const add = (x, y, s, o = {}) => {
-      const t = label(this, x, y, s, { depth: 301, align: 'center', ...o });
-      this.overlayTexts.push(t);
-      return t;
-    };
-    const lines = (y, text, color = '#FFFFFF') => {
-      const ls = wrap(text, 148);
-      ls.forEach((l, i) => add(W / 2, y + i * 16 - 4, l, { color }));
-      return y + ls.length * 16;
-    };
-    const button = (x, y, bw, text, fill) => {
-      const r = [x, y, bw, 18];
-      g.fillStyle(fill, 1).fillRect(r[0], r[1], r[2], r[3]).lineStyle(1, 0xffff4f, 1).strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
-      add(x + bw / 2, y, text, { color: '#FFFFFF', px: wrap(text, bw - 6, 12).length > 1 ? 10 : 12 }).setOrigin(0.5, 0.5).setY(y + 8);
-      return r;
-    };
-    // Measure first, then centre the panel above the bottom buttons.
-    const n = (t) => wrap(t, 148).length;
-    const h = 22 + n(THANKS.body) * 16 + 26 + n(THANKS.mapLine) * 16 + 26 + n(THANKS.choose) * 16 + 28;
-    const y0 = Math.max(22, Math.round((298 - h) / 2));
-    g.fillStyle(0x000000, 0.95).fillRect(6, y0, 168, h).lineStyle(1, 0xffff4f, 1).strokeRect(6.5, y0 + 0.5, 167, h - 1);
-    let y = lines(y0 + 4, THANKS.title, '#FFFF4F') + 2;
-    y = lines(y, THANKS.body);
-    const book = button(14, y + 2, 74, THANKS.bookButton, 0x8f2f20);
-    const ig = button(92, y + 2, 74, THANKS.igButton, 0x8f2f20);
-    y = lines(y + 26, THANKS.mapLine);
-    const map = button(20, y + 2, 140, THANKS.mapButton, 0x2f4f8f);
-    y = lines(y + 26, THANKS.choose, '#FFFF4F');
-    const end = button(14, y + 4, 60, THANKS.end, 0x000000);
-    const more = button(78, y + 4, 88, this.world.progress.targets.every((k) => this.world.progress.talked.has(k)) ? THANKS.keepWalking : THANKS.keepTalking, 0x000000);
-    this.thanksBtns = { book, ig, map, end, more };
+    const P = (this.thanksPanel = { x: 14, y: 92, w: 152, h: 128 });
+    g.fillStyle(0x000000, 1).fillRect(P.x, P.y, P.w, P.h).lineStyle(1, 0xffff4f, 1).strokeRect(P.x + 0.5, P.y + 0.5, P.w - 1, P.h - 1);
+    this.overlayTexts.push(label(this, W / 2, P.y + 1, THANKS.title, { depth: 301, align: 'center', color: '#FFFF4F' }));
+    g.lineStyle(1, 0x5a4a20, 1).lineBetween(P.x + 8, P.y + 21.5, P.x + P.w - 8, P.y + 21.5);
+    const talkedAll = w.progress.targets.every((k) => w.progress.talked.has(k));
+    const by = P.y + P.h - 24;
+    const end = this.thanksButton(g, P.x + 6, by, 50, THANKS.end, 0x000000, 301);
+    const more = this.thanksButton(g, P.x + 60, by, P.w - 66, talkedAll ? THANKS.keepWalking : THANKS.keepTalking, 0x000000, 301);
+    this.thanksBtns = { end, more, prev: [P.x + 2, P.y + 26, 16, 52], next: [P.x + P.w - 18, P.y + 26, 16, 52] };
+    this.thanksPageG = this.thanksPageG ?? this.add.graphics().setDepth(302);
+    this.thanksPageObjs = [];
+    this.showThanksPage(0);
+  }
+
+  thanksButton(g, x, y, bw, text, fill, depth, objs = this.overlayTexts) {
+    const r = [x, y, bw, 18];
+    g.fillStyle(fill, 1).fillRect(r[0], r[1], r[2], r[3]).lineStyle(1, 0xffff4f, 1).strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
+    const px = wrap(text, bw - 6, 12).length > 1 ? 10 : 12;
+    objs.push(label(this, x + bw / 2, 0, text, { depth: depth + 1, align: 'center', color: '#FFFFFF', px }).setOrigin(0.5, 0.5).setY(y + 8));
+    return r;
+  }
+
+  showThanksPage(i) {
+    const n = THANKS.pages.length;
+    this.thanksPage = (i + n) % n;
+    const pg = THANKS.pages[this.thanksPage];
+    const P = this.thanksPanel;
+    const g = this.thanksPageG.clear().setVisible(true);
+    this.thanksPageObjs.forEach((o) => o.destroy());
+    const objs = (this.thanksPageObjs = []);
+    const cx = W / 2;
+    // Icon and line on one row, centred together.
+    const line = label(this, 0, 0, pg.line, { depth: 303, color: '#FFFFFF' });
+    objs.push(line);
+    const iw = 14;
+    const lw = Math.ceil(line.width) - 8;
+    const x0 = Math.round(cx - (iw + 4 + lw) / 2);
+    const rowY = P.y + 26;
+    this.drawIcon(g, pg.icon, x0, rowY + 1, objs);
+    line.setPosition(x0 + iw + 4, rowY - 4);
+    let y = rowY + 16;
+    if (pg.sub) {
+      objs.push(label(this, cx, y - 4, pg.sub, { depth: 303, align: 'center', color: '#FFFF4F', px: wrap(pg.sub, 112, 12).length > 1 ? 10 : 12 }));
+    }
+    const action = this.thanksButton(g, cx - 45, P.y + 60, 90, pg.button, 0x8f2f20, 302, objs);
+    this.thanksBtns.action = action;
+    this.thanksBtns.url = URLS[pg.url];
+    // Arrows and dots.
+    g.fillStyle(0xffff4f, 1);
+    const ay = P.y + 50;
+    g.fillTriangle(P.x + 12, ay - 5, P.x + 12, ay + 5, P.x + 6, ay);
+    g.fillTriangle(P.x + P.w - 12, ay - 5, P.x + P.w - 12, ay + 5, P.x + P.w - 6, ay);
+    for (let k = 0; k < n; k++) {
+      g.fillStyle(k === this.thanksPage ? 0xffff4f : 0x5a5a5a, 1).fillRect(cx - (n * 8) / 2 + k * 8 + 2, P.y + 84, 4, 4);
+    }
+  }
+
+  /** Small pixel icons (design px): ticket, Instagram glyph, map pin. */
+  drawIcon(g, kind, x, y, objs) {
+    if (kind === 'ticket') {
+      objs.push(this.add.image(x, y + 3, 'c_ticket').setOrigin(0, 0).setScale(1 / 3).setDepth(303));
+      return;
+    }
+    const px = (c, a, b) => g.fillStyle(c, 1).fillRect(x + a, y + b, 1, 1);
+    if (kind === 'ig') {
+      const N = 13;
+      const stops = [
+        [0, [0xfe, 0xda, 0x75]],
+        [0.35, [0xf5, 0x85, 0x29]],
+        [0.6, [0xdd, 0x2a, 0x7b]],
+        [1, [0x81, 0x34, 0xaf]],
+      ];
+      const grad = (t) => {
+        for (let k = 1; k < stops.length; k++) {
+          if (t <= stops[k][0]) {
+            const [t0, c0] = stops[k - 1];
+            const [t1, c1] = stops[k];
+            const f = (t - t0) / (t1 - t0);
+            const c = c0.map((v, j) => Math.round(v + (c1[j] - v) * f));
+            return (c[0] << 16) | (c[1] << 8) | c[2];
+          }
+        }
+        return 0x8134af;
+      };
+      for (let b = 0; b < N; b++) {
+        for (let a = 0; a < N; a++) {
+          if (Math.min(a, N - 1 - a) + Math.min(b, N - 1 - b) < 2) continue; // rounded corners
+          const ring = (a === 2 || a === 10 || b === 2 || b === 10) && a >= 2 && a <= 10 && b >= 2 && b <= 10 && !((a === 2 || a === 10) && (b === 2 || b === 10));
+          const d = Math.hypot(a - 6, b - 6);
+          const lens = d >= 1.5 && d <= 2.6;
+          const dot = a === 8 && b === 4;
+          px(ring || lens || dot ? 0xffffff : grad((a + (N - 1 - b)) / (2 * (N - 1))), a, b);
+        }
+      }
+      return;
+    }
+    if (kind === 'pin') {
+      const rows = ['..XXXXX..', '.XXXXXXX.', 'XXXWWWXXX', 'XXWWWWWXX', 'XXWWWWWXX', 'XXXWWWXXX', '.XXXXXXX.', '..XXXXX..', '...XXX...', '....X....'];
+      rows.forEach((r, b) => [...r].forEach((ch, a) => ch !== '.' && px(ch === 'X' ? 0xea4335 : 0xffffff, a + 2, b + 1)));
+    }
   }
 
   tapThanks(x, y) {
     const b = this.thanksBtns;
-    if (this.hit(b.book, x, y)) return openUrl(URLS.booking);
-    if (this.hit(b.ig, x, y)) return openUrl(URLS.eventInstagram);
-    if (this.hit(b.map, x, y)) return openUrl(URLS.map);
+    if (this.hit(b.action, x, y)) return openUrl(b.url);
     if (this.hit(b.end, x, y)) {
       this.closeOverlay();
       return this.onEvents(this.world.finish());
     }
-    if (this.hit(b.more, x, y)) this.closeOverlay();
+    if (this.hit(b.more, x, y)) return this.closeOverlay();
+    if (this.hit(b.prev, x, y)) return this.showThanksPage(this.thanksPage - 1);
+    if (this.hit(b.next, x, y)) return this.showThanksPage(this.thanksPage + 1);
+    this.thanksSwipe = x; // a swipe across the card pages too (see onUp)
   }
 
   closeOverlay() {
     if (this.overlay === 'map') this.worldScene().setMap(false);
+    this.thanksPageG?.clear().setVisible(false);
+    this.thanksPageObjs?.forEach((o) => o.destroy());
+    this.thanksPageObjs = [];
+    this.thanksSwipe = null;
     this.overlay = null;
     this.overlayG.clear().setVisible(false);
     this.overlayTexts.forEach((t) => t.destroy());
@@ -428,6 +517,9 @@ export class HudScene extends Phaser.Scene {
       S.zoomHinted = true;
       this.hintUntil = time + ZOOM_HINT_MS;
     }
+    const dimTo = this.dialogue.open || this.overlay === 'missions' || this.overlay === 'thanks' ? 0.55 : 0;
+    this.dim.alpha += (dimTo - this.dim.alpha) * Math.min(1, (this.game.loop.delta / 1000) * 10);
+    if (Math.abs(this.dim.alpha - dimTo) < 0.01) this.dim.alpha = dimTo;
     this.dialogue.tick(time);
     this.drawHud(time);
   }

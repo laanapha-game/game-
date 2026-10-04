@@ -71,10 +71,12 @@ in git history (commit before "only people and the player").
 
 ## After all six places
 
-A thank-you panel opens (text in `THANKS`, `src/scene3/data/script.js`): ขอบคุณที่เล่นเกมของเรา, buttons for
-booking (`URLS.booking`), IG @laanapha (`URLS.eventInstagram`) and Google Map (`URLS.map`, the owner's link to
-เมื่อคืนผมนอนไม่หลับ), then a choice: จบเกม (straight to the ending)
-or คุยกับทีมงานต่อ (keep playing to collect vouchers; the exit still ends the game).
+A small card opens (`THANKS` in `src/scene3/data/script.js`): ขอบคุณที่เล่นเกมของเรา! and three pages,
+turned with the arrows, a swipe or the arrow keys: จองบัตร (`URLS.booking`) -> IG laanapha with the IG logo
+(`URLS.eventInstagram`) -> เจอกันที่ "เมื่อคืนผมนอนไม่หลับ" (`URLS.map`). Under them, always: จบเกม
+(straight to the ending) or คุยกับทีมงานต่อ (keep playing for vouchers; the exit still ends the game).
+
+While a dialogue, the checklist or this card is up, the game dims (55% black) so the UI stands out.
 
 ## Add a character
 

@@ -92,15 +92,14 @@ export const summaryText = (goals, talked, targets) => `สำรวจ ${goals}
 export const voucherHowTo = (how) => `วิธีใช้คูปอง: ${how}`;
 export const prizeHowTo = (how) => `รางวัลพิเศษ ✓ วิธีรับ: ${how}`;
 export const ENDING_BUTTONS = { book: 'จองบัตรเลย', instagram: 'IG @laanapha', credits: 'เครดิต', home: 'หน้าแรก' };
-// ---- All six places explored (owner): thank you, book, IG, Google Map, then end or keep talking ----
+// ---- All six places explored (owner): thank you, then three pages (book -> IG -> map), then end or keep talking ----
 export const THANKS = {
   title: 'ขอบคุณที่เล่นเกมของเรา!',
-  body: 'กดเข้าลิงก์ไปจองในเว็บหลัก และติดตาม IG เป็นกำลังใจและติดตามข่าวสารให้ทีมพวกเรากัน',
-  bookButton: 'จองบัตร',
-  igButton: 'IG',
-  mapLine: 'เจอกันที่ Google Map:',
-  mapButton: 'เมื่อคืนผมนอนไม่หลับ',
-  choose: 'จะจบเกมเลย หรือคุยกับทีมงานให้ครบเพื่อรับ voucher?',
+  pages: [
+    { icon: 'ticket', line: 'จองบัตรในเว็บหลัก', button: 'จองบัตร', url: 'booking' },
+    { icon: 'ig', line: 'IG: laanapha', sub: 'ติดตามเป็นกำลังใจและข่าวสาร', button: 'ติดตาม', url: 'eventInstagram' },
+    { icon: 'pin', line: 'เจอกันที่', sub: '"เมื่อคืนผมนอนไม่หลับ"', button: 'Google Map', url: 'map' },
+  ],
   end: 'จบเกม',
   keepTalking: 'คุยกับทีมงานต่อ',
   keepWalking: 'เดินเล่นต่อ', // when everyone has been talked to already
