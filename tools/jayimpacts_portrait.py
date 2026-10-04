@@ -1,10 +1,12 @@
-"""Jayimpacts dialogue portrait, cute anime chibi, Stardew Valley inspired (owner references)
+"""Jayimpacts dialogue portrait, chibi, Stardew Valley inspired, face after the Drive art (owner)
 -> src/assets/art/portraits/jayimpacts_portrait.png (64 x 64 design px, 2 frames:
 neutral, talk) at RENDER_SCALE x, nearest neighbour.
 
 Bust portrait like the Stardew Valley portraits: head and shoulders, light from the
 upper left, near-black tinted outline around the silhouette, 4-6 tones per material,
-hand-placed eyes (white catchlight, heavy upper lid), strong brows, a soft smile.
+hand-placed face after the Drive avatar: calm heavy-lidded eyes with dark irises, thick
+straight brows, a small one-sided smile, no blush; near-black hair parted on one side and
+swept over, with a lock falling beside one eye.
 Look from the Drive avatar: spiky black hair swept to one side, houndstooth jacket over
 a black tee, a thin chain, white wings with yellow tips behind the shoulders and a gold
 halo ring (plain ring, not the Drive gear).
@@ -26,7 +28,7 @@ C = {
     # skin ramp (outline .. highlight)
     'k0': '#4A2418', 'k1': '#B06A4C', 'k2': '#D88C68', 'k3': '#EAA67C', 'k4': '#F6C094', 'k5': '#FFDDB4',
     # hair ramp
-    'h0': '#100C1A', 'h1': '#1C1828', 'h2': '#2A2438', 'h3': '#3A3450', 'h4': '#524A6C', 'h5': '#7470A0',
+    'h0': '#0A0807', 'h1': '#16120F', 'h2': '#221C18', 'h3': '#332B26', 'h4': '#48403A', 'h5': '#605852',
     # jacket houndstooth (light, mid, dark, shade) + outline
     'j0': '#141218', 'j1': '#D6D2CC', 'j2': '#9A9694', 'j3': '#5E5A5E', 'j4': '#3C383E',
     # tee
@@ -34,9 +36,9 @@ C = {
     # chain
     'c1': '#B8B4BC', 'c2': '#F4F2F6',
     # eyes
-    'e0': '#100C14', 'e1': '#3A2A2A', 'e2': '#6A4A3C', 'ew': '#FFFFFF', 'es': '#E8DCD4',
+    'e0': '#0E0A0A', 'e1': '#2E2220', 'e2': '#4E3A30', 'ew': '#FFFFFF', 'es': '#E8DCD4',
     # mouth, blush
-    'm1': '#9A4A3C', 'm2': '#C46E5C', 'bl': '#F0A088',
+    'm1': '#9A4A3C', 'm2': '#6A2A22', 'bl': '#F0A088',
     # wings
     'w0': '#5E5468', 'w1': '#FFFFFF', 'w2': '#E6E4F2', 'w3': '#C4C0D8', 'y1': '#FFE070', 'y2': '#F0B030',
     # halo
@@ -155,9 +157,10 @@ CLUMPS = [
     ((40, 12), (46, 6), 4.6), ((43, 15), (51, 11), 4.4), ((21, 15), (12, 12), 4.4),
     # sides and sideburns
     ((20, 18), (12, 22), 4.0), ((44, 18), (52, 21), 4.0), ((19, 22), (17, 31), 3.4), ((45, 22), (47, 31), 3.4),
-    # fringe, soft clumps swept to the viewer's right, ending above the brows
-    ((22, 14), (21, 23), 3.4), ((25, 13), (27, 22), 3.6), ((30, 13), (32, 21), 3.6),
-    ((34, 13), (37, 22), 3.6), ((38, 14), (41, 21), 3.4), ((41, 15), (44, 23), 3.0),
+    # parted on the viewer's left and swept over to the right (forehead open on the
+    # left), with one long lock falling beside the right eye, as in the Drive art
+    ((23, 15), (20, 19), 3.0), ((27, 14), (30, 18), 3.4), ((31, 14), (36, 20), 3.6),
+    ((35, 14), (40, 22), 3.6), ((39, 15), (42, 24), 3.2), ((42, 16), (44, 28), 2.4), ((24, 15), (24, 20), 2.6),
 ]
 
 
@@ -207,7 +210,7 @@ def hair_colour(x, y):
     v = light + (1 - n) * 0.35 - (0.35 if n > 0.82 and i >= 0 else 0)
     if 6 <= y <= 12 and i >= 0 and 0.15 < n < 0.55 and (x + 2 * y) % 4:
         v += 0.25                                         # sheen strands on the crown
-    return ramp(v, ['h1', 'h1', 'h2', 'h2', 'h3', 'h4', 'h5'])
+    return ramp(v, ['h0', 'h1', 'h1', 'h2', 'h2', 'h3', 'h4'])
 
 
 def skin_colour(x, y):
@@ -247,24 +250,22 @@ def in_lapel_edge(x, y):
 
 
 # ---------------------------------------------------------------- features
-EYE_L = [  # big anime eye, 9 x 9: thick upper lash, sparkle in a dark iris, light at the bottom
-    '...aaaa..',
-    '.aaaaaaa.',
-    'aswwdddsa',
-    '.swwddis.',
+EYE_L = [  # calm heavy-lidded eye (Drive art), 9 x 6: thick upper lid, dark iris, small catchlight
+    '..aaaaaa.',
+    'aaaaaaaaa',
+    '.sddwdis.',
     '.sdddiis.',
-    '.sdiiiws.',
-    '.silllls.',
-    '..sllls..',
+    '..siiis..',
     '...kkk...',
 ]
-EYE_R = EYE_L  # same highlight side on both eyes (anime convention); lash flicks added per side
-EYE_LEG = {'a': 'e0', 's': 'es', 'w': 'ew', 'd': 'e0', 'i': 'e1', 'l': 'e2', 'k': 'k1'}
-BROW_L = ['.aaaa', 'a....']
-BROW_R = ['aaaa.', '....a']
+EYE_R = [r[::-1] for r in EYE_L]
+EYE_R[2] = '.siwddds.'  # catchlight stays on the upper left of the iris
+EYE_LEG = {'a': 'e0', 's': 'es', 'w': 'ew', 'd': 'e0', 'i': 'e1', 'l': 'e2', 'k': 'k2'}
+BROW_L = ['..aaaaa', 'aaaaaaa', 'aa.....']   # thick, straight, outer end slightly down
+BROW_R = [r[::-1] for r in BROW_L]
 MOUTH = {
-    'neutral': (['k...k', '.mmm.'], (30, 40)),
-    'talk': (['.mmm.', 'mrrrm', '.mrm.'], (30, 40)),
+    'neutral': (['.....m', '.mmmm.'], (29, 40)),        # small smile, one corner up
+    'talk': (['.mmmmm', '.mrrm.'], (29, 40)),
 }
 
 
@@ -338,18 +339,11 @@ def portrait(frame):
     pass
     cv.set(18, 30, 'k1'); cv.set(18, 31, 'k1'); cv.set(45, 30, 'k1'); cv.set(45, 31, 'k1')
     # face
-    cv.stamp(21, 25, BROW_L, {'a': 'h1'})
-    cv.stamp(38, 25, BROW_R, {'a': 'h1'})
+    cv.stamp(20, 24, BROW_L, {'a': 'h0'})
+    cv.stamp(37, 24, BROW_R, {'a': 'h0'})
     cv.stamp(20, 28, EYE_L, EYE_LEG)
     cv.stamp(35, 28, EYE_R, EYE_LEG)
-    cv.set(19, 29, 'e0'); cv.set(18, 28, 'e0')                       # outer lash flicks
-    cv.set(44, 29, 'e0'); cv.set(45, 28, 'e0')
-    cv.set(32, 37, 'k1')                                              # tiny nose
-    for bx in (19, 40):                                               # rosy cheeks with blush lines
-        for i in range(5):
-            cv.set(bx + i, 38, 'bl')
-        for i in (1, 3):
-            cv.set(bx + i, 39, 'bl')
+    cv.set(33, 35, 'k2'); cv.set(33, 36, 'k1'); cv.set(32, 37, 'k1')   # nose: a soft shade line
     rows, (mx, my) = MOUTH[frame]
     cv.stamp(mx, my, rows, {'m': 'm1', 'r': 'm2', 'k': 'k1'})
     return cv.image()

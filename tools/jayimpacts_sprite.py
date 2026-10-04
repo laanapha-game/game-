@@ -7,9 +7,9 @@ Same cell and conventions as the bird costumes: 32 x 36 frames, feet on row 35, 
 view faces LEFT, sheets at RENDER_SCALE (3) x with nearest neighbour.
 
 Chibi proportions: a big round head (rows 3-21, well over half his height), a small
-body, short legs and round shoes. Big anime eyes (dark lash line, brown iris lighter at
-the bottom, white catchlight), rosy cheeks, a tiny smile. Soft rounded hair clumps with
-a sheen. Near-black tinted outline per material, three tones per material.
+body, short legs and round shoes. Face after the Drive art (owner): calm heavy-lidded
+eyes with dark irises, thick straight brows, a small one-sided smile; black hair parted
+on one side and swept over, with a lock falling beside one eye. Near-black tinted outline per material, three tones per material.
 
 Look from the Drive art: black hair swept to one side, grey houndstooth jacket over a
 black tee, belt with a gold buckle, cream trousers, brown shoes, small white wings with
@@ -40,10 +40,10 @@ ANIM = {
 }
 
 C = {
-    'h0': '#141020', 'h1': '#2C2638', 'h2': '#423A58', 'h3': '#6A6490',            # hair
+    'h0': '#0A0807', 'h1': '#1C1714', 'h2': '#2C2520', 'h3': '#4A423C',            # hair (black, Drive art)
     'k0': '#5C3024', 'k1': '#E8A47E', 'k2': '#F8C8A0', 'k3': '#FFE2C4',            # skin
-    'e0': '#1A1220', 'e1': '#6A3E2C', 'e2': '#B07850', 'ew': '#FFFFFF',            # eyes
-    'bl': '#F59A8C', 'm1': '#A84838',                                              # blush, mouth
+    'e0': '#0E0A0A', 'e1': '#3A2A24', 'e2': '#5A4034', 'ew': '#FFFFFF',            # eyes
+    'bl': '#F59A8C', 'm1': '#C0705C',                                              # blush, mouth
     'j0': '#1E1B22', 'j1': '#D4D0CC', 'j2': '#8C8888', 'j3': '#5A5658',            # jacket
     't1': '#2A2630', 't2': '#3E3A46', 'B': '#2A1E1A', 'g': '#E8C060',              # tee, belt
     'p0': '#4E4434', 'p1': '#F4EEE0', 'p2': '#E0D4BC', 'p3': '#B8A88E',            # trousers
@@ -126,8 +126,8 @@ def wing(g, side, x0, y0):
 
 def hair_colour(cy, x0, x1):
     def col(x, y):
-        if 0 < (y - (cy - 7)) < 2 and x0 <= x <= x1 and (x + y) % 3:
-            return 'h3'                                      # sheen band
+        if (y - (cy - 7)) in (0, 1) and x0 + 1 <= x <= x0 + 5 - (y - (cy - 7)) * 2:
+            return 'h3'                                      # short sheen on the lit side
         if y >= cy - 1:
             return 'h1'
         return 'h2' if (x - y) % 5 == 0 else 'h1'
@@ -139,9 +139,9 @@ def blobs(X, Y, pts, rx, ry):
 
 
 # ---------------------------------------------------------------- front
-EYE = ['oooo', 'ewAe', 'ewAA', 'eAAL', '.LL.']  # lash, sparkle inside a dark iris, lighter iris at the bottom
+EYE = ['oooo', 'ewAe', '.AA.']                 # calm heavy lid (Drive art), dark iris, small catchlight
 EYE_LEG = {'o': 'e0', 'w': 'ew', 'e': 'e0', 'A': 'e1', 'L': 'e2'}
-EYE_SHUT = ['....', '....', '.oo.', 'o..o', '....']  # happy closed eyes (^ ^)
+EYE_SHUT = ['....', 'oooo', '....']           # closed: lid line
 
 
 def front(frame):
@@ -181,7 +181,8 @@ def front(frame):
         X, Y = x + 0.5, y + 0.5
         cap = ((X - 16) / 10.4) ** 2 + ((Y - (cy - 4)) / 6.2) ** 2 <= 1 and Y <= cy - 3
         tufts = blobs(X, Y, ((10.5, cy - 8.6), (14.5, cy - 9.4), (19, cy - 9.2), (22.5, cy - 7.8)), 2.2, 1.6)
-        fringe = blobs(X, Y, ((9, cy - 3), (12.4, cy - 2.6), (16, cy - 3.2), (19.8, cy - 2.4), (23, cy - 2.8)), 2.2, 1.9)
+        fringe = blobs(X, Y, ((12.4, cy - 3.6), (16, cy - 3.0), (19.6, cy - 2.4), (22.6, cy - 1.6)), 2.2, 1.9)
+        fringe = fringe or (22.4 <= X <= 24.2 and cy - 2 <= Y <= cy + 2.4)   # lock beside his left eye
         sides = (6.2 <= X <= 8.2 or 23.8 <= X <= 25.8) and Y <= cy + 3 and ell(16, cy, 9.9, 8.7)(x, y)
         return cap or tufts or fringe or sides
     g.part(in_hair, hair_colour(cy, 10, 21), 'hair', over=False)
@@ -190,15 +191,11 @@ def front(frame):
     eye = EYE_SHUT if frame == 'blink' else EYE
     g.stamp(9, ey, eye, EYE_LEG)
     g.stamp(19, ey, eye, EYE_LEG)
-    if frame != 'blink':
-        g.set(8, ey, 'e0')                                   # outer lash flicks
-        g.set(23, ey, 'e0')
-    for x in (7, 8, 23, 24):
-        g.set(x, ey + 4, 'bl')
-    g.set(15, ey + 5, 'm1')
+    g.stamp(9, ey - 2, ['.aaa'], {'a': 'h0'})                # straight brows, a skin row above the lids
+    g.stamp(19, ey - 2, ['aaa.'], {'a': 'h0'})
+    g.set(15, ey + 5, 'm1')                                  # small smile, one corner up
     g.set(16, ey + 5, 'm1')
-    g.set(14, ey + 4, 'k1')                                  # smile corners
-    g.set(17, ey + 4, 'k1')
+    g.set(17, ey + 4, 'm1')
     if wave is not None:
         # his right arm raised (viewer's right): sleeve going up and out, round hand
         o = wave
@@ -273,11 +270,10 @@ def side(frame):
     g.part(in_hair, hair_colour(cy, 9, 21), 'hair', over=False)
     g.set(17, cy + 1, 'k1')                                   # ear detail
     ey = cy + 1
-    g.stamp(7, ey, ['ooo', 'ewA', 'ewA', 'eAL', '.L.'], EYE_LEG)
-    g.set(6, ey, 'e0')
-    g.set(10, ey + 4, 'bl')
-    g.set(11, ey + 4, 'bl')
+    g.stamp(7, ey, ['ooo', 'ewA', '.A.'], EYE_LEG)
+    g.stamp(6, ey - 2, ['aaaa'], {'a': 'h0'})               # brow
     g.set(7, ey + 5, 'm1')
+    g.set(8, ey + 4, 'm1')
     if p['arm'] is None:
         o = int(frame[-1])
         # near arm raised in front of him: sleeve up and forward, round hand

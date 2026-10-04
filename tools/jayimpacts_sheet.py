@@ -41,14 +41,14 @@ def main():
     av = av.resize((av.width * 200 // av.height, 200), Image.LANCZOS)
     sheet.paste(av, (30 + ch.width, 40), av)
     y = 260
-    d.text((20, y), 'AFTER, cute anime chibi portrait 64x64 (neutral, talk), shown 5x', fill=Y, font=fs)
+    d.text((20, y), 'AFTER, chibi portrait with the Drive art face, 64x64 (neutral, talk), shown 5x', fill=Y, font=fs)
     paste(por[0], 20, y + 26, 5, (60, 70, 80, 255))
     paste(por[1], 350, y + 26, 5, (60, 70, 80, 255))
     d.text((700, y), 'portrait at 1x and 2x', fill=Y, font=fs)
     paste(por[0], 700, y + 26, 1, (60, 70, 80, 255))
     paste(por[0], 780, y + 26, 2, (60, 70, 80, 255))
     y2 = y + 26 + 320 + 20
-    d.text((20, y2), 'AFTER, cute anime chibi walking sprite 32x36, 4x. side: idle0 idle1 walk0-3 wave0 wave1 | front: idle0 idle1 blink wave0 wave1', fill=Y, font=fs)
+    d.text((20, y2), 'AFTER, chibi walking sprite with the Drive art face, 32x36, 4x. side: idle0 idle1 walk0-3 wave0 wave1 | front: idle0 idle1 blink wave0 wave1', fill=Y, font=fs)
     for i, fr in enumerate(jay_s):
         paste(fr, 20 + i * 134, y2 + 26, 4, (111, 176, 74, 255))
     for i, fr in enumerate(jay_f):
