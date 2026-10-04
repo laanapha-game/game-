@@ -1,5 +1,5 @@
 // Scene 3 ending (spec 6.6) and credits. Design space 180 x 320.
-// Ending: the player's character, "สำรวจ n/6 จุด · คุยกับทีมงาน k/14", vouchers as ticket
+// Ending: the player's character, "สำรวจ n/6 จุด · คุยกับทีมงาน k/n", vouchers as ticket
 // icons, the event card, the ticket phase line by date, and four buttons: จองบัตรเลย,
 // Instagram, เครดิต, หน้าแรก. Links open in a new tab.
 import Phaser from 'phaser';

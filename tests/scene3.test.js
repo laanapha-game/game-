@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import * as L from '../src/scene3/logic/layout.js';
 import { findPath } from '../src/scene3/logic/pathfind.js';
 import { World, slide, TOUR } from '../src/scene3/logic/world.js';
-import { NPCS, STALL_ROW, TALK_TARGETS } from '../src/scene3/logic/npcs.js';
+import { NPCS, STALL_ROW, TALK_TARGETS, MUSICIANS } from '../src/scene3/logic/npcs.js';
 import { resetWelcomeSession, welcomePlayed } from '../src/scene3/logic/welcome.js';
 import { ticketLine } from '../src/scene3/logic/ticketLine.js';
 import { WELCOME_PAGES, STALL_ROW_PAGES, STALL_ROW_SPEAKER, GOALS } from '../src/scene3/data/script.js';
@@ -84,8 +84,8 @@ test('spread: positions move by LS, sizes do not', () => {
   assert.equal(L.WORLD.w, 636);
 });
 
-test('14 talk targets: each opens its dialogue and gives exactly one voucher', () => {
-  assert.equal(TALK_TARGETS.length, 14);
+test('talk targets (Jayimpacts and the stall row): each opens its dialogue and gives exactly one voucher', () => {
+  assert.deepEqual(TALK_TARGETS, ['jay', STALL_ROW.key]);
   const w = new World({ skipWelcome: true });
   for (const key of TALK_TARGETS) {
     const t = w.startTalk(key);
@@ -99,7 +99,7 @@ test('14 talk targets: each opens its dialogue and gives exactly one voucher', (
     w.startTalk(key);
     assert.deepEqual(w.endTalk(), []);
   }
-  assert.equal(w.progress.vouchers, 14);
+  assert.equal(w.progress.vouchers, TALK_TARGETS.length);
   assert.equal(NPCS.find((n) => n.key === 'jay').ig, true, 'Jayimpacts has the IG button');
 });
 
@@ -187,15 +187,16 @@ test('the player starts on the soi in front of the entrance', () => {
   assert.ok(L.START.y > L.R.soi[1] && L.START.y < L.R.soi[3]);
 });
 
-test('special prize only after the last of the 14 targets, after its voucher', () => {
+test('special prize only after the last target, after its voucher', () => {
   const w = new World({ skipWelcome: true });
-  TALK_TARGETS.slice(0, 13).forEach((k) => {
+  const last = TALK_TARGETS.length - 1;
+  TALK_TARGETS.slice(0, last).forEach((k) => {
     w.startTalk(k);
     const ev = w.endTalk();
     assert.ok(!ev.some((e) => e.type === 'prize'));
   });
   assert.equal(w.progress.prize, false);
-  w.startTalk(TALK_TARGETS[13]);
+  w.startTalk(TALK_TARGETS[last]);
   const ev = w.endTalk();
   assert.deepEqual(ev.map((e) => e.type), ['voucher', 'prize']);
   assert.equal(w.progress.prize, true);
@@ -217,15 +218,9 @@ test('goals: six zones tick once each; the exit ends only when all are done', ()
   assert.ok(ev.some((e) => e.type === 'exit'));
 });
 
-test('walking characters pause while spoken to', () => {
-  const w = new World({ skipWelcome: true });
-  const wiz = w.npc('wizard');
-  for (let i = 0; i < 60; i++) w.update(1 / 30, {});
-  w.startTalk('wizard');
-  const at = { x: wiz.x, y: wiz.y };
-  for (let i = 0; i < 30; i++) w.updateNpcs(1 / 30);
-  assert.deepEqual({ x: wiz.x, y: wiz.y }, at);
-  w.endTalk();
+test('only people and the player: no bird-costume characters, no band', () => {
+  assert.deepEqual(NPCS.map((n) => n.costume), ['jayimpacts']);
+  assert.deepEqual(MUSICIANS, []);
 });
 
 test('ticket line by date (Asia/Bangkok, poster phases)', () => {

@@ -1,7 +1,7 @@
 // Scene 3 in a real browser (needs `npm run dev`). Taps like a player:
 //   - three phone sizes: whole-number scaling, 9:16, the canvas fits the window
 //   - the opening welcome: tap skips the walk-in, six pages, tap ends the walk-out
-//   - talk with TALK, voucher +1; the lane stall row; Jayimpacts' IG button
+//   - talk with TALK at the lane stall row, voucher +1; Jayimpacts' IG button
 //   - the AUTO tour reaches its first stops; the MAP view; zoom buttons
 //   - Thai text never overflows the dialogue box
 //   - screenshots at 390 x 844, day and night: first screen, lane, band corner,
@@ -22,6 +22,7 @@ const ok = (cond, msg) => {
 
 const browser = await chromium.launch();
 
+const FADE_MS = 3000; // the white fade-in on arrival
 async function open(query = '', size = { width: 390, height: 844 }) {
   const page = await browser.newPage({ viewport: size, deviceScaleFactor: DPR });
   page.on('pageerror', (e) => ok(false, `page error: ${e.message}`));
@@ -86,7 +87,7 @@ for (const size of [
   await tapDesign(page, 90, 160); // tap skips the walk-in
   s = await state(page);
   ok(s.welcome === 'talk' && s.dlg, 'tap during the walk-in opens the dialogue');
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(FADE_MS);
   await page.screenshot({ path: `${OUT}/first_screen_day.png` });
   let pages = 0;
   for (let i = 0; i < 14 && (await state(page)).dlg; i++) {
@@ -102,15 +103,16 @@ for (const size of [
   s = await state(page);
   ok(s.welcome === 'done', 'tap during the walk-out ends it');
 
-  // TALK with น้องบาส: voucher +1
-  await page.evaluate(() => {
-    const n = window.__scene3.world.npc('bas');
-    window.__scene3.teleport(n.x - 6, n.y + 12);
+  // TALK with the lane stall row: voucher +1
+  await page.evaluate(async () => {
+    const { STALL_ROW } = await import('/src/scene3/logic/npcs.js');
+    const t = STALL_ROW.touch[0];
+    window.__scene3.teleport(t.x, t.y);
   });
   await page.waitForTimeout(300);
   await tapDesign(page, 111, 309); // AUTO/TALK button
   s = await state(page);
-  ok(s.dlg, 'TALK opens น้องบาส');
+  ok(s.dlg, 'TALK opens the stall row');
   while ((await state(page)).dlg) await tapDesign(page, 90, 260);
   s = await state(page);
   ok(s.vouchers === 1, `one voucher after the first talk (${s.vouchers})`);
@@ -164,13 +166,14 @@ for (const night of [false, true]) {
   if (night) {
     const page = await open('?night=1');
     await tapDesign(page, 90, 160);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(FADE_MS);
     await page.screenshot({ path: `${OUT}/first_screen_${tag}.png` });
     await page.close();
   }
   for (const [name, go] of Object.entries(views)) {
     const page = await open(q);
     await page.evaluate(`(${go.toString()})(window.__scene3)`);
+    await page.waitForTimeout(FADE_MS);
     await page.waitForFunction(() => !window.__scene3.game.scene.getScene('S3Hud').banner, null, { timeout: 20000 }).catch(() => {}); // let the goal banner pass
     await page.waitForTimeout(300);
     await page.screenshot({ path: `${OUT}/${name}_${tag}.png` });

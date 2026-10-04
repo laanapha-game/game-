@@ -42,7 +42,7 @@ export const VOUCHER = {
 // TODO(owner): what the special prize is and how it is claimed.
 export const SPECIAL_PRIZE = {
   howToClaim: 'รอทีมกำหนด', // TODO: shown on the ending as "รางวัลพิเศษ ✓ วิธีรับ: ..."
-  // Does the lane stall row count toward "talked to everyone"? Default yes: all 14 targets.
+  // Does the lane stall row count toward "talked to everyone"? Default yes.
   stallRowCounts: true,
 };
 // TODO(owner): a way to actually book a stall (link, phone or IG message). null = no button.

@@ -50,7 +50,7 @@ export const LABELS = {
 export const STALL_ROW_SPEAKER = 'ซุ้มเปิดจองพื้นที่';
 export const STALL_ROW_PAGES = ['ใครอยากมาเป็นส่วนหนึ่งของงาน สามารถจับจองพื้นที่เปิดซุ้มกับเราได้เลยครับ'];
 
-// ---- Ghosts at the stalls outside the entrance (owner): talkable, not part of the 14 talk targets ----
+// ---- Ghosts at the stalls outside the entrance (owner): talkable, not talk targets ----
 // Names from scene 2 (scene2-spec open item 3).
 export const GHOST_NAMES = { 1: 'กระหัง', 2: 'ผีในไห', 3: 'ผีนางรำสุดสวย', 4: 'ซอมบี้แห่ง Cozy ราชพฤกษ์ 6', 5: 'ผีกุมารตัวน้อย' };
 export const GHOST_PAGES = ['จริงๆแล้วมีผีมากกว่านี้อีกนะ แต่เจ้าต้องมางานจริงจะได้เจอผีอีกเยอะเลย ชวนเพื่อนๆมากันด้วยนะ!'];

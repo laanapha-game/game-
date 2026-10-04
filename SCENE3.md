@@ -31,7 +31,7 @@ registers scene 3 with scene 1 (the only change outside `src/scene3/`). Back goe
 | `src/scene3/config.js` | **The one config file**: spread LS, zoom levels, speeds, talk range, voucher rules, special prize, stall booking, event card, URLs, ticket phases, font. Every TODO is here |
 | `src/scene3/data/script.js` | All scene 3 text (exact Thai). Characters' dialogue and credits are TODO placeholders |
 | `src/scene3/logic/layout.js` | The map: regions, fences, objects, zones, start, exit, guides, collision |
-| `src/scene3/logic/npcs.js` | The 13 characters, the band, the lane stall row, the 14 talk targets |
+| `src/scene3/logic/npcs.js` | The characters (now only Jayimpacts), the band (empty), the lane stall row, the ghosts, the talk targets |
 | `src/scene3/logic/world.js` | Simulation: movement with collision, walkers, talks, zones, exit, AUTO tour |
 | `src/scene3/logic/progress.js`, `welcome.js`, `pathfind.js`, `ticketLine.js` | Goals/vouchers/prize, opening welcome, A*, ticket line by date |
 | `src/scene3/scenes/` | Phaser: `WorldScene` (draws the world), `HudScene` (all input, HUD, dialogue, banners, checklist, MAP), `EndingScene` (ending + credits) |
@@ -60,6 +60,14 @@ x = 12c, row r at y = 16 + 12r) and spread by `LS` (config, 1.5) around the plot
 
 Change `LS` and everything moves apart or together; `npm test` re-checks that every zone, character,
 stall touch point and the exit can still be reached by walking.
+
+## Characters
+
+The owner asked for only people and the player in the event, so the twelve bird-costume staff and the
+three musicians are gone. Jayimpacts (beside the Rotary stall), the lane stall row and the ghosts outside
+remain; the talk targets are Jayimpacts and the stall row (two vouchers, then the special prize). The
+removed characters' lines are still in `NPC_LINES` (`src/scene3/data/script.js`); the removed entries are
+in git history (commit before "only people and the player").
 
 ## Add a character
 

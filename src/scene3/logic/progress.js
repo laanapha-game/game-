@@ -4,7 +4,7 @@ import { GOALS } from '../data/script.js';
 import { VOUCHER, SPECIAL_PRIZE } from '../config.js';
 
 export class Progress {
-  /** @param {string[]} targets talk target keys (14: thirteen characters and the stall row) */
+  /** @param {string[]} targets talk target keys (Jayimpacts and the stall row) */
   constructor(targets) {
     this.targets = targets;
     this.goals = new Set();

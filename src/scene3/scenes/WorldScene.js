@@ -275,8 +275,8 @@ export class WorldScene extends Phaser.Scene {
     for (const g of this.ghosts ?? []) g.y = g.bob.top + (Math.sin(time / 400 + g.bob.phase) > 0 ? -DESIGN : 0);
     this.windows.setAlpha(S.night ? 0.55 + 0.45 * Math.abs(Math.sin(time / 230) * Math.sin(time / 97)) : 0.15 + 0.1 * Math.abs(Math.sin(time / 300)));
 
-    // Guides until the player has talked to น้องบาส; the exit arrow once every goal is done.
-    const guidesOn = !w.progress.talked.has('bas');
+    // Guides until the player reaches the registration desk; the exit arrow once every goal is done.
+    const guidesOn = !w.progress.goals.has('desk');
     for (const g of this.guides) {
       g.setVisible(guidesOn);
       if (guidesOn && g.animated) g.setAlpha(0.5 + 0.5 * Math.abs(Math.sin(time / 300)));
