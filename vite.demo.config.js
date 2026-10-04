@@ -1,5 +1,5 @@
 // One self-contained HTML file for sharing a playable demo: the full game
-// (game.html, scene 1 -> scene 2). Output: dist-demo/game.html.
+// (game.html, scene 1 -> scene 2 -> scene 3). Output: dist-demo/game.html.
 import { defineConfig } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
