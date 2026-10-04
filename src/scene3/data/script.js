@@ -70,6 +70,11 @@ export const NPC_NAMES = {
   nok: 'พี่นก (ทางเชื่อมออกซอย)',
   jay: 'Jayimpacts · ซุ้ม Rotary',
   kaiching: 'Kaiching · ทีม Jintanakarn',
+  // the team (owner, Drive "Team Asset"); TODO(owner): roles for the tags
+  po: 'Po · ทีมงานลานนภา',
+  peay: 'Peay · ทีมงานลานนภา',
+  aomsin: 'Aomsin · ทีมงานลานนภา',
+  nemo: 'Nemo · ทีมงานลานนภา',
   captain: 'Captain',
 };
 export const NPC_LINES = {
@@ -85,6 +90,11 @@ export const NPC_LINES = {
   nok: ['Welcome to Laanapha ยินดีต้อนรับค่ะ', 'ทางนี้เป็นทางเชื่อมออกไปต่อซอยด้านหน้าค่ะ รถเข้า-ออกทางนี้เลย', 'แถวนี้เป็นย่านใกล้คลองบางหลวง ตอนเย็นลมเย็นดีมากค่ะ', 'พร้อมจะสำรวจพื้นที่ใน ลาน ณ ภา รึยังคะ??', 'เชิญเดินตรงไปด้านในเลยค่ะ'],
   jay: ['ยินดีต้อนรับสู่ซุ้ม Rotary! ข้า Jayimpacts เฝ้าซุ้มนี้อยู่', 'ถ้าชอบงานนี้ อย่าลืมกดติดตาม IG ของข้าด้วยนะ'], // the last page gets the "เปิด IG" button
   kaiching: ['ข้า Kaiching จากทีม Jintanakarn ยินดีที่ได้เจอ', 'หนังสั้น ชักศอกไม่ถึงใจ เริ่มฉาย 1 ทุ่มตรงเป๊ะ อย่ามาสายนะ'],
+  // TODO(owner): the team's own lines; until then they point at the game's own goals and places.
+  po: ['สวัสดีครับ ผม Po ทีมงานลานนภา ตรงนี้คือจุดลงทะเบียนครับ', 'เดินสำรวจให้ครบทั้ง 7 จุดนะครับ'],
+  peay: ['สวัสดีค่ะ Peay จากทีมงานลานนภาค่ะ', 'คุยกับทีมงานให้ครบทุกคน จะได้รางวัลพิเศษนะคะ'],
+  aomsin: ['หวัดดีครับ Aomsin ทีมงานลานนภาครับ', 'อย่าลืมแวะซุ้มผีด้านนอกงานด้วยนะ มีผีรอทักทายอยู่'],
+  nemo: ['สวัสดีครับ Nemo ทีมงานลานนภาครับ', 'ตรงนี้คือที่นั่งบีนแบ็กหน้าจอหนังกลางแปลงครับ'],
   captain: ['Captain รายงานตัว! ข้าเดินตรวจงานอยู่', 'โปรแกรมหลักเริ่ม 1 ทุ่มครึ่ง ห้ามพลาด', 'บัตรราคาขึ้นตามช่วงวัน จองเร็วถูกกว่านะ'],
 };
 
@@ -115,7 +125,11 @@ export const CREDITS = [
   { gap: 10 },
   { h: 'ทีมงาน' },
   { p: true, who: 'jayimpacts', n: 'Jayimpacts', r: 'ซุ้ม Rotary' },
-  { p: true, who: 'vampire', n: 'Kaiching', r: 'ทีม Jintanakarn' },
+  { p: true, who: 'team_kaiching', n: 'Kaiching', r: 'ทีม Jintanakarn' },
+  { p: true, who: 'team_po', n: 'Po', r: 'ทีมงาน' },
+  { p: true, who: 'team_peay', n: 'Peay', r: 'ทีมงาน' },
+  { p: true, who: 'team_aomsin', n: 'Aomsin', r: 'ทีมงาน' },
+  { p: true, who: 'team_nemo', n: 'Nemo', r: 'ทีมงาน' },
   { p: true, who: 'slasher', acc: 'cap', n: 'Captain', r: 'ทีมงาน' },
   { t: 'น้องบาส · ดีเจต้น · เชฟตูน' },
   { t: 'น้าเบียร์ · น้องข้าวปั้น · น้องกอล์ฟ' },

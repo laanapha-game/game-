@@ -63,11 +63,26 @@ stall touch point and the exit can still be reached by walking.
 
 ## Characters
 
-The owner asked for only people and the player in the event, so the twelve bird-costume staff and the
-three musicians are gone. Jayimpacts (beside the Rotary stall), the lane stall row and the ghosts outside
-remain; the talk targets are Jayimpacts and the stall row (two vouchers, then the special prize). The
-removed characters' lines are still in `NPC_LINES` (`src/scene3/data/script.js`); the removed entries are
-in git history (commit before "only people and the player").
+Only people and the player (owner): Jayimpacts (beside the Rotary stall) and the team from the owner's
+Drive folder "Team Asset", drawn in Jayimpacts' model by `tools/team_sprite.py` (same 40 x 56 cell,
+frames, anims, outline and 3/4 side view; looks per person in `tools/team_specs.py`, read off their
+photos; the photos are waist-up, so trousers and shoes are a guess). Each also has a 64 x 64 portrait
+(neutral, talk) shown over their dialogue, like Jayimpacts'. Preview: `docs/scene3/team_contact_sheet.png`.
+
+| Who | Where | Look |
+|---|---|---|
+| Po | behind the registration desk | fringe, round gold glasses, light grey tee |
+| Kaiching | east of the desk | messy black hair, black tee |
+| Peay | between the drinks and pizza stalls | low bun, brown polo |
+| Aomsin | the banquet tables' middle aisle | short crop, grey long-sleeve with a white print, cross necklace |
+| Nemo | the beanbags in front of the screen | thick curtain bangs, white shirt |
+
+Talk targets: the five, Jayimpacts and the lane stall row (one voucher each; all seven: the special
+prize). Po, Peay, Aomsin and Nemo's lines and roles are placeholders (`TODO(owner)` in
+`src/scene3/data/script.js`); Kaiching keeps the prototype's lines. The ghosts outside talk too (no
+voucher). The bird-costume staff and the band were removed earlier; their lines are still in `NPC_LINES`.
+
+Regenerate the team: `python3 tools/team_sprite.py --sheet docs/scene3/team_contact_sheet.png`.
 
 ## After all seven places
 

@@ -1,6 +1,7 @@
 // Scene 3 logic tests (no browser): reachability on the real collision map, talk targets
 // and vouchers, the lane stall row, the opening welcome, the special prize, ticket text,
 // and the map spread.
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as L from '../src/scene3/logic/layout.js';
@@ -84,8 +85,8 @@ test('spread: positions move by LS, sizes do not', () => {
   assert.equal(L.WORLD.w, 636);
 });
 
-test('talk targets (Jayimpacts and the stall row): each opens its dialogue and gives exactly one voucher', () => {
-  assert.deepEqual(TALK_TARGETS, ['jay', STALL_ROW.key]);
+test('talk targets (the team, Jayimpacts and the stall row): each opens its dialogue and gives exactly one voucher', () => {
+  assert.deepEqual(TALK_TARGETS, ['po', 'kaiching', 'peay', 'aomsin', 'nemo', 'jay', STALL_ROW.key]);
   const w = new World({ skipWelcome: true });
   for (const key of TALK_TARGETS) {
     const t = w.startTalk(key);
@@ -244,8 +245,14 @@ test('after all seven places: allGoals once, and finish() ends without the exit 
   assert.deepEqual(w.finish(), []);
 });
 
-test('only people and the player: no bird-costume characters, no band', () => {
-  assert.deepEqual(NPCS.map((n) => n.costume), ['jayimpacts']);
+test('only people and the player: Jayimpacts and the team in his model, no birds, no band', () => {
+  assert.deepEqual(NPCS.map((n) => n.costume), ['team_po', 'team_kaiching', 'team_peay', 'team_aomsin', 'team_nemo', 'jayimpacts']);
+  const team = JSON.parse(readFileSync('src/assets/art/characters/team.json', 'utf8'));
+  const jay = JSON.parse(readFileSync('src/assets/art/characters/jayimpacts.json', 'utf8'));
+  assert.deepEqual(team.cell, jay.cell, 'same cell as Jayimpacts');
+  assert.deepEqual(team.frames, jay.frames, 'same frames');
+  assert.deepEqual(team.anim, jay.anim, 'same anims');
+  assert.deepEqual(team.characters.map((c) => c.id), ['team_po', 'team_peay', 'team_kaiching', 'team_aomsin', 'team_nemo']);
   assert.deepEqual(MUSICIANS, []);
 });
 

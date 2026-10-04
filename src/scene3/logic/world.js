@@ -105,7 +105,7 @@ export class World {
     this.stopAuto();
     const def = key === STALL_ROW.key ? STALL_ROW : n ? n.def : GHOSTS.find((g) => g.key === key);
     if (!def) return null;
-    this.talking = { key, speaker: def.name, pages: def.pages, ig: !!def.ig };
+    this.talking = { key, speaker: def.name, pages: def.pages, ig: !!def.ig, costume: def.costume };
     if (n) this.faceEachOther(n);
     return this.talking;
   }

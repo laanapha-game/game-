@@ -1,7 +1,8 @@
 // Scene 3 textures: generated props (tools/scene3_art.py), the character sheets (scene 1's
-// eight birds and Jayimpacts), scene 2's ghost stalls, and the Jayimpacts portrait.
+// eight birds, Jayimpacts and the team), scene 2's ghost stalls, and the portraits.
 import CHARS from '../assets/art/characters/characters.json';
 import JAY from '../assets/art/characters/jayimpacts.json';
+import TEAM from '../assets/art/characters/team.json';
 
 const WORLD_PNG = import.meta.glob('../assets/scene3/world/*.png', { eager: true, query: '?url', import: 'default' });
 const CHAR_PNG = import.meta.glob('../assets/scene3/char/*.png', { eager: true, query: '?url', import: 'default' });
@@ -18,7 +19,9 @@ export const COSTUMES = (() => {
   const out = {};
   for (const c of CHARS.characters) out[c.id] = { id: c.id, name: c.name, cell: CHARS.cell, frames: CHARS.frames, side: c.side.file, front: c.front.file };
   const j = JAY.characters[0];
-  out.jayimpacts = { id: 'jayimpacts', name: j.name, cell: JAY.cell, frames: JAY.frames, side: j.side.file, front: j.front.file };
+  out.jayimpacts = { id: 'jayimpacts', name: j.name, cell: JAY.cell, frames: JAY.frames, side: j.side.file, front: j.front.file, portrait: 'jayimpacts_portrait' };
+  // The team, drawn in Jayimpacts' model (tools/team_sprite.py): same cell, frames and anims.
+  for (const t of TEAM.characters) out[t.id] = { id: t.id, name: t.name, cell: TEAM.cell, frames: TEAM.frames, side: t.side.file, front: t.front.file, portrait: t.portrait.replace('.png', '') };
   return out;
 })();
 
@@ -62,9 +65,12 @@ export function createAnims(scene) {
     scene.textures.addSpriteSheet(`ghost_${g.key}`, img, { frameWidth: fw, frameHeight: img.height });
     scene.anims.create({ key: `ghost_${g.key}`, frames: g.loop.map((frame) => ({ key: `ghost_${g.key}`, frame })), frameRate: 4, repeat: -1 });
   }
-  // Portrait: 2 frames of 64 x 64 design px (neutral, talk) at 3x.
-  const portrait = scene.textures.get('p_jayimpacts_portrait').getSourceImage();
-  scene.textures.addSpriteSheet('portrait_jay', portrait, { frameWidth: portrait.height, frameHeight: portrait.height });
+  // Portraits: 2 frames of 64 x 64 design px (neutral, talk) at 3x; key portrait_<costume>.
+  for (const c of Object.values(COSTUMES)) {
+    if (!c.portrait) continue;
+    const img = scene.textures.get(`p_${c.portrait}`).getSourceImage();
+    scene.textures.addSpriteSheet(`portrait_${c.id}`, img, { frameWidth: img.height, frameHeight: img.height });
+  }
   for (const c of Object.values(COSTUMES)) {
     for (const view of ['side', 'front']) {
       const anim = (JAY_LIKE(c) ? JAY : CHARS).anim[view];
@@ -75,7 +81,7 @@ export function createAnims(scene) {
     }
   }
 }
-const JAY_LIKE = (c) => c.id === 'jayimpacts';
+const JAY_LIKE = (c) => c.id === 'jayimpacts' || c.id.startsWith('team_');
 
 /** Anim key for a costume, view and action, falling back to idle when the sheet has no such action. */
 export function animKey(scene, id, view, action) {

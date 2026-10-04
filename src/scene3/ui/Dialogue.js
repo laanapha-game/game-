@@ -1,7 +1,7 @@
 // Scene 3 dialogue box (spec 6.5): black panel, yellow border, magenta name tag, 3 lines of
 // 12 px text (about 150 px wide), a blinking arrow to continue, optional buttons on the
 // last page (the IG button). Pages that would overflow are split, never clipped.
-// Jayimpacts' pages show his portrait above the box.
+// Jayimpacts' and the team's pages show their portrait above the box.
 import { label, wrap } from './text.js';
 import { paginate } from '../../logic/textWrap.js';
 import { LINE_H } from '../config.js';
@@ -19,14 +19,14 @@ export class Dialogue {
     this.tag = label(scene, 0, 0, '', { depth: DEPTH + 2, color: '#FFFFFF' });
     this.lines = Array.from({ length: LINES }, (_, i) => label(scene, TEXT.x, TEXT.y + i * LINE_H - 4, '', { depth: DEPTH + 1 }));
     this.arrow = label(scene, BOX.x + BOX.w - 12, BOX.y + BOX.h - 18, '▼', { depth: DEPTH + 2, color: '#FFFF4F', px: 10 });
-    this.portrait = scene.add.sprite(BOX.x + 2, BOX.y - 2, 'portrait_jay', 0).setOrigin(0, 1).setScale(1 / 3).setDepth(DEPTH - 1);
+    this.portrait = scene.add.sprite(BOX.x + 2, BOX.y - 2, 'portrait_jayimpacts', 0).setOrigin(0, 1).setScale(1 / 3).setDepth(DEPTH - 1);
     this.btn = null;
     this.open = false;
     this.hide();
   }
 
   /**
-   * pages: strings. opts: { speaker, portrait: bool, button: {label, onPress} on the last page,
+   * pages: strings. opts: { speaker, portrait: costume id with a portrait (true: Jayimpacts), button: {label, onPress} on the last page,
    * onPage(i) (index into the original pages), onClose() }
    */
   show(pages, opts = {}) {
@@ -55,7 +55,9 @@ export class Dialogue {
       this.tag.setPosition(BOX.x + 6 + 5 - 4, BOX.y - 8 - 4 - 1);
     } else this.tag.setVisible(false);
     this.lines.forEach((t, k) => t.setText(b.lines[k] ?? '').setVisible(true));
-    this.portrait.setVisible(!!this.opts.portrait).setFrame(0);
+    const pk = this.opts.portrait === true ? 'portrait_jayimpacts' : this.opts.portrait ? `portrait_${this.opts.portrait}` : null;
+    if (pk && this.scene.textures.exists(pk)) this.portrait.setTexture(pk, 0);
+    this.portrait.setVisible(!!pk && this.scene.textures.exists(pk)).setFrame(0);
     this.arrow.setVisible(true);
     this.opts.onPage?.(b.src);
     this.btn?.destroy();

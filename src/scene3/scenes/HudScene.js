@@ -12,6 +12,7 @@ import { ZONES, dist, inZone } from '../logic/layout.js';
 import { STALL_ROW, GHOSTS } from '../logic/npcs.js';
 import { audio } from '../../audio/engine.js';
 import { openUrl } from '../ui/openUrl.js';
+import { COSTUMES } from '../assets.js';
 
 const W = 180;
 const H = 320;
@@ -256,13 +257,12 @@ export class HudScene extends Phaser.Scene {
     if (!t) return;
     this.walkTo = null;
     this.pendingTalk = null;
-    const isJay = key === 'jay';
     let button = null;
     if (t.ig) button = { label: LABELS.igButton, onPress: () => openUrl(URLS.instagram) };
     if (key === STALL_ROW.key && STALL_BOOKING.url) button = { label: STALL_BOOKING.label, onPress: () => openUrl(STALL_BOOKING.url) };
     this.dialogue.show(t.pages, {
       speaker: t.speaker,
-      portrait: isJay,
+      portrait: COSTUMES[t.costume]?.portrait ? t.costume : null,
       button,
       onClose: () => this.onEvents(w.endTalk()),
     });
