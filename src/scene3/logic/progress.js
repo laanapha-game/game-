@@ -1,4 +1,4 @@
-// Scene 3 progress: six goals (main objective), talks and vouchers (optional), the
+// Scene 3 progress: seven goals (main objective), talks and vouchers (optional), the
 // special prize after talking to everyone. Pure; the scene shows the returned events.
 import { GOALS } from '../data/script.js';
 import { VOUCHER, SPECIAL_PRIZE } from '../config.js';

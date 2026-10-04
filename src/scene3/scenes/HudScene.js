@@ -296,7 +296,7 @@ export class HudScene extends Phaser.Scene {
       }
       if (e.type === 'allGoals') {
         this.world.stopAuto();
-        this.time.delayedCall(1200, () => this.openThanks()); // after a moment on the sixth place's banner
+        this.time.delayedCall(1200, () => this.openThanks()); // after a moment on the last place's banner
       }
       if (e.type === 'prize') this.showBanner([PRIZE_BANNER]);
       if (e.type === 'exitEarly') this.showBanner([e.text]);
@@ -341,8 +341,8 @@ export class HudScene extends Phaser.Scene {
     add(W / 2, 32, LABELS.missions, { align: 'center', color: '#FFFF4F' });
     GOALS.forEach((goal, i) => {
       const done = w.progress.goals.has(goal.id);
-      add(14, 52 + i * 22, done ? '✓' : '·', { color: done ? '#FFFF4F' : '#888888' });
-      add(26, 52 + i * 22, goal.name, { color: done ? '#FFFFFF' : '#AAAAAA' });
+      add(14, 50 + i * 19, done ? '✓' : '·', { color: done ? '#FFFF4F' : '#888888' });
+      add(26, 50 + i * 19, goal.name, { color: done ? '#FFFFFF' : '#AAAAAA' });
     });
     add(14, 186, chipText(w.progress.goalCount, w.progress.vouchers), { color: '#FFFFFF' });
     if (w.progress.prize) add(14, 204, PRIZE_CHECK, { color: '#FFFF4F' });
@@ -358,7 +358,7 @@ export class HudScene extends Phaser.Scene {
   }
 
   /**
-   * All six places explored: a small card that pages book -> IG -> map (arrows, dots, swipe),
+   * All places explored: a small card that pages book -> IG -> map (arrows, dots, swipe),
    * with จบเกม / คุยกับทีมงานต่อ always at the bottom.
    */
   openThanks() {

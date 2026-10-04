@@ -202,13 +202,13 @@ test('special prize only after the last target, after its voucher', () => {
   assert.equal(w.progress.prize, true);
 });
 
-test('goals: six zones tick once each; the exit ends only when all are done', () => {
+test('goals: seven zones (ซุ้มผี added) tick once each; the exit ends only when all are done', () => {
   const w = new World({ skipWelcome: true });
   // early exit
   w.player.x = L.EXIT.rect[0] - 4;
   w.player.y = L.START.y;
   let ev = w.update(0.2, { dir: { x: 1, y: 0 } });
-  assert.ok(ev.some((e) => e.type === 'exitEarly' && e.text === 'ยังสำรวจไม่ครบ (0/6)'));
+  assert.ok(ev.some((e) => e.type === 'exitEarly' && e.text === 'ยังสำรวจไม่ครบ (0/7)'));
   for (const g of GOALS) assert.equal(w.progress.enterZone(g.id).length >= 1, true);
   assert.deepEqual(w.progress.enterZone('lane'), []);
   assert.equal(w.progress.allGoals, true);
@@ -218,7 +218,23 @@ test('goals: six zones tick once each; the exit ends only when all are done', ()
   assert.ok(ev.some((e) => e.type === 'exit'));
 });
 
-test('after all six places: allGoals once, and finish() ends without the exit walk', () => {
+test('ซุ้มผี: the seventh place, in front of the ghost stalls, reached before the exit', () => {
+  assert.deepEqual(GOALS.map((g) => g.id), ['lane', 'shops', 'desk', 'tables', 'cinema', 'haunted', 'ghosts']);
+  assert.equal(GOALS[6].name, 'ซุ้มผี');
+  const z = L.ZONES.ghosts;
+  for (const s of L.GHOST_STALLS) assert.ok(s.x >= z[0] && s.x <= z[2], `stall ${s.number} is along the zone`);
+  assert.ok(z[2] < L.EXIT.rect[0], 'the zone stops before the exit');
+  const w = new World({ skipWelcome: true });
+  const ev = [];
+  for (let i = 0; i < 40 && !w.progress.goals.has('ghosts'); i++) {
+    w.player.x = (z[0] + z[2]) / 2;
+    w.player.y = (z[1] + z[3]) / 2;
+    ev.push(...w.update(0.05, {}));
+  }
+  assert.ok(ev.some((e) => e.type === 'goal' && e.goal.id === 'ghosts'));
+});
+
+test('after all seven places: allGoals once, and finish() ends without the exit walk', () => {
   const w = new World({ skipWelcome: true });
   assert.deepEqual(w.finish(), [], 'no early finish');
   const ev = GOALS.flatMap((g) => w.progress.enterZone(g.id));

@@ -1,7 +1,7 @@
 # Scene 3: event exploration and the ending
 
 The player explores a top-down map of the real event site (ลานนภา Halloween Fest, 24-25 Oct 2569),
-ticks six places, talks to the team for discount vouchers, then leaves by the soi to the ending
+ticks seven places (ซุ้มผี, in front of the ghost stalls on the soi, added by the owner), talks to the team for discount vouchers, then leaves by the soi to the ending
 (summary, book tickets, follow IG) and the credits. Phaser 4, like scene 2; all game logic is in plain
 modules that run in Node.
 
@@ -69,7 +69,7 @@ remain; the talk targets are Jayimpacts and the stall row (two vouchers, then th
 removed characters' lines are still in `NPC_LINES` (`src/scene3/data/script.js`); the removed entries are
 in git history (commit before "only people and the player").
 
-## After all six places
+## After all seven places
 
 A small card opens (`THANKS` in `src/scene3/data/script.js`): ขอบคุณที่เล่นเกมของเรา! and three pages,
 turned with the arrows, a swipe or the arrow keys: จองบัตร (`URLS.booking`) -> IG laanapha with the IG logo
@@ -91,8 +91,8 @@ While a dialogue, the checklist or this card is up, the game dims (55% black) so
 
 1. Add `{ id, name, line }` to `GOALS` in `src/scene3/data/script.js`.
 2. Add the zone rectangle (base units, spread) under the same id in `ZONES` in `layout.js`.
-3. Optionally add a tour stop to `TOUR` in `world.js`. The chip text says `n/6`; if the number of goals
-   changes, update `chipText`, `exitTooEarly` and `summaryText` in `script.js` (the 6 is in the owner's text).
+3. Optionally add a tour stop to `TOUR` in `world.js`. The counts in `chipText`, `exitTooEarly` and
+   `summaryText` follow `GOALS.length`.
 
 ## Text
 

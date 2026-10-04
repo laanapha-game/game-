@@ -1,7 +1,7 @@
 // Scene 3 simulation, no Phaser: player movement with the real collision, walking
 // characters, talk targets, goal zones, exit, autopilot tour and the opening welcome.
 // The Phaser scene feeds input and draws the state; tests drive it directly.
-import { boxFree, ZONES, EXIT, START, WELCOME, dist, inZone, R, DESK, LANE_STALLS, SHOPS, TABLES, BAND, HOUSE_BASE, spread } from './layout.js';
+import { boxFree, ZONES, EXIT, START, WELCOME, dist, inZone, R, DESK, LANE_STALLS, SHOPS, TABLES, BAND, HOUSE_BASE, GHOST_SPOTS, spread } from './layout.js';
 import { NPCS, STALL_ROW, TALK_TARGETS, GHOSTS } from './npcs.js';
 import { Progress } from './progress.js';
 import { Welcome } from './welcome.js';
@@ -35,6 +35,7 @@ export const TOUR = [
   { name: 'cinema', p: spread({ x: 150, y: 128 }) },
   { name: 'haunted', p: { x: spread(HOUSE_BASE).x, y: R.river[3] + 6 } },
   { name: 'band', p: { x: BAND.rug.x, y: BAND.rug.y + 2 } },
+  { name: 'ghosts', p: { x: GHOST_SPOTS[2].x - 8, y: GHOST_SPOTS[2].y + 8 } },
   { name: 'soi', p: { x: START.x - 30, y: START.y } },
 ];
 

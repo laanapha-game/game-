@@ -18,7 +18,7 @@ export const WELCOME_PAGES = [
 export const AFTER_WELCOME_BANNER = 'เปิดรายการภารกิจได้ที่ปุ่ม ภารกิจ';
 export const ZOOM_HINT = ['กด + / -', 'ซูมเข้า-ออก'];
 
-// ---- Goals: six places (final names and facts) ----
+// ---- Goals: seven places (final names and facts; ซุ้มผี added by the owner) ----
 export const GOALS = [
   { id: 'lane', name: 'ซอยทางเข้า', line: 'ซุ้มจองพื้นที่เปิดซุ้มกับทีมงาน' },
   { id: 'shops', name: 'แถวร้านค้าและ Photo Booth', line: 'มินิมาร์ท เครื่องดื่ม พิซซ่า จุดถ่ายรูป และซุ้ม Rotary' },
@@ -26,12 +26,13 @@ export const GOALS = [
   { id: 'tables', name: 'โซนโต๊ะจัดเลี้ยง', line: 'นั่งกินข้าวพร้อมชมบรรยากาศงาน' },
   { id: 'cinema', name: 'จอหนังกลางแปลงและบีนแบ็ก', line: 'หนังสั้นเริ่ม 1 ทุ่ม โปรแกรมหลักเริ่ม 1 ทุ่มครึ่ง' },
   { id: 'haunted', name: 'บ้านเมื่อคืนผมนอนไม่หลับ', line: 'อยู่ฝั่งตรงข้ามคลองบางหลวง กล้าเข้าไหม?' },
+  { id: 'ghosts', name: 'ซุ้มผี', line: 'ผีหน้าซุ้มรอทักทายอยู่ ลองคุยดูสิ' },
 ];
 
 // ---- HUD and banners ----
-export const chipText = (goals, vouchers) => `สำรวจ ${goals}/6 · คูปอง ${vouchers}`;
+export const chipText = (goals, vouchers) => `สำรวจ ${goals}/${GOALS.length} · คูปอง ${vouchers}`;
 export const CHIP_DONE = 'ครบแล้ว! ไปที่ทางออก';
-export const exitTooEarly = (goals) => `ยังสำรวจไม่ครบ (${goals}/6)`;
+export const exitTooEarly = (goals) => `ยังสำรวจไม่ครบ (${goals}/${GOALS.length})`;
 export const VOUCHER_BANNER = 'ได้คูปองส่วนลดค่าบัตร!';
 export const PRIZE_BANNER = 'คุยครบทุกคนแล้ว! ได้รางวัลพิเศษ โฮะๆ';
 export const PRIZE_CHECK = 'รางวัลพิเศษ ✓';
@@ -88,11 +89,11 @@ export const NPC_LINES = {
 };
 
 // ---- Ending (final) ----
-export const summaryText = (goals, talked, targets) => `สำรวจ ${goals}/6 จุด · คุยกับทีมงาน ${talked}/${targets}`;
+export const summaryText = (goals, talked, targets) => `สำรวจ ${goals}/${GOALS.length} จุด · คุยกับทีมงาน ${talked}/${targets}`;
 export const voucherHowTo = (how) => `วิธีใช้คูปอง: ${how}`;
 export const prizeHowTo = (how) => `รางวัลพิเศษ ✓ วิธีรับ: ${how}`;
 export const ENDING_BUTTONS = { book: 'จองบัตรเลย', instagram: 'IG @laanapha', credits: 'เครดิต', home: 'หน้าแรก' };
-// ---- All six places explored (owner): thank you, then three pages (book -> IG -> map), then end or keep talking ----
+// ---- All places explored (owner): thank you, then three pages (book -> IG -> map), then end or keep talking ----
 export const THANKS = {
   title: 'ขอบคุณที่เล่นเกมของเรา!',
   pages: [

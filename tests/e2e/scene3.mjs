@@ -154,18 +154,18 @@ for (const size of [
   await page.close();
 }
 
-// ---------------------------------------------------------------- all six places: thank-you panel
+// ---------------------------------------------------------------- all seven places: thank-you panel
 {
   const page = await open('?skip=1');
   await page.waitForTimeout(FADE_MS);
   await page.evaluate(() => {
     const s = window.__scene3;
-    const ev = ['lane', 'shops', 'desk', 'tables', 'cinema', 'haunted'].flatMap((z) => s.world.progress.enterZone(z));
+    const ev = ['lane', 'shops', 'desk', 'tables', 'cinema', 'haunted', 'ghosts'].flatMap((z) => s.world.progress.enterZone(z));
     s.game.scene.getScene('S3Hud').onEvents(ev);
   });
   await page.waitForFunction(() => window.__scene3.game.scene.getScene('S3Hud').overlay === 'thanks', null, { timeout: 15000 }).then(
-    () => ok(true, 'the thank-you panel opens after the sixth place'),
-    () => ok(false, 'the thank-you panel opens after the sixth place'),
+    () => ok(true, 'the thank-you panel opens after the last place'),
+    () => ok(false, 'the thank-you panel opens after the last place'),
   );
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${OUT}/thanks_day.png` });
@@ -216,7 +216,7 @@ for (const night of [false, true]) {
   const page = await open(q);
   await page.evaluate(() => {
     const w = window.__scene3.world;
-    ['lane', 'shops', 'desk', 'tables', 'cinema', 'haunted'].forEach((z) => w.progress.enterZone(z));
+    ['lane', 'shops', 'desk', 'tables', 'cinema', 'haunted', 'ghosts'].forEach((z) => w.progress.enterZone(z));
     w.progress.targets.forEach((k) => w.progress.talk(k));
     window.__scene3.ending();
   });

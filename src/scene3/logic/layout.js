@@ -196,6 +196,7 @@ export const ZONES = {
   tables: spreadRect([110, row(13) + 8, 222, row(25) + 6]),
   cinema: spreadRect([col(2), 86, col(24), row(11)]),
   haunted: spreadRect([HOUSE_BASE.x - 40, row(5), HOUSE_BASE.x + 40, 86]),
+  ghosts: spreadRect([298, row(46), 420, row(47) - 2]), // the soi's north half in front of the ghost stalls (stops short of the exit)
 };
 export const EXIT = { rect: [WORLD.w - 14, R.soi[1], WORLD.w, R.soi[3]] };
 
