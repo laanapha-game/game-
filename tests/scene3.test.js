@@ -10,7 +10,7 @@ import { World, slide, TOUR } from '../src/scene3/logic/world.js';
 import { NPCS, STALL_ROW, TALK_TARGETS, MUSICIANS } from '../src/scene3/logic/npcs.js';
 import { resetWelcomeSession, welcomePlayed } from '../src/scene3/logic/welcome.js';
 import { ticketLine } from '../src/scene3/logic/ticketLine.js';
-import { WELCOME_PAGES, STALL_ROW_PAGES, STALL_ROW_SPEAKER, GOALS } from '../src/scene3/data/script.js';
+import { WELCOME_PAGES, STALL_ROW_PAGES, STALL_ROW_SPEAKER, GOALS, NPC_LINES } from '../src/scene3/data/script.js';
 import { TALK_RANGE, PLAYER_BOX, LS, TICKET_PHASES } from '../src/scene3/config.js';
 import { PHASES } from '../src/data/ticketPhases.js';
 
@@ -86,7 +86,7 @@ test('spread: positions move by LS, sizes do not', () => {
   assert.equal(L.WORLD.w, 636);
 });
 
-test('talk targets (the team, Jayimpacts and the stall row): each opens its dialogue and gives exactly one voucher', () => {
+test('talk targets (the team, Jayimpacts and the stall row): each opens its dialogue and counts once; no coupon per talk', () => {
   assert.deepEqual(TALK_TARGETS, ['po', 'kaiching', 'peay', 'aomsin', 'nemo', 'jay', STALL_ROW.key]);
   const w = new World({ skipWelcome: true });
   for (const key of TALK_TARGETS) {
@@ -96,13 +96,16 @@ test('talk targets (the team, Jayimpacts and the stall row): each opens its dial
     const def = key === STALL_ROW.key ? STALL_ROW : NPCS.find((n) => n.key === key);
     assert.equal(t.speaker, def.name);
     const ev = w.endTalk();
-    assert.equal(ev.filter((e) => e.type === 'voucher').length, 1, `${key} gives one voucher`);
+    assert.equal(ev.filter((e) => e.type === 'talked').length, 1, `${key} counts once`);
     // talking again gives nothing
     w.startTalk(key);
     assert.deepEqual(w.endTalk(), []);
   }
-  assert.equal(w.progress.vouchers, TALK_TARGETS.length);
-  assert.equal(NPCS.find((n) => n.key === 'jay').ig, true, 'Jayimpacts has the IG button');
+  assert.equal(w.progress.talked.size, TALK_TARGETS.length);
+  assert.equal(w.progress.vouchers, 1, 'talking with everyone = 1 special-prize coupon (owner)');
+  assert.equal(NPCS.find((n) => n.key === 'jay').link, 'instagram', "Jayimpacts' own IG button");
+  assert.equal(NPCS.find((n) => n.key === 'nemo').link, 'eventInstagram', 'Nemo: feedback by DM to @laanapha');
+  assert.ok(NPC_LINES.nemo.some((l) => l.includes('Feedback') && l.includes('DM Instagram')), 'Nemo says the game keeps improving, feedback by DM');
 });
 
 test('the five lane stalls all open the same dialogue and count once', () => {
@@ -117,7 +120,7 @@ test('the five lane stalls all open the same dialogue and count once', () => {
     assert.deepEqual(d.pages, STALL_ROW_PAGES);
     w.endTalk();
   }
-  assert.equal(w.progress.vouchers, 1);
+  assert.equal(w.progress.talked.size, 1);
   assert.equal(STALL_ROW_PAGES[0], 'ใครอยากมาเป็นส่วนหนึ่งของงาน สามารถจับจองพื้นที่เปิดซุ้มกับเราได้เลยครับ');
 });
 
@@ -189,7 +192,7 @@ test('the player starts on the soi in front of the entrance', () => {
   assert.ok(L.START.y > L.R.soi[1] && L.START.y < L.R.soi[3]);
 });
 
-test('special prize only after the last target, after its voucher', () => {
+test('special prize (1 coupon) only after the last target', () => {
   const w = new World({ skipWelcome: true });
   const last = TALK_TARGETS.length - 1;
   TALK_TARGETS.slice(0, last).forEach((k) => {
@@ -198,10 +201,12 @@ test('special prize only after the last target, after its voucher', () => {
     assert.ok(!ev.some((e) => e.type === 'prize'));
   });
   assert.equal(w.progress.prize, false);
+  assert.equal(w.progress.vouchers, 0);
   w.startTalk(TALK_TARGETS[last]);
   const ev = w.endTalk();
-  assert.deepEqual(ev.map((e) => e.type), ['voucher', 'prize']);
+  assert.deepEqual(ev.map((e) => e.type), ['talked', 'prize']);
   assert.equal(w.progress.prize, true);
+  assert.equal(w.progress.vouchers, 1);
 });
 
 test('goals: seven zones (ซุ้มผี added) tick once each; the exit ends only when all are done', () => {

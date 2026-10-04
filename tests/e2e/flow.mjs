@@ -279,7 +279,7 @@ if (!only) {
   await page.waitForFunction(() => window.__scene2GameOver, null, { timeout: 5000 });
   const home = await page.evaluate(() => {
     const r = document.querySelector('#game canvas').getBoundingClientRect();
-    return { x: r.left + (90 * r.width) / 180, y: r.top + (240 * r.height) / 320 };
+    return { x: r.left + (90 * r.width) / 180, y: r.top + (292 * r.height) / 320 }; // the หน้าแรก link
   });
   await page.touchscreen.tap(home.x, home.y);
   await page.waitForTimeout(800);

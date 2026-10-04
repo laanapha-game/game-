@@ -184,6 +184,7 @@ export const SFX = {
     [81, 84, 88].forEach((m, i) => bell(B, t + 0.18 + i * 0.06, m, 0.1));
   },
   // Foley
+  jump: (B, t) => tone(B, t, 360, { type: 'square', dur: 0.14, gain: 0.06, glide: 820 }), // a tap in the walks (owner)
   step: (B, t, o = {}) => {
     const g = o.run ? 0.24 : 0.15;
     noise(B, t, { dur: 0.05, gain: g, type: 'lowpass', freq: o.alt ? 650 : 520 });

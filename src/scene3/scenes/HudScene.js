@@ -6,8 +6,8 @@
 import Phaser from 'phaser';
 import { label, wrap } from '../ui/text.js';
 import { Dialogue } from '../ui/Dialogue.js';
-import { GOALS, LABELS, chipText, CHIP_DONE, WELCOME_PAGES, WELCOME_SPEAKER, AFTER_WELCOME_BANNER, ZOOM_HINT, VOUCHER_BANNER, PRIZE_BANNER, PRIZE_CHECK, THANKS } from '../data/script.js';
-import { ZOOM_LEVELS, MIN_TOUCH_CSS_PX, PLATE_RANGE, URLS, STALL_BOOKING, TALK_RANGE, ZOOM_HINT_MS } from '../config.js';
+import { GOALS, LABELS, chipText, CHIP_DONE, WELCOME_PAGES, WELCOME_SPEAKER, MISSIONS_HINT, ZOOM_HINT, talkedBanner, PRIZE_BANNER, PRIZE_CHECK, THANKS } from '../data/script.js';
+import { ZOOM_LEVELS, MIN_TOUCH_CSS_PX, PLATE_RANGE, URLS, STALL_BOOKING, TALK_RANGE, ZOOM_HINT_MS, MISSIONS_HINT_MS } from '../config.js';
 import { ZONES, dist, inZone } from '../logic/layout.js';
 import { STALL_ROW, GHOSTS } from '../logic/npcs.js';
 import { audio } from '../../audio/engine.js';
@@ -52,6 +52,8 @@ export class HudScene extends Phaser.Scene {
     this.plate = label(this, 0, 0, '', { depth: 12, align: 'center', color: '#FFFF4F' });
     this.hintTexts = ZOOM_HINT.map((t, i) => label(this, 0, 0, t, { depth: 12, align: 'center', color: i ? '#FFFFFF' : '#FFFF4F', px: 10 }).setVisible(false));
     this.hintUntil = 0;
+    this.missionsHintTexts = MISSIONS_HINT.map((t, i) => label(this, 0, 0, t, { depth: 12, align: 'center', color: i ? '#FFFFFF' : '#FFFF4F', px: 10 }).setVisible(false));
+    this.missionsHintUntil = 0;
     this.place = label(this, W / 2, 0, '', { depth: 12, align: 'center', color: '#FFFFFF', px: 10 });
     this.bannerG = this.add.graphics().setDepth(150);
     this.bannerTexts = [0, 1].map(() => label(this, W / 2, 0, '', { depth: 151, align: 'center', color: '#FFFF4F' }));
@@ -258,7 +260,7 @@ export class HudScene extends Phaser.Scene {
     this.walkTo = null;
     this.pendingTalk = null;
     let button = null;
-    if (t.ig) button = { label: LABELS.igButton, onPress: () => openUrl(URLS.instagram) };
+    if (t.link) button = { label: LABELS.igButton, onPress: () => openUrl(URLS[t.link]) };
     if (key === STALL_ROW.key && STALL_BOOKING.url) button = { label: STALL_BOOKING.label, onPress: () => openUrl(STALL_BOOKING.url) };
     this.dialogue.show(t.pages, {
       speaker: t.speaker,
@@ -278,9 +280,8 @@ export class HudScene extends Phaser.Scene {
     });
   }
 
-  welcomeDone() {
-    this.showBanner([AFTER_WELCOME_BANNER]);
-  }
+  // After the welcome: the ภารกิจ callout first (update() starts it), then the zoom callout.
+  welcomeDone() {}
 
   onEvents(ev) {
     for (const e of ev) {
@@ -290,15 +291,15 @@ export class HudScene extends Phaser.Scene {
         audio.sfx('letter_chime');
         this.showBanner([e.goal.name, e.goal.line]);
       }
-      if (e.type === 'voucher') {
+      if (e.type === 'talked') {
         audio.sfx('angel_appear');
-        this.showBanner([VOUCHER_BANNER]);
+        if (e.talked < e.targets) this.showBanner([talkedBanner(e.talked, e.targets)]);
       }
       if (e.type === 'allGoals') {
         this.world.stopAuto();
         this.time.delayedCall(1200, () => this.openThanks()); // after a moment on the last place's banner
       }
-      if (e.type === 'prize') this.showBanner([PRIZE_BANNER]);
+      if (e.type === 'prize') this.showBanner(PRIZE_BANNER);
       if (e.type === 'exitEarly') this.showBanner([e.text]);
       if (e.type === 'exit') {
         audio.sfx('scene3_chime');
@@ -334,6 +335,7 @@ export class HudScene extends Phaser.Scene {
   // ---------------------------------------------------------------- overlays
   openMissions() {
     const w = this.world;
+    this.missionsHintUntil = 0; // seen: the zoom callout comes next
     this.overlay = 'missions';
     const g = this.overlayG.clear().setVisible(true);
     g.fillStyle(0x000000, 0.94).fillRect(8, 30, 164, 214).lineStyle(1, 0xffff4f, 1).strokeRect(8.5, 30.5, 163, 213);
@@ -344,7 +346,7 @@ export class HudScene extends Phaser.Scene {
       add(14, 50 + i * 19, done ? '✓' : '·', { color: done ? '#FFFF4F' : '#888888' });
       add(26, 50 + i * 19, goal.name, { color: done ? '#FFFFFF' : '#AAAAAA' });
     });
-    add(14, 186, chipText(w.progress.goalCount, w.progress.vouchers), { color: '#FFFFFF' });
+    add(14, 186, chipText(w.progress.goalCount, w.progress.talked.size, w.progress.targets.length), { color: '#FFFFFF' });
     if (w.progress.prize) add(14, 204, PRIZE_CHECK, { color: '#FFFF4F' });
     add(W / 2, 224, LABELS.close, { align: 'center', color: '#888888', px: 10 });
   }
@@ -370,6 +372,7 @@ export class HudScene extends Phaser.Scene {
     this.banner?.remove();
     this.nextBanner();
     this.hintUntil = 0;
+    this.missionsHintUntil = 0;
     this.overlay = 'thanks';
     const g = this.overlayG.clear().setVisible(true);
     const P = (this.thanksPanel = { x: 14, y: 92, w: 152, h: 128 });
@@ -512,8 +515,14 @@ export class HudScene extends Phaser.Scene {
       if (pt && pt.d <= TALK_RANGE) this.talk(pt.key);
       else if (dist(w.player, this.walkTo) < 2) this.walkTo = null;
     } else if (!this.down) S.input.target = null;
-    // Once per session, after the welcome: point at the +/- buttons.
-    if (!S.zoomHinted && !w.welcome.locked && !this.dialogue.open && !this.overlay) {
+    // Once per session, after the welcome: point at ภารกิจ, then (after it is opened or
+    // MISSIONS_HINT_MS) at the +/- buttons.
+    const free = !w.welcome.locked && !this.dialogue.open && !this.overlay;
+    if (!S.missionsHinted && free) {
+      S.missionsHinted = true;
+      this.missionsHintUntil = time + MISSIONS_HINT_MS;
+    }
+    if (!S.zoomHinted && S.missionsHinted && time >= this.missionsHintUntil && free) {
       S.zoomHinted = true;
       this.hintUntil = time + ZOOM_HINT_MS;
     }
@@ -522,6 +531,24 @@ export class HudScene extends Phaser.Scene {
     if (Math.abs(this.dim.alpha - dimTo) < 0.01) this.dim.alpha = dimTo;
     this.dialogue.tick(time);
     this.drawHud(time);
+  }
+
+  /** A pulsing callout above the ภารกิจ button: "see what to do". */
+  drawMissionsHint(g, time, hidden) {
+    const on = !hidden && time < this.missionsHintUntil;
+    this.missionsHintTexts.forEach((t) => t.setVisible(on));
+    if (!on) return;
+    const blink = Math.floor(time / 400) % 2 === 0;
+    const r = BTN.missions;
+    g.lineStyle(1, blink ? 0xffffff : 0xffff4f, 1).strokeRect(r[0] - 1.5, r[1] - 1.5, r[2] + 3, r[3] + 3);
+    const bw = 64;
+    const bh = 30;
+    const bx = Math.round(r[0] + r[2] / 2 - bw / 2);
+    const by = r[1] - bh - 7 - (blink ? 0 : 1);
+    g.fillStyle(0x000000, 0.9).fillRect(bx, by, bw, bh).lineStyle(1, 0xffff4f, 1).strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+    // Arrow down to the button.
+    g.fillStyle(0xffff4f, 1).fillTriangle(bx + bw / 2 - 4, by + bh, bx + bw / 2 + 4, by + bh, bx + bw / 2, by + bh + 5);
+    this.missionsHintTexts.forEach((t, i) => t.setOrigin(0.5, 0).setPosition(bx + bw / 2, by - 3 + i * 13));
   }
 
   /** A pulsing callout left of the +/- buttons: "you can zoom". */
@@ -566,10 +593,11 @@ export class HudScene extends Phaser.Scene {
       box(r, active ? 0x8f2f20 : 0x000000, locked ? 0x666666 : 0xffff4f);
       t.setOrigin(0.5, 0.5).setPosition(Math.round(r[0] + r[2] / 2), Math.round(r[1] + r[3] / 2) - 1).setColor(locked ? '#777777' : k === 'act' && talkable ? '#FFFF4F' : '#FFFFFF');
     }
+    this.drawMissionsHint(g, time, hidden || this.dialogue.open);
     this.drawZoomHint(g, time, hidden || this.dialogue.open);
     // Progress chip.
     const done = w.progress.allGoals;
-    const chip = done ? CHIP_DONE : chipText(w.progress.goalCount, w.progress.vouchers);
+    const chip = done ? CHIP_DONE : chipText(w.progress.goalCount, w.progress.talked.size, w.progress.targets.length);
     this.chip.setText(chip).setVisible(!hidden);
     if (!hidden) {
       const cw = Math.ceil(this.chip.width) - 8 + 12;

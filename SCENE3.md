@@ -1,7 +1,7 @@
 # Scene 3: event exploration and the ending
 
 The player explores a top-down map of the real event site (ลานนภา Halloween Fest, 24-25 Oct 2569),
-ticks seven places (ซุ้มผี, in front of the ghost stalls on the soi, added by the owner), talks to the team for discount vouchers, then leaves by the soi to the ending
+ticks seven places (ซุ้มผี, in front of the ghost stalls on the soi, added by the owner), talks to the team (all of them: one special-prize coupon, the team announces what it is), then leaves by the soi to the ending
 (summary, book tickets, follow IG) and the credits. Phaser 4, like scene 2; all game logic is in plain
 modules that run in Node.
 
@@ -28,12 +28,12 @@ registers scene 3 with scene 1 (the only change outside `src/scene3/`). Back goe
 
 | Path | What |
 |---|---|
-| `src/scene3/config.js` | **The one config file**: spread LS, zoom levels, speeds, talk range, voucher rules, special prize, stall booking, event card, URLs, font. Every TODO is here. Ticket dates and prices: the whole game shares `src/data/ticketPhases.js` (the poster) |
+| `src/scene3/config.js` | **The one config file**: spread LS, zoom levels, speeds, talk range, special prize, stall booking, event card, URLs, font. Every TODO is here. Ticket dates and prices: the whole game shares `src/data/ticketPhases.js` (the poster) |
 | `src/scene3/data/script.js` | All scene 3 text (exact Thai). Characters' dialogue and credits are TODO placeholders |
 | `src/scene3/logic/layout.js` | The map: regions, fences, objects, zones, start, exit, guides, collision |
 | `src/scene3/logic/npcs.js` | The characters (now only Jayimpacts), the band (empty), the lane stall row, the ghosts, the talk targets |
 | `src/scene3/logic/world.js` | Simulation: movement with collision, walkers, talks, zones, exit, AUTO tour |
-| `src/scene3/logic/progress.js`, `welcome.js`, `pathfind.js`, `ticketLine.js` | Goals/vouchers/prize, opening welcome, A*, ticket line by date |
+| `src/scene3/logic/progress.js`, `welcome.js`, `pathfind.js`, `ticketLine.js` | Goals, talks and the special prize, opening welcome, A*, ticket line by date |
 | `src/scene3/scenes/` | Phaser: `WorldScene` (draws the world), `HudScene` (all input, HUD, dialogue, banners, checklist, MAP), `EndingScene` (ending + credits) |
 | `src/scene3/ground.js` | Ground pre-rendered once per look into one canvas |
 | `src/scene3/viewScale.js` | Whole-number scaling of the 180 x 320 design space, letterboxed |
@@ -77,10 +77,11 @@ photos; the photos are waist-up, so trousers and shoes are a guess). Each also h
 | Aomsin | the banquet tables' middle aisle | short crop, grey long-sleeve with a white print, cross necklace |
 | Nemo | the beanbags in front of the screen | thick curtain bangs, white shirt |
 
-Talk targets: the five, Jayimpacts and the lane stall row (one voucher each; all seven: the special
-prize). Po, Peay, Aomsin and Nemo's lines and roles are placeholders (`TODO(owner)` in
-`src/scene3/data/script.js`); Kaiching keeps the prototype's lines. The ghosts outside talk too (no
-voucher). The bird-costume staff and the band were removed earlier; their lines are still in `NPC_LINES`.
+Talk targets: the five, Jayimpacts and the lane stall row. Each counts once; talking with all seven gives one
+special-prize coupon (owner; no coupon per talk), and the team announces later what it is. Nemo tells players the
+game keeps improving during ticket sales and asks for feedback by DM; his last page has an IG button to @laanapha.
+Po, Peay and Aomsin's lines and roles are placeholders (`TODO(owner)` in `src/scene3/data/script.js`); Kaiching keeps
+the prototype's lines. The ghosts outside talk too (they do not count). The bird-costume staff and the band were removed earlier; their lines are still in `NPC_LINES`.
 
 Regenerate the team: `python3 tools/team_sprite.py --sheet docs/scene3/team_contact_sheet.png`.
 
@@ -89,7 +90,7 @@ Regenerate the team: `python3 tools/team_sprite.py --sheet docs/scene3/team_cont
 A small card opens (`THANKS` in `src/scene3/data/script.js`): ขอบคุณที่เล่นเกมของเรา! and three pages,
 turned with the arrows, a swipe or the arrow keys: จองบัตร (`URLS.booking`) -> IG laanapha with the IG logo
 (`URLS.eventInstagram`) -> เจอกันที่ "เมื่อคืนผมนอนไม่หลับ" (`URLS.map`). Under them, always: จบเกม
-(straight to the ending) or คุยกับทีมงานต่อ (keep playing for vouchers; the exit still ends the game).
+(straight to the ending) or คุยกับทีมงานต่อ (keep playing for the special prize; the exit still ends the game).
 
 While a dialogue, the checklist or this card is up, the game dims (55% black) so the UI stands out.
 
@@ -100,7 +101,7 @@ While a dialogue, the checklist or this card is up, the game dims (55% black) so
    `mic`), and either `at` (standing spot, world units, usually `spread({x, y})` from base units) or
    `patrol` (waypoints for a walker).
 2. Add its pages to `NPC_LINES` in `src/scene3/data/script.js` under the same key.
-3. It becomes a talk target automatically (one voucher, counts toward the special prize). Run `npm test`.
+3. It becomes a talk target automatically (counts toward the special prize). Run `npm test`.
 
 ## Add a goal
 

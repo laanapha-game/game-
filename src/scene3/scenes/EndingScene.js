@@ -1,11 +1,11 @@
 // Scene 3 ending (spec 6.6) and credits. Design space 180 x 320.
-// Ending: the player's character, "สำรวจ n/7 จุด · คุยกับทีมงาน k/n", vouchers as ticket
-// icons, the event card, the ticket phase line by date, and four buttons: จองบัตรเลย,
+// Ending: the player's character, "สำรวจ n/7 จุด · คุยกับทีมงาน k/n", the special-prize coupon (a ticket
+// icon), the event card, the ticket phase line by date, and four buttons: จองบัตรเลย,
 // Instagram, เครดิต, หน้าแรก. Links open in a new tab.
 import Phaser from 'phaser';
 import { label, wrap } from '../ui/text.js';
-import { summaryText, voucherHowTo, prizeHowTo, ENDING_BUTTONS, CREDITS } from '../data/script.js';
-import { EVENT_CARD, URLS, VOUCHER, SPECIAL_PRIZE, MIN_TOUCH_CSS_PX } from '../config.js';
+import { summaryText, PRIZE_CHECK, PRIZE_NOTE, PRIZE_TODO, ENDING_BUTTONS, CREDITS } from '../data/script.js';
+import { EVENT_CARD, URLS, MIN_TOUCH_CSS_PX } from '../config.js';
 import { ticketLine } from '../logic/ticketLine.js';
 import { COSTUMES } from '../assets.js';
 import { audio } from '../../audio/engine.js';
@@ -52,20 +52,15 @@ export class EndingScene extends Phaser.Scene {
     let y = 76;
     center(y, summaryText(p.goalCount, p.talked.size, p.targets.length), { color: '#FFFF4F' });
     y += 13;
-    // Vouchers as small ticket icons (rows of 7).
-    const per = 7;
-    for (let i = 0; i < p.vouchers; i++) {
-      const col = i % per;
-      const row = Math.floor(i / per);
-      this.add.image(W / 2 - (Math.min(p.vouchers, per) * 16) / 2 + 8 + col * 16, y + 3 + row * 10, 'c_ticket').setScale(1 / 3);
-    }
-    y += p.vouchers > per ? 22 : p.vouchers ? 12 : 0;
-    center(y + 2, voucherHowTo(VOUCHER.howToUse), { color: '#FFFFFF', px: 10 });
-    y += 12;
+    // Talking with everyone: one special-prize coupon (a ticket icon); the team announces what it is.
     if (p.prize) {
-      center(y + 2, prizeHowTo(SPECIAL_PRIZE.howToClaim), { color: '#FFFF4F', px: 10 });
+      for (let i = 0; i < p.vouchers; i++) this.add.image(W / 2 - (p.vouchers * 16) / 2 + 8 + i * 16, y + 3, 'c_ticket').setScale(1 / 3);
       y += 12;
-    }
+      center(y + 2, PRIZE_CHECK, { color: '#FFFF4F', px: 10 });
+      y += 12;
+      center(y + 2, PRIZE_NOTE, { color: '#FFFFFF', px: 10 });
+    } else center(y + 2, PRIZE_TODO, { color: '#FFFFFF', px: 10 });
+    y += 12;
     // Event card.
     y += 4;
     const cardLines = [`${EVENT_CARD.dates} · ${EVENT_CARD.opens}`, EVENT_CARD.shortFilm, EVENT_CARD.mainProgram];

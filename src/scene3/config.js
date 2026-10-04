@@ -14,7 +14,8 @@ export const BASE_H = 640;
 // ---- Camera and zoom (design px per map unit) ----
 export const ZOOM_LEVELS = [3, 2, 1.2, 0.65, 'fit']; // 'fit' = the whole map width in the window
 export const ZOOM_START = 2; // index into ZOOM_LEVELS: 1.2, the lane and its stalls in view
-export const ZOOM_HINT_MS = 9000; // the +/- hint after the welcome, until the first zoom
+export const MISSIONS_HINT_MS = 8000; // after the welcome: points at ภารกิจ first, until it is opened
+export const ZOOM_HINT_MS = 9000; // then the +/- hint, until the first zoom
 export const SMOOTH_BELOW = 1; // the world is drawn with smoothing below this zoom, nearest-neighbour above
 
 // ---- Characters ----
@@ -32,16 +33,12 @@ export const PLAYER_BOX = { w: 8, h: 4 }; // collision box at the feet
 export const PATH_GRID = 4; // A* grid step (map units)
 export const MIN_TOUCH_CSS_PX = 44; // tappable areas grow to at least this (hit areas, not drawings)
 
-// ---- Goals and vouchers ----
+// ---- Goals and the special prize ----
 export const GOAL_COUNT = 6;
-// TODO(owner): voucher rules (amount, code, expiry, how it is redeemed, whether talks become stamps).
-export const VOUCHER = {
-  perFirstTalk: 1, // one voucher for the first talk with each target
-  howToUse: 'รอทีมกำหนด', // TODO: shown on the ending as "วิธีใช้คูปอง: ..."
-};
-// TODO(owner): what the special prize is and how it is claimed.
+// Talks (owner): no coupon per talk. Talking with everyone gives one special-prize coupon;
+// what it is, the team announces later (the ending says so: PRIZE_NOTE in data/script.js).
 export const SPECIAL_PRIZE = {
-  howToClaim: 'รอทีมกำหนด', // TODO: shown on the ending as "รางวัลพิเศษ ✓ วิธีรับ: ..."
+  coupons: 1,
   // Does the lane stall row count toward "talked to everyone"? Default yes.
   stallRowCounts: true,
 };

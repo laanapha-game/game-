@@ -15,7 +15,8 @@ export const WELCOME_PAGES = [
   'แล้วก็อย่าลืมไปคุยกับทีมงานของเราด้วยนะครับ',
   'ถ้าคุยครบทุกคน จะมีรางวัลพิเศษให้ด้วย โฮะๆ',
 ];
-export const AFTER_WELCOME_BANNER = 'เปิดรายการภารกิจได้ที่ปุ่ม ภารกิจ';
+// After the welcome (owner): first point at ภารกิจ, then at + / - (zoom).
+export const MISSIONS_HINT = ['กด ภารกิจ', 'ดูสิ่งที่ต้องทำ'];
 export const ZOOM_HINT = ['กด + / -', 'ซูมเข้า-ออก'];
 
 // ---- Goals: seven places (final names and facts; ซุ้มผี added by the owner) ----
@@ -30,12 +31,16 @@ export const GOALS = [
 ];
 
 // ---- HUD and banners ----
-export const chipText = (goals, vouchers) => `สำรวจ ${goals}/${GOALS.length} · คูปอง ${vouchers}`;
+export const chipText = (goals, talked, targets) => `สำรวจ ${goals}/${GOALS.length} · คุย ${talked}/${targets}`;
 export const CHIP_DONE = 'ครบแล้ว! ไปที่ทางออก';
 export const exitTooEarly = (goals) => `ยังสำรวจไม่ครบ (${goals}/${GOALS.length})`;
-export const VOUCHER_BANNER = 'ได้คูปองส่วนลดค่าบัตร!';
-export const PRIZE_BANNER = 'คุยครบทุกคนแล้ว! ได้รางวัลพิเศษ โฮะๆ';
-export const PRIZE_CHECK = 'รางวัลพิเศษ ✓';
+// Talks (owner): no coupon per talk; talking with everyone = 1 special-prize coupon,
+// and the team announces later what it is.
+export const talkedBanner = (talked, targets) => `คุยกับทีมงานแล้ว ${talked}/${targets}`;
+export const PRIZE_BANNER = ['ได้คูปองรางวัลพิเศษ 1 ใบ!', 'ทีมงานจะอัพเดทอีกครั้ง', 'ว่าได้อะไร'];
+export const PRIZE_CHECK = 'คูปองรางวัลพิเศษ 1 ใบ ✓';
+export const PRIZE_NOTE = 'ทีมงานจะอัพเดทอีกครั้งว่าได้อะไร';
+export const PRIZE_TODO = 'คุยกับทีมงานให้ครบ รับคูปองรางวัลพิเศษ';
 export const LABELS = {
   map: 'MAP',
   missions: 'ภารกิจ',
@@ -94,14 +99,13 @@ export const NPC_LINES = {
   po: ['สวัสดีครับ ผม Po ทีมงานลานนภา ตรงนี้คือจุดลงทะเบียนครับ', 'เดินสำรวจให้ครบทั้ง 7 จุดนะครับ'],
   peay: ['สวัสดีค่ะ Peay จากทีมงานลานนภาค่ะ', 'คุยกับทีมงานให้ครบทุกคน จะได้รางวัลพิเศษนะคะ'],
   aomsin: ['หวัดดีครับ Aomsin ทีมงานลานนภาครับ', 'อย่าลืมแวะซุ้มผีด้านนอกงานด้วยนะ มีผีรอทักทายอยู่'],
-  nemo: ['สวัสดีครับ Nemo ทีมงานลานนภาครับ', 'ตรงนี้คือที่นั่งบีนแบ็กหน้าจอหนังกลางแปลงครับ'],
+  // owner: Nemo tells players the game keeps improving; the last page gets the IG button (laanapha).
+  nemo: ['สวัสดีครับ Nemo ทีมงานลานนภาครับ', 'เกมนี้จะยังถูกพัฒนาขึ้นเรื่อยๆ ระหว่างช่วงขายบัตรนี้นะครับ', 'สามารถเข้าไป Feedback กันได้ผ่าน DM Instagram Laanapha เลยครับ'],
   captain: ['Captain รายงานตัว! ข้าเดินตรวจงานอยู่', 'โปรแกรมหลักเริ่ม 1 ทุ่มครึ่ง ห้ามพลาด', 'บัตรราคาขึ้นตามช่วงวัน จองเร็วถูกกว่านะ'],
 };
 
 // ---- Ending (final) ----
 export const summaryText = (goals, talked, targets) => `สำรวจ ${goals}/${GOALS.length} จุด · คุยกับทีมงาน ${talked}/${targets}`;
-export const voucherHowTo = (how) => `วิธีใช้คูปอง: ${how}`;
-export const prizeHowTo = (how) => `รางวัลพิเศษ ✓ วิธีรับ: ${how}`;
 export const ENDING_BUTTONS = { book: 'จองบัตรเลย', instagram: 'IG @laanapha', credits: 'เครดิต', home: 'หน้าแรก' };
 // ---- All places explored (owner): thank you, then three pages (book -> IG -> map), then end or keep talking ----
 export const THANKS = {

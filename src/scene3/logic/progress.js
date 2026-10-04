@@ -1,7 +1,7 @@
-// Scene 3 progress: seven goals (main objective), talks and vouchers (optional), the
-// special prize after talking to everyone. Pure; the scene shows the returned events.
+// Scene 3 progress: seven goals (main objective), talks (optional), and the special-prize
+// coupon after talking to everyone. Pure; the scene shows the returned events.
 import { GOALS } from '../data/script.js';
-import { VOUCHER, SPECIAL_PRIZE } from '../config.js';
+import { SPECIAL_PRIZE } from '../config.js';
 
 export class Progress {
   /** @param {string[]} targets talk target keys (Jayimpacts and the stall row) */
@@ -35,14 +35,14 @@ export class Progress {
     return ev;
   }
 
-  /** A talk ended. First talk with a target gives one voucher; the last one also the prize (after the voucher). */
+  /** A talk ended. The first talk with a target counts; the last one gives the special-prize coupon. */
   talk(key) {
     if (!this.targets.includes(key) || this.talked.has(key)) return [];
     this.talked.add(key);
-    this.vouchers += VOUCHER.perFirstTalk;
-    const ev = [{ type: 'voucher', key, vouchers: this.vouchers }];
+    const ev = [{ type: 'talked', key, talked: this.talked.size, targets: this.targets.length }];
     if (!this.prize && this.prizeTargets.every((k) => this.talked.has(k))) {
       this.prize = true;
+      this.vouchers = SPECIAL_PRIZE.coupons; // the special-prize coupon
       ev.push({ type: 'prize' });
     }
     return ev;

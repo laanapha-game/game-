@@ -1,13 +1,14 @@
 # ลานนภา Halloween Fest: the promo game (scenes 1, 2 and 3)
 
-Scene 3 (the event map, vouchers, the ending and credits) is documented in [`SCENE3.md`](SCENE3.md).
+Scene 3 (the event map, talks, the ending and credits) is documented in [`SCENE3.md`](SCENE3.md).
 
 The source of truth is [`scene2-spec.md`](scene2-spec.md).
 
 A portrait mobile browser game (180 x 320 layout, rendered at device resolution) built with Phaser 4 and Vite.
 This repo builds scenes 2 and 3 and connects them to scene 1 (home and character select, by the scene 1 developer).
 The whole game: home -> character select -> scene 2 (Trick or Treat run) -> scene 3 (the event map: the welcome,
-seven places, talks and vouchers, the thank-you card) -> ending -> credits -> home. A Game over in scene 2 goes home;
+seven places, talks and the special-prize coupon, the thank-you card) -> ending -> credits -> home. A Game over in scene 2 offers
+ลองใหม่ (from the checkpoint before the stall that was lost), ซื้อบัตร and หน้าแรก;
 Back in scene 3 goes to character select.
 
 - `game.html`: the full game, scene 1 -> 2 -> 3. This is the website (`npm run build:site`, see "Website").
@@ -50,7 +51,7 @@ NODE_ENV=development npx vite build --config vite.site.config.js --outDir /tmp/s
 npx vite preview --config vite.site.config.js --outDir /tmp/site-dev --port 4174
 node tests/e2e/fullgame.mjs http://localhost:4174/ --shots=/tmp/shots     # the whole game
 npm run build:site && npm run preview:site
-node tests/e2e/fullgame.mjs http://localhost:4173/ --prod                 # the real build: taps only, Game over -> home
+node tests/e2e/fullgame.mjs http://localhost:4173/ --prod                 # the real build: taps only, Game over -> ลองใหม่ -> หน้าแรก
 ```
 
 `npm run site:assets` (with `npm run dev` running) redraws `site/og.png` and the icons from the game itself.
@@ -164,5 +165,5 @@ Another host can still embed scene 2 with `startScene2({ parent, character, onWi
 - The chase timer starts when the chaser appears, after the letter is read (state table S3). It uses wall-clock time, so it keeps running even when the tab is in the background.
 - Timer bar: the chaser icon moves with time, the bird icon moves with run progress, and the goal is the left end.
 - Soi exit is placed between stalls 4 and 5. The chase runs to stalls 3-5 and the final sprint are tapped (12 px per tap,
-  10.8 in the sprint, no drain over time); the chase clock (6:00) runs 3x, 5x in the sprint, where the chaser has red eyes.
+  10.8 in the sprint, no drain over time); the chase clock (6:00) runs 3x; in the sprint the red-eyed chaser dashes and reaches the bird in 5 s.
 - Reply order is fixed (polite on top). The jar pick has no time limit.

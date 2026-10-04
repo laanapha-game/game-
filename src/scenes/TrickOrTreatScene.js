@@ -3,7 +3,8 @@
 //   S0 angel intro -> WALK -> S1 stall 1 (Krahang): dialogue, shake, tap game
 //   -> WALK -> S2 stall 2 (jar ghost): dialogue, shake, jar game -> S3 letter,
 //   chase starts (2:00 timer) -> S4..S6 stalls 3..5 -> S7 final sprint -> scene 3
-//   any fail -> caught sequence -> GameOver scene (single Home button)
+//   any fail -> caught sequence -> GameOver scene: retry from the checkpoint before the
+//   stall that was lost (owner), buy a ticket, or home
 //
 // Each state is an async step. When the run ends (fail or win) `this.ended` is
 // set and every pending wait/tween promise stops resolving, so no step can
@@ -23,6 +24,7 @@ import {
   REPLY_POLITE,
   REPLY_RUDE,
   NAMES,
+  UI_TEXT,
 } from '../data/script.js';
 import { resolveToday, stall3Pages } from '../logic/ticket.js';
 import { TapMeter } from '../logic/meter.js';
@@ -52,6 +54,10 @@ const STALL_WORLD_X = STALL_SCROLL.map((s) => C.STALL_STOP_X - s);
 const FINAL_WORLD_X = STALL_SCROLL[4] + C.SPRINT_DISTANCE_PX; // scroll at which the light is reached
 const LIGHT_ENTRANCE_IN_PIECE = 52; // entrance centre from the piece's left edge
 const COUNTER_Y = C.GROUND_Y - C.STALL_H + C.STALL_COUNTER_Y; // counter top on screen
+// Retry checkpoints (owner): run() steps a lost run restarts from, the one before the stall
+// that was lost: walk to stall 1, walk to stall 2, the chase (after stall 2, no letter again),
+// the runs to stalls 3, 4, 5, the final sprint.
+const CHECKPOINT_STEPS = [1, 3, 5, 6, 7, 8, 9];
 
 export class TrickOrTreatScene extends Phaser.Scene {
   constructor() {
@@ -73,6 +79,14 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.running = false;
     this.meter = null;
     this.timer = new ChaseTimer(C.CHASE_TIME_S);
+    // A retry restarts this same scene object: nothing from the last run may carry over.
+    for (const k of ['chaser', 'chaserShadow', 'chaserX', 'chasePx', 'jars', 'redEyes', 'introFloat', 'mouthOpen', 'gapBand', 'lastBeat', 'lastDust', 'lastGrowl', 'lastTickSec', 'jumping', 'jumpDone', 'dashObjs', 'tickS1', 'tickRun', 'failReason']) {
+      this[k] = undefined;
+    }
+    this.checkpoint = data.checkpoint ?? null; // a retry starts here
+    this.lastCheckpoint = { step: 1, worldX: 0, chase: null };
+    this.dash = null;
+    this.dashWarn = false;
   }
 
   create() {
@@ -181,10 +195,94 @@ export class TrickOrTreatScene extends Phaser.Scene {
       () => this.stall(4),
       () => this.s7Sprint(),
     ];
-    for (const step of steps) {
-      if (this.ended) return;
-      await step();
+    let k = 0;
+    if (this.checkpoint) {
+      k = this.checkpoint.step;
+      await this.restore(this.checkpoint);
     }
+    for (; k < steps.length; k++) {
+      if (this.ended) return;
+      if (CHECKPOINT_STEPS.includes(k)) this.lastCheckpoint = this.snapshot(k);
+      await steps[k]();
+    }
+  }
+
+  /** Where a retry starts: the step, the scroll and (mid-chase) the chase clock. */
+  snapshot(step) {
+    const t = this.timer;
+    const chase = t.started ? { spentMs: t.totalMs - t.remainingS() * 1000, chasePx: this.chasePx } : null;
+    return { step, worldX: this.worldX, chase };
+  }
+
+  /** A retry: the world as it was at the checkpoint; mid-chase, a breath, then the clock goes on. */
+  async restore(cp) {
+    this.worldX = cp.worldX;
+    if (cp.step >= 3) this.stalls[0].ghost.setVisible(false); // the Krahang was flung off
+    if (cp.step === 3) audio.mood('funky');
+    if (!cp.chase) return;
+    const birdP = this.worldX / FINAL_WORLD_X;
+    // The chaser starts behind again (at least RETRY_CHASER_GAP), never on the bird's back.
+    const spent = Math.max(0, Math.min(cp.chase.spentMs, (birdP - C.RETRY_CHASER_GAP) * this.timer.totalMs));
+    this.chasePx = cp.chase.chasePx;
+    this.spawnChaser(C.CHASER_START_X, 'chaser_float');
+    this.introFloat = true;
+    audio.intensity(spent / this.timer.totalMs);
+    audio.mood('chase');
+    this.timerBar.setVisible(true);
+    this.timerBar.update(1 - spent / this.timer.totalMs, birdP);
+    this.bird.play('idle', 'side');
+    await this.tapToRun();
+    this.timer.startAt(spent);
+    this.timer.setRate(C.CHASE_SPEED);
+  }
+
+  spawnChaser(x, anim) {
+    this.chaser = this.add.sprite(x, C.CHASER_HOVER_Y, 'chaser', FRAMES.chaser.openMouth).setDepth(45);
+    this.chaser.setFlipX(faces('chaser') === 'right');
+    this.chaserShadow = this.add.image(this.chaser.x, C.PLAYER_Y + 1, 'ground_shadow').setOrigin(0.5, 1).setDepth(44);
+    if (anim) this.chaser.play(anim);
+  }
+
+  /** Before the chaser comes (owner): "tap the screen to run", until the player taps. */
+  async tapToRun() {
+    this.setState('S3_READY');
+    const cx = C.GAME_W / 2;
+    const y = 150;
+    const box = this.add.rectangle(cx, y, 160, 44, C.PALETTE.black, 0.88).setStrokeStyle(1, C.PALETTE.yellow).setDepth(160);
+    const title = this.add.text(cx, y - 8, UI_TEXT.tapToRun, textStyle(C.FONT_TITLE_PX, C.CSS.yellow)).setOrigin(0.5).setDepth(161);
+    const tap = this.add.text(cx, y + 11, UI_TEXT.tap, textStyle(C.FONT_BODY_PX, C.CSS.white)).setOrigin(0.5).setDepth(161);
+    const blink = this.time.addEvent({ delay: 400, loop: true, callback: () => tap.setVisible(!tap.visible) });
+    audio.sfx('choice_show');
+    await this.wait(350); // the tap that closed the chaser's line does not count
+    await this.guard(new Promise((r) => (this.tapHandler = r)));
+    this.tapHandler = null;
+    audio.sfx('ui_click');
+    blink.remove();
+    [box, title, tap].forEach((o) => o.destroy());
+  }
+
+  /** Walks (owner): a tap jumps, so the short walk is not dull. */
+  jump() {
+    if (this.jumping) return;
+    this.jumping = true;
+    const s = this.bird.sprite;
+    audio.sfx('jump');
+    this.jumpDone = new Promise((done) =>
+      this.tweens.add({
+        targets: s,
+        y: C.PLAYER_Y - C.JUMP_PX,
+        duration: C.JUMP_MS / 2,
+        ease: 'Quad.easeOut',
+        yoyo: true,
+        onUpdate: () => (s.y = Math.round(s.y)),
+        onComplete: () => {
+          s.y = C.PLAYER_Y;
+          this.jumping = false;
+          audio.sfx('step', { run: true });
+          done();
+        },
+      }),
+    );
   }
 
   /** Scrolls the world until stall `i` stops at STALL_STOP_X. */
@@ -201,7 +299,10 @@ export class TrickOrTreatScene extends Phaser.Scene {
   // WALK: slower auto-scroll before stalls 1 and 2. No timer, no fail.
   async walkTo(i) {
     this.setState(`WALK${i + 1}`);
+    this.tapHandler = () => this.jump();
     await this.scrollTo(i, C.WALK_SEGMENT_S * 1000, C.WALK_SPEED_PX_S / C.RUN_SPEED_PX_S);
+    this.tapHandler = null;
+    if (this.jumping) await this.guard(this.jumpDone); // land before the stall
   }
 
   // S0: angel intro, 5 pages, no timer, then the angel disappears.
@@ -426,21 +527,22 @@ export class TrickOrTreatScene extends Phaser.Scene {
   // S3: read the letter, then the chaser appears and the 2:00 timer starts.
   async s3LetterAndChase() {
     this.setState('S3');
-    const { panel, texts, arrow } = this.buildLetter();
-    audio.sfx('paper');
-    await this.wait(400); // avoid the pick tap closing the letter at once
-    await this.guard(new Promise((r) => (this.tapHandler = r)));
-    audio.sfx('paper');
-    this.tapHandler = null;
-    [panel, arrow, ...texts].forEach((o) => o.destroy());
+    if (this.checkpoint?.step !== 5) {
+      // (a retry after stall 2 starts at the chaser, the letter was read)
+      const { panel, texts, arrow } = this.buildLetter();
+      audio.sfx('paper');
+      await this.wait(400); // avoid the pick tap closing the letter at once
+      await this.guard(new Promise((r) => (this.tapHandler = r)));
+      audio.sfx('paper');
+      this.tapHandler = null;
+      [panel, arrow, ...texts].forEach((o) => o.destroy());
+    }
     this.bird.play('idle', 'side');
 
     // Chase intro cutscene: the chaser jumps in (open mouth, red flash, shake),
     // calls out in red, the bird turns back scared, the ghost floats in close.
     this.setState('S3_INTRO');
-    this.chaser = this.add.sprite(C.CHASER_INTRO_FROM_X, C.CHASER_HOVER_Y, 'chaser', FRAMES.chaser.openMouth).setDepth(45);
-    this.chaser.setFlipX(faces('chaser') === 'right');
-    this.chaserShadow = this.add.image(this.chaser.x, C.PLAYER_Y + 1, 'ground_shadow').setOrigin(0.5, 1).setDepth(44);
+    this.spawnChaser(C.CHASER_INTRO_FROM_X);
     const cam = this.cameras.main;
     cam.flash(250, 200, 0, 0);
     // The chaser appears: the scare, then the scary chase music straight away.
@@ -456,8 +558,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.introFloat = true; // update() bobs the chaser while it floats in
     await this.talk(CHASER_INTRO_PAGES, { color: C.CHASER_TEXT_COLOR });
 
-    // The chase starts: bird faces forward, 2:00 timer starts (same rule, never pauses).
+    // The chase starts: bird faces forward, "tap to run", then the timer starts (never pauses).
     this.bird.lookBack(false);
+    await this.tapToRun();
     this.timer.start();
     this.timer.setRate(C.CHASE_SPEED); // the ghost chases 3x faster (owner); clock is 6:00 of chase time
     audio.mood('chase'); // already playing since the chaser appeared
@@ -600,26 +703,82 @@ export class TrickOrTreatScene extends Phaser.Scene {
     await this.wait(400);
   }
 
-  // S7: tap to fill the meter; meter value maps to scroll toward the light.
+  // S7 (owner): the red-eyed ghost dashes and reaches the player in DASH_CATCH_S; tap to run
+  // into the light first. The meter shows the way to the light.
   async s7Sprint() {
     this.setState('S7');
-    this.finalChase();
+    await this.dashWarning();
     await this.tapRun(FINAL_WORLD_X, C.SPRINT_GAIN * C.SPRINT_DISTANCE_PX);
     return this.win();
   }
 
-  /** Final sprint: the chaser's eyes turn red and it comes FINAL_CHASE_SPEED (5x) faster (the clock runs 5x). */
-  finalChase() {
+  /** The warning before the dash: red eyes, a roar, red flashes and shakes, it rears back. */
+  async dashWarning() {
+    this.dashWarn = true;
     this.redEyes = true;
-    this.timer.setRate(C.FINAL_CHASE_SPEED);
-    const c = this.chaser;
-    if (c && this.textures.exists('chaser_red')) {
-      const frame = c.frame.name;
-      if (c.anims.isPlaying) c.play('chaser_red_float');
-      else c.setTexture('chaser_red', frame);
-    }
-    this.cameras.main.flash(200, 200, 0, 0);
+    this.timer.setRate(0); // the chase clock stops; the dash decides now
+    const c = this.chaser ?? (this.spawnChaser(C.CHASER_START_X), this.chaser);
+    c.stop().setTexture(this.textures.exists('chaser_red') ? 'chaser_red' : 'chaser', FRAMES.chaser.openMouth);
+    this.mouthOpen = true;
+    this.bird.lookBack(true);
+    this.bird.play('scared', 'side');
+    const cam = this.cameras.main;
+    cam.flash(300, 255, 0, 0);
+    cam.shake(C.DASH_WARN_MS * 0.6, C.DASH_SHAKE);
+    audio.sfx('jumpscare', { level: 0.75 });
     audio.sfx('chaser_closer');
+    audio.duck(900);
+    audio.intensity(1);
+    const cx = C.GAME_W / 2;
+    const red = this.add.rectangle(0, 0, C.GAME_W, C.GAME_H, 0xdd0000, 1).setOrigin(0).setDepth(140).setAlpha(0);
+    this.tweens.add({ targets: red, alpha: 0.32, duration: 220, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const text = this.add.text(cx, 44, UI_TEXT.dashWarn, textStyle(C.FONT_TITLE_PX, C.CHASER_TEXT_COLOR)).setOrigin(0.5).setDepth(161);
+    const count = this.add.text(cx, 66, '', textStyle(C.FONT_TITLE_PX, C.CSS.white)).setOrigin(0.5).setDepth(161);
+    // Speed lines streaming behind it.
+    const lines = [...Array(7).keys()].map((i) => this.add.rectangle(c.x, C.CHASER_HOVER_Y - 30 + i * 9, 10 + (i % 3) * 6, 1, C.PALETTE.white, 0.75).setOrigin(0, 0.5).setDepth(44));
+    this.dashObjs = [red, text, count, ...lines];
+    // It rears back, then comes.
+    await this.tweenP({ targets: c, x: C.CHASER_MAX_X - 6, duration: C.DASH_WARN_MS * 0.5, ease: 'Back.easeIn' });
+    await this.wait(C.DASH_WARN_MS * 0.5);
+    this.bird.lookBack(false);
+    text.setText(UI_TEXT.dashTap);
+    cam.shake(250, C.DASH_SHAKE);
+    audio.sfx('whoosh', { from: 200, to: 3000, dur: 0.5, gain: 0.5 });
+    this.dash = { t0: this.time.now, fromX: c.x, c0: 1 - this.timer.remainingS() / C.CHASE_TIME_S, count, lines, text, sec: null };
+    this.dashWarn = false;
+  }
+
+  /** The dash: the chaser closes in (faster and faster) and reaches the bird at DASH_CATCH_S. */
+  updateDash(time) {
+    const d = this.dash;
+    const k = Math.min(1, (this.time.now - d.t0) / (C.DASH_CATCH_S * 1000));
+    const birdP = Math.min(1, this.worldX / FINAL_WORLD_X);
+    this.timerBar.update(1 - lerp(d.c0, birdP, k), birdP); // the chaser icon slides onto the bird's
+    if (this.ended) return;
+    if (k >= 1) return this.fail('caught');
+    const c = this.chaser;
+    c.x = Math.round(lerp(d.fromX, C.BIRD_X + C.CHASER_MIN_GAP_PX, k * k));
+    c.y = C.CHASER_HOVER_Y + Math.round(Math.sin(time / 70) * 2);
+    this.chaserShadow?.setX(c.x);
+    d.lines.forEach((l, i) => l.setPosition(c.x + 18 + ((time * 0.12 + i * 23) % 40), l.y));
+    const sec = Math.ceil(C.DASH_CATCH_S * (1 - k));
+    if (sec !== d.sec) {
+      d.sec = sec;
+      d.count.setText(String(sec));
+      audio.sfx('timer_tick');
+    }
+    if (time - (this.lastBeat ?? 0) >= lerp(560, 200, k)) {
+      this.lastBeat = time;
+      audio.sfx('heartbeat');
+      this.cameras.main.shake(90, C.SHAKE_INTENSITY * (1 + k));
+    }
+    d.text.setVisible(Math.floor(time / 180) % 2 === 0 || k < 0.6);
+  }
+
+  clearDash() {
+    this.dashObjs?.forEach((o) => o.active && o.destroy());
+    this.dashObjs = null;
+    this.dash = null;
   }
 
   /**
@@ -669,6 +828,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     this.won = true;
     this.ended = true;
     this.setState('WIN');
+    this.clearDash();
     this.cameras.main.shakeEffect.reset();
     const tw = (cfg) => new Promise((r) => this.tweens.add({ ...cfg, onComplete: r }));
     // Run into the light, fade to a white silhouette, then white out.
@@ -702,9 +862,7 @@ export class TrickOrTreatScene extends Phaser.Scene {
     audio.mood(null);
     audio.hold('aura', false);
 
-    if (!this.chaser) {
-      this.chaser = this.add.sprite(C.GAME_W + 40, C.CHASER_HOVER_Y, 'chaser', 0).setDepth(45).setFlipX(faces('chaser') === 'right');
-    }
+    if (!this.chaser) this.spawnChaser(C.GAME_W + 40);
     this.chaser.stop().setFrame(FRAMES.chaser.openMouth).setDepth(150);
     this.bird.play('scared', 'side');
     this.tweens.add({ targets: this.chaser, x: C.BIRD_X + 8, y: C.PLAYER_Y - 30, duration: C.CAUGHT_MS * 0.6, ease: 'Quad.easeIn' });
@@ -716,7 +874,8 @@ export class TrickOrTreatScene extends Phaser.Scene {
       audio.duck(1000);
     });
     this.time.delayedCall(C.CAUGHT_MS, () => {
-      this.scene.start('GameOver', { reason, onGameOver: this.onGameOver, redEyes: !!this.redEyes });
+      const retry = { character: this.character, passOn: this.passOn, onWin: this.onWin, onGameOver: this.onGameOver, checkpoint: this.lastCheckpoint };
+      this.scene.start('GameOver', { reason, onGameOver: this.onGameOver, redEyes: !!this.redEyes, retry });
     });
   }
 
@@ -745,7 +904,9 @@ export class TrickOrTreatScene extends Phaser.Scene {
       this.chaser.y = C.CHASER_HOVER_Y + Math.round(Math.sin(time / 300) * 2);
       this.chaserShadow?.setX(this.chaser.x);
     }
-    if (!this.timer.started || this.won) return;
+    if (this.won || this.dashWarn) return; // the dash warning: nothing else moves
+    if (this.dash) return this.updateDash(time);
+    if (!this.timer.started) return;
     const remaining = this.timer.remainingS();
     this.timerBar.update(remaining / C.CHASE_TIME_S, Math.min(1, this.worldX / FINAL_WORLD_X));
     if (this.ended) return;

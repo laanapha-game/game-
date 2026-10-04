@@ -1,7 +1,7 @@
 // The whole game in one run, played like a player: scene 1 home -> character select ->
 // scene 2 (every dialogue, both minigames, the chase and the sprint, by taps) -> scene 3
 // (the welcome, all seven places with the AUTO tour, the thank-you card, a talk with every
-// character for every voucher and the special prize, the walk out of the soi) -> ending ->
+// character for the special-prize coupon, the walk out of the soi) -> ending ->
 // credits -> หน้าแรก -> scene 1 home -> a second game starts.
 //
 //   node tests/e2e/fullgame.mjs [url] [--char=<id>] [--shots=<dir>] [--prod]
@@ -142,9 +142,21 @@ if (PROD) {
   }
   await page.waitForTimeout(14000);
   await shot(page, 'scene2_gameover');
-  await tapG(90, 240);
+  // ลองใหม่: the run starts again before stall 1 (the walk), not on the home page.
+  await tapG(90, 222);
+  await page.waitForTimeout(2500);
+  check(!(await homeShown()) && (await drawn('#game canvas')) > 8, `Game over -> ลองใหม่: scene 2 starts again [${clock()}]`);
+  await shot(page, 'scene2_retry');
+  // Slow taps again: the walk (a tap jumps), stall 1's pages, the Krahang game times out -> Game over -> หน้าแรก.
+  for (let i = 0; i < 30; i++) {
+    await tapG(90, 200);
+    await page.waitForTimeout(880);
+  }
+  await page.waitForTimeout(14000);
+  await shot(page, 'scene2_gameover_again');
+  await tapG(90, 292);
   await page.waitForTimeout(1200);
-  check(await homeShown(), `Game over -> Home: back on scene 1's home page [${clock()}]`);
+  check(await homeShown(), `Game over -> หน้าแรก: back on scene 1's home page [${clock()}]`);
   await shot(page, 'home_again');
   const again = await startGame('pumpkin');
   check(again?.id === 'pumpkin' && (await drawn('#game canvas')) > 0, 'a second game starts from home');
@@ -208,6 +220,8 @@ if (PROD) {
     await page.waitForTimeout(300);
   }
   check((await s3()).welcome === 'done', `welcome: ${pages} pages, Jayimpacts walks out`);
+  await page.waitForTimeout(400);
+  await shot(page, 'scene3_missions_hint');
 
   // AUTO tour: every place. The thank-you card opens after the seventh.
   await page.waitForTimeout(500);
@@ -321,10 +335,10 @@ if (PROD) {
     await shot(page, `scene3_talk_${key}`);
     for (let i = 0; i < 20 && (await s3()).dlg; i++) await tapG(30, 260);
     st = await s3();
-    console.log(`     talked to ${key}: vouchers ${st.vouchers} [${clock()}]`);
+    console.log(`     talked to ${key}: ${st.talked.length}/${targets.length} [${clock()}]`);
   }
   st = await s3();
-  check(st.talked.length === targets.length && st.vouchers === targets.length, `talked with all ${targets.length} (${walked} walked to by tapping them, ${placed} placed next to them): ${st.vouchers} vouchers`);
+  check(st.talked.length === targets.length && st.vouchers === 1, `talked with all ${targets.length} (${walked} walked to by tapping them, ${placed} placed next to them): ${st.vouchers} special-prize coupon`);
   check(st.prize, 'the special prize for talking with everyone');
   await page.waitForTimeout(1500);
   await shot(page, 'scene3_prize');

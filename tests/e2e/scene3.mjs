@@ -1,7 +1,8 @@
 // Scene 3 in a real browser (needs `npm run dev`). Taps like a player:
 //   - three phone sizes: whole-number scaling, 9:16, the canvas fits the window
 //   - the opening welcome: tap skips the walk-in, six pages, tap ends the walk-out
-//   - talk with TALK at the lane stall row, voucher +1; Jayimpacts' IG button
+//   - after the welcome, the ภารกิจ callout, then the zoom callout
+//   - talk with TALK at the lane stall row (counts once); Jayimpacts' and Nemo's IG buttons
 //   - the AUTO tour reaches its first stops; the MAP view; zoom buttons
 //   - Thai text never overflows the dialogue box
 //   - screenshots at 390 x 844, day and night: first screen, lane, band corner,
@@ -51,6 +52,9 @@ const state = (page) =>
       lines: hud.dialogue.open ? hud.dialogue.boxes[hud.dialogue.i].lines : [],
       btn: !!hud.dialogue.btn,
       vouchers: s.world.progress.vouchers,
+      talked: s.world.progress.talked.size,
+      missionsHint: hud.missionsHintTexts[0].visible,
+      zoomHint: hud.hintTexts[0].visible,
       goals: [...s.world.progress.goals],
       player: { ...s.world.player },
       auto: !!s.world.auto,
@@ -102,8 +106,16 @@ for (const size of [
   await tapDesign(page, 90, 160);
   s = await state(page);
   ok(s.welcome === 'done', 'tap during the walk-out ends it');
+  await page.waitForTimeout(300);
+  s = await state(page);
+  ok(s.missionsHint && !s.zoomHint, 'after the welcome: the ภารกิจ callout first');
+  await tapDesign(page, 67, 309); // ภารกิจ
+  await tapDesign(page, 90, 160); // close the checklist
+  await page.waitForTimeout(300);
+  s = await state(page);
+  ok(!s.missionsHint && s.zoomHint, 'after the checklist: the zoom callout');
 
-  // TALK with the lane stall row: voucher +1
+  // TALK with the lane stall row: counts once (no coupon per talk)
   await page.evaluate(async () => {
     const { STALL_ROW } = await import('/src/scene3/logic/npcs.js');
     const t = STALL_ROW.touch[0];
@@ -115,8 +127,8 @@ for (const size of [
   ok(s.dlg, 'TALK opens the stall row');
   while ((await state(page)).dlg) await tapDesign(page, 90, 260);
   s = await state(page);
-  ok(s.vouchers === 1, `one voucher after the first talk (${s.vouchers})`);
-  ok(s.progress?.vouchers === 1, 'progress published to LannaphaGame.progress.scene3');
+  ok(s.talked === 1 && s.vouchers === 0, `the first talk counts, no coupon yet (${s.talked} talked, ${s.vouchers} coupons)`);
+  ok(s.progress?.talked?.length === 1, 'progress published to LannaphaGame.progress.scene3');
 
   // Jayimpacts at the Rotary stall: IG button on his last page
   await page.evaluate(() => {
@@ -128,6 +140,27 @@ for (const size of [
   for (let i = 0; i < 10 && !(await state(page)).btn && (await state(page)).dlg; i++) await tapDesign(page, 90, 260);
   ok((await state(page)).btn, 'Jayimpacts has the เปิด IG button on his last page');
   await page.screenshot({ path: `${OUT}/talk_jayimpacts_day.png` });
+  while ((await state(page)).dlg) await tapDesign(page, 30, 260);
+
+  // Nemo: the game keeps improving, feedback by DM; his last page opens the event's IG.
+  await page.evaluate(() => {
+    window.__opened = [];
+    const click = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () {
+      if (this.target !== '_blank') return click.call(this);
+      window.__opened.push(this.href);
+    };
+    const n = window.__scene3.world.npc('nemo');
+    window.__scene3.teleport(n.x, n.y + 12);
+  });
+  await page.waitForTimeout(300);
+  await tapDesign(page, 111, 309);
+  for (let i = 0; i < 10 && !(await state(page)).btn && (await state(page)).dlg; i++) await tapDesign(page, 90, 260);
+  const nemoText = (await state(page)).lines.join('');
+  ok((await state(page)).btn && nemoText.includes('Feedback'), `Nemo: feedback by DM, with an IG button (${nemoText})`);
+  const btnRect = await page.evaluate(() => window.__scene3.game.scene.getScene('S3Hud').dialogue.btnRect ?? null);
+  if (btnRect) await tapDesign(page, btnRect[0] + btnRect[2] / 2, btnRect[1] + btnRect[3] / 2);
+  ok((await page.evaluate(() => window.__opened)).includes('https://www.instagram.com/laanapha/'), "Nemo's button opens IG laanapha");
   while ((await state(page)).dlg) await tapDesign(page, 30, 260);
 
   // AUTO tour from the start reaches the lane

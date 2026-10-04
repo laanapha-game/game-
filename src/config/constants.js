@@ -29,22 +29,36 @@ export const CSS = {
 };
 
 // ---- Section 5 constants ----
-// Chase clock (owner): the ghost chases CHASE_SPEED (3x) faster all chase and
-// FINAL_CHASE_SPEED (5x) in the final sprint, so the clock is 6:00 of chase time
-// (about 2:00 real at 3x). Never pauses.
+// Chase clock (owner): the ghost chases CHASE_SPEED (3x) faster all chase, so the clock is
+// 6:00 of chase time (about 2:00 real). Never pauses; in the final sprint the dash
+// (DASH_CATCH_S) takes over.
 export const CHASE_TIME_S = 360;
 export const CHASE_SPEED = 3;
 export const TAP_GAME_TIME_S = 10;
 export const TAP_GAME_GAIN = 0.06;
 export const TAP_GAME_DECAY_PER_S = 0.1;
-export const SPRINT_GAIN = 0.03; // ASSUMPTION, tune: share of the sprint distance per tap
+export const SPRINT_GAIN = 0.04; // share of the sprint distance per tap: 25 taps, about 5 a second in the dash (was 0.03)
+// Final sprint (owner): after stall 5 the red-eyed ghost dashes and reaches the player in
+// DASH_CATCH_S real seconds (taps do not push it back), after a DASH_WARN_MS warning.
+export const DASH_CATCH_S = 5;
+export const DASH_WARN_MS = 1500;
+export const DASH_SHAKE = 0.008;
+// Walks before stalls 1 and 2 (owner): tap to jump.
+export const JUMP_PX = 18;
+export const JUMP_MS = 440;
+// Retry (owner): from the checkpoint before the stall that was lost. Mid-chase, the chaser
+// starts at least this much chase progress behind the bird, so a retry is never lost at once.
+export const RETRY_CHASER_GAP = 0.1;
+// Game over buttons (design y): ลองใหม่, ซื้อบัตร, and the small หน้าแรก link.
+export const GAMEOVER_RETRY_Y = 222;
+export const GAMEOVER_TICKET_Y = 258;
+export const GAMEOVER_HOME_Y = 292;
 export const SPRINT_DECAY_PER_S = 0; // owner: escape progress no longer drains over time
 // Chase runs to stalls 3-5 are tap-controlled like the final sprint (owner request):
 // each tap runs CHASE_TAP_PX further, the world catches up at CHASE_RUN_PX_S, and
 // progress never goes back. ASSUMPTION, tune.
 export const CHASE_TAP_PX = 12;
 export const CHASE_RUN_PX_S = 120;
-export const FINAL_CHASE_SPEED = 5; // final sprint (owner): red-eyed chaser comes 5x faster, the chase clock runs 5x
 export const RUN_SEGMENT_S = 10;
 export const JAR_REVEAL_MS = 1200;
 export const JAR_SWAPS = 6; // ASSUMPTION

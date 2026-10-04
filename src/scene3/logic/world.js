@@ -97,7 +97,7 @@ export class World {
     return near[0] ?? null;
   }
 
-  /** Open a talk. Returns { key, speaker, pages, ig } or null. Walking characters pause. */
+  /** Open a talk. Returns { key, speaker, pages, link } or null. Walking characters pause. */
   startTalk(key) {
     if (this.welcome.locked || this.talking) return null;
     const n = this.npc(key);
@@ -105,7 +105,7 @@ export class World {
     this.stopAuto();
     const def = key === STALL_ROW.key ? STALL_ROW : n ? n.def : GHOSTS.find((g) => g.key === key);
     if (!def) return null;
-    this.talking = { key, speaker: def.name, pages: def.pages, ig: !!def.ig, costume: def.costume };
+    this.talking = { key, speaker: def.name, pages: def.pages, link: def.link ?? null, costume: def.costume };
     if (n) this.faceEachOther(n);
     return this.talking;
   }

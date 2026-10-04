@@ -70,6 +70,14 @@ export const NAMES = {
 export const UI_TEXT = {
   tap: 'TAP!', // TODO copy
   gameOver: 'GAME OVER', // TODO copy
-  home: 'HOME', // TODO copy for the single Game over button
+  // Game over (owner): retry from before the stall that was lost, or buy a ticket; home stays as a small link.
+  retry: 'ลองใหม่',
+  buyTicket: 'ซื้อบัตร',
+  home: 'หน้าแรก',
+  // Before the chase (owner): how to run.
+  tapToRun: 'เคาะหน้าจอเพื่อวิ่งหนี!',
+  // Final sprint (owner): the ghost dashes and reaches the player in DASH_CATCH_S.
+  dashWarn: 'มันพุ่งมาแล้ว!!',
+  dashTap: 'เคาะรัวๆ หนีเข้าแสง!',
   fontPlaceholder: 'PLACEHOLDER FONT', // dev-only badge, remove when the Thai pixel font lands
 };

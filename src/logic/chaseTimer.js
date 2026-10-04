@@ -1,8 +1,8 @@
 // Chase timer (spec 4): starts when the chaser appears and NEVER pauses.
 // Uses wall-clock time, so it also keeps running while dialogue, choices,
 // the letter, or even a backgrounded tab would otherwise freeze the game loop.
-// setRate(r): from now on time runs r x as fast (the chase runs at 3x, the final
-// sprint at 5x). Time already spent is kept.
+// setRate(r): from now on time runs r x as fast (the chase runs at 3x; 0 stops it, as in
+// the final sprint's dash). Time already spent is kept.
 export class ChaseTimer {
   constructor(totalS, clock = () => performance.now()) {
     this.totalMs = totalS * 1000;
@@ -14,6 +14,12 @@ export class ChaseTimer {
 
   start() {
     if (this.startedAt === null) this.startedAt = this.clock();
+  }
+
+  /** Start as if `spentMs` of chase time had already gone (a retry from a checkpoint). */
+  startAt(spentMs) {
+    this.start();
+    this.spentMs = spentMs;
   }
 
   setRate(r) {

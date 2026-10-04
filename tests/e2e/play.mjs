@@ -117,15 +117,16 @@ export async function playToWin(page, vp, shot = async () => {}, report = {}, { 
   }
   await tapUntil(page, vp, (s) => s === 'S7', { every: 200, timeout: 30000 });
   await page.waitForFunction(() => !!window.__scene2.tickRun, null, { timeout: 5000 }).catch(() => {});
-  report.sprint = await page.evaluate(() => ({ eyes: window.__scene2.chaser.texture.key, rate: window.__scene2.timer.rate }));
+  report.sprint = await page.evaluate(() => ({ eyes: window.__scene2.chaser.texture.key, rate: window.__scene2.timer.rate, dash: !!window.__scene2.dash }));
+  // The dash reaches the bird in 5 s (owner): tap fast, with one short idle check.
   for (let i = 0; i < 8; i++) {
     await tapCenter(page, vp);
-    await page.waitForTimeout(60);
+    await page.waitForTimeout(30);
   }
-  await page.waitForTimeout(300); // let the run catch up with the taps
-  report.sprintIdle = await idle(1200);
+  await page.waitForFunction(() => !window.__scene2.running, null, { timeout: 3000 }).catch(() => {}); // the run caught up with the taps
+  report.sprintIdle = await idle(400);
   await shot('s7');
-  await tapUntil(page, vp, (s) => s === 'WIN' || s === 'SCENE3' || s === 'GAME_OVER_SCREEN', { every: 40, timeout: 60000 });
+  await tapUntil(page, vp, (s) => s === 'WIN' || s === 'SCENE3' || s === 'GAME_OVER_SCREEN', { every: 5, timeout: 60000 });
   await page.waitForTimeout(1050); // ran into the light, white silhouette up, whiteout starting
   await shot('win_silhouette');
   await page.waitForTimeout(500);
