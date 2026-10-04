@@ -18,12 +18,12 @@ def cells(path, n, w=32, h=36):
 
 
 def main():
-    jay_s = cells(A + 'jayimpacts_side.png', 8)
-    jay_f = cells(A + 'jayimpacts_front.png', 5)
+    jay_s = cells(A + 'jayimpacts_side.png', 8, 40, 56)
+    jay_f = cells(A + 'jayimpacts_front.png', 5, 40, 56)
     nu_s = cells(A + 'nuannapa_side.png', 9)
     nu_f = cells(A + 'nuannapa_front.png', 3)
     por = cells('src/assets/art/portraits/jayimpacts_portrait.png', 2, 64, 64)
-    W, H = 1500, 1240
+    W, H = 1500, 1600
     sheet = Image.new('RGB', (W, H), (32, 30, 36))
     d = ImageDraw.Draw(sheet)
     f, fs = ImageFont.truetype(FONT, 20), ImageFont.truetype(FONT, 16)
@@ -44,22 +44,25 @@ def main():
     d.text((20, y), 'AFTER, portrait 64x64 downsampled from the original avatar (neutral, talk), shown 5x', fill=Y, font=fs)
     paste(por[0], 20, y + 26, 5, (60, 70, 80, 255))
     paste(por[1], 350, y + 26, 5, (60, 70, 80, 255))
-    d.text((700, y), 'portrait at 1x and 2x', fill=Y, font=fs)
-    paste(por[0], 700, y + 26, 1, (60, 70, 80, 255))
-    paste(por[0], 780, y + 26, 2, (60, 70, 80, 255))
+    d.text((1000, y), 'portrait at 1x and 2x', fill=Y, font=fs)
+    paste(por[0], 1000, y + 26, 1, (60, 70, 80, 255))
+    paste(por[0], 1080, y + 26, 2, (60, 70, 80, 255))
     y2 = y + 26 + 320 + 20
-    d.text((20, y2), 'AFTER, walking sprite 32x36 with the head taken from the original, 4x. side: idle0 idle1 walk0-3 wave0 wave1 | front: idle0 idle1 blink wave0 wave1', fill=Y, font=fs)
+    d.text((20, y2), 'AFTER, walking sprite 40x56: the original art above the belt, drawn walking legs, 4x. side: idle0 idle1 walk0-3 wave0 wave1 | front: idle0 idle1 blink wave0 wave1', fill=Y, font=fs)
     for i, fr in enumerate(jay_s):
-        paste(fr, 20 + i * 134, y2 + 26, 4, (111, 176, 74, 255))
+        paste(fr, 20 + i * 166, y2 + 26, 4, (111, 176, 74, 255))
     for i, fr in enumerate(jay_f):
-        paste(fr, 20 + i * 134, y2 + 26 + 150, 4, (111, 176, 74, 255))
-    y3 = y2 + 26 + 300 + 14
-    d.text((20, y3), 'Next to nuannapa, 3x, day lawn and night ground', fill=Y, font=fs)
+        paste(fr, 20 + i * 166, y2 + 26 + 232, 4, (111, 176, 74, 255))
+    y3 = y2 + 26 + 464 + 14
+    d.text((20, y3), 'Next to nuannapa (32x36), 3x, feet on the same line, day lawn and night ground', fill=Y, font=fs)
     sel = [nu_s[0], jay_s[0], nu_s[2], jay_s[2], nu_f[0], jay_f[0], jay_f[3], jay_s[6]]
-    for i, fr in enumerate(sel):
-        paste(fr, 20 + i * 100, y3 + 26, 3, (140, 203, 90, 255))
-        paste(fr, 20 + i * 100, y3 + 26 + 112, 3, (74, 26, 20, 255))
-    sheet.crop((0, 0, W, y3 + 26 + 224 + 12)).save('docs/scene3/jayimpacts_contact_sheet.png')
+    for row, bg in ((0, (140, 203, 90, 255)), (1, (74, 26, 20, 255))):
+        top = y3 + 26 + row * 176
+        for i, fr in enumerate(sel):
+            cell = Image.new('RGBA', (40, 56))
+            cell.alpha_composite(fr, ((40 - fr.width) // 2, 56 - fr.height))
+            paste(cell, 20 + i * 126, top, 3, bg)
+    sheet.crop((0, 0, W, y3 + 26 + 352 + 12)).save('docs/scene3/jayimpacts_contact_sheet.png')
 
 
 if __name__ == '__main__':
