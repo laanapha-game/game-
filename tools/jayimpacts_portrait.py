@@ -1,4 +1,4 @@
-"""Jayimpacts dialogue portrait, Stardew Valley inspired (owner references)
+"""Jayimpacts dialogue portrait, cute anime chibi, Stardew Valley inspired (owner references)
 -> src/assets/art/portraits/jayimpacts_portrait.png (64 x 64 design px, 2 frames:
 neutral, talk) at RENDER_SCALE x, nearest neighbour.
 
@@ -113,13 +113,13 @@ def checker(x, y):
 # ---------------------------------------------------------------- shapes
 HX, HY = 32, 27          # face centre
 def face_half_width(y):
-    """Face half width per row: wide cheeks, tapering to a soft chin at row 44."""
-    if y < 12 or y > 44:
+    """Face half width per row: round chibi face, full cheeks, a small round chin at row 45."""
+    if y < 12 or y > 45:
         return -1
-    if y <= 30:
-        return 12.5
-    t = (y - 30) / 14
-    return 12.5 * math.sqrt(max(0.0, 1 - t ** 2.2)) + 0.5
+    if y <= 32:
+        return 13.5
+    t = (y - 32) / 13.5
+    return 13.5 * math.sqrt(max(0.0, 1 - t ** 2)) + 0.5
 
 
 def in_face(x, y):
@@ -134,7 +134,7 @@ def in_ear(x, y):
 
 
 def in_neck(x, y):
-    return 25 <= x <= 38 and 38 <= y <= 50
+    return 28 <= x <= 35 and 40 <= y <= 50
 
 
 def in_shoulders(x, y):
@@ -151,13 +151,13 @@ def in_shoulders(x, y):
 # lit, the seams between clumps are dark: that gives the Stardew strand look.
 CLUMPS = [
     # crown spikes
-    ((24, 12), (15, 5), 4.0), ((28, 10), (22, 2), 4.0), ((32, 10), (30, 1), 4.0), ((36, 10), (39, 2), 4.0),
-    ((40, 12), (47, 4), 4.0), ((43, 15), (53, 10), 4.0), ((21, 15), (10, 11), 4.0),
+    ((24, 12), (17, 6), 4.6), ((28, 11), (24, 4), 4.6), ((32, 11), (32, 3), 4.6), ((36, 11), (40, 4), 4.6),
+    ((40, 12), (46, 6), 4.6), ((43, 15), (51, 11), 4.4), ((21, 15), (12, 12), 4.4),
     # sides and sideburns
-    ((20, 18), (11, 21), 3.6), ((44, 18), (53, 19), 3.6), ((19, 22), (16, 31), 3.0), ((45, 22), (48, 31), 3.0),
-    # fringe, swept to the viewer's right
-    ((22, 14), (21, 25), 3.0), ((25, 13), (27, 23), 3.2), ((30, 13), (32, 22), 3.2),
-    ((34, 13), (37, 24), 3.2), ((38, 14), (41, 22), 3.0), ((41, 15), (44, 25), 2.8),
+    ((20, 18), (12, 22), 4.0), ((44, 18), (52, 21), 4.0), ((19, 22), (17, 31), 3.4), ((45, 22), (47, 31), 3.4),
+    # fringe, soft clumps swept to the viewer's right, ending above the brows
+    ((22, 14), (21, 23), 3.4), ((25, 13), (27, 22), 3.6), ((30, 13), (32, 21), 3.6),
+    ((34, 13), (37, 22), 3.6), ((38, 14), (41, 21), 3.4), ((41, 15), (44, 23), 3.0),
 ]
 
 
@@ -174,7 +174,7 @@ def hair_hit(x, y):
     best = None
     for i, (root, tip, w) in enumerate(CLUMPS):
         d, t = seg(px, py, root, tip)
-        width = w * (1 - t) + 0.6 * t
+        width = w * (1 - t) + 1.3 * t                    # rounded tips
         if d <= width:
             n = d / width
             if best is None or n < best[1]:
@@ -212,18 +212,19 @@ def hair_colour(x, y):
 
 def skin_colour(x, y):
     dx = x + 0.5 - HX
-    v = 0.56 - dx * 0.014 - max(0, y - 36) * 0.03
-    if y <= hairline(x) + 2:
-        v -= 0.25                                         # shadow under the fringe
-    if y >= 38 and dx > -4:
-        v -= 0.12                                         # jaw shade
-    if abs(dx) > face_half_width(y) - 1.5:
-        v -= 0.18                                         # rounded edge
+    # anime flat shading: one light tone, a soft shadow under the fringe and at the far cheek
+    v = 0.7
+    if y <= hairline(x) + 1:
+        v -= 0.3                                          # shadow under the fringe
+    if dx > face_half_width(y) - 3 or (y >= 42):
+        v -= 0.22                                         # far cheek and under the chin
+    if dx < -6 and 30 <= y <= 36:
+        v += 0.12                                         # lit cheek
     return ramp(v, ['k1', 'k2', 'k3', 'k4', 'k4', 'k5'])
 
 
 def neck_colour(x, y):
-    v = 0.35 - (x - 25) * 0.015 - (0.3 if y < 44 else 0)
+    v = 0.5 - (0.3 if y < 47 else 0)
     return ramp(v, ['k1', 'k2', 'k3', 'k4'])
 
 
@@ -246,18 +247,24 @@ def in_lapel_edge(x, y):
 
 
 # ---------------------------------------------------------------- features
-EYE_L = [  # viewer's left eye, 7 x 3: heavy upper lid, sclera, brown iris, pupil, catchlight
-    '.aaaaaa',
-    'aswipea',
-    '..sppe.',
+EYE_L = [  # big anime eye, 9 x 9: thick upper lash, sparkle in a dark iris, light at the bottom
+    '...aaaa..',
+    '.aaaaaaa.',
+    'aswwdddsa',
+    '.swwddis.',
+    '.sdddiis.',
+    '.sdiiiws.',
+    '.silllls.',
+    '..sllls..',
+    '...kkk...',
 ]
-EYE_R = [r[::-1] for r in EYE_L]
-EYE_LEG = {'a': 'e0', 's': 'es', 'w': 'ew', 'i': 'ew', 'p': 'e2', 'e': 'e0'}
-BROW_L = ['aaaa...', '.aaaaaa']
-BROW_R = [r[::-1] for r in BROW_L]
+EYE_R = EYE_L  # same highlight side on both eyes (anime convention); lash flicks added per side
+EYE_LEG = {'a': 'e0', 's': 'es', 'w': 'ew', 'd': 'e0', 'i': 'e1', 'l': 'e2', 'k': 'k1'}
+BROW_L = ['.aaaa', 'a....']
+BROW_R = ['aaaa.', '....a']
 MOUTH = {
-    'neutral': (['k....k', '.mmmm.'], (29, 39)),
-    'talk': (['.mmmm.', 'mrrrrm', '.mmmm.'], (29, 39)),
+    'neutral': (['k...k', '.mmm.'], (30, 40)),
+    'talk': (['.mmm.', 'mrrrm', '.mrm.'], (30, 40)),
 }
 
 
@@ -319,8 +326,8 @@ def portrait(frame):
     cv.fill(lambda x, y: in_shoulders(x, y) and in_lapel_edge(x, y), lambda x, y: 'j0', 'jacket')
     cv.fill(in_neck, neck_colour, 'skin')
     # chain: a soft U across the collarbone
-    for x in range(26, 38):
-        y = round(48 + 3.2 * (1 - ((x - 31.5) / 6) ** 2))
+    for x in range(27, 37):
+        y = round(48 + 2.6 * (1 - ((x - 31.5) / 5) ** 2))
         cv.set(x, y, 'c2' if x % 3 == 0 else 'c1')
     cv.fill(in_ear, lambda x, y: 'k3' if x < 32 else 'k2', 'skin')
     cv.fill(in_face, skin_colour, 'skin')
@@ -328,18 +335,21 @@ def portrait(frame):
     halo(cv)
     cv.outline({'skin': 'k0', 'hair': 'h0', 'jacket': 'j0', 'wing': 'w0', 'halo': 'g0'})
     # inner lines: jaw under the chin onto the neck, ear detail
-    for x in range(26, 38):
-        y = 44
-        if cv.get(x, y + 1) in ('k1', 'k2', 'k3', 'k4'):
-            cv.set(x, y + 1, 'k1')
+    pass
     cv.set(18, 30, 'k1'); cv.set(18, 31, 'k1'); cv.set(45, 30, 'k1'); cv.set(45, 31, 'k1')
     # face
-    cv.stamp(21, 24, BROW_L, {'a': 'h0'})
-    cv.stamp(36, 24, BROW_R, {'a': 'h0'})
-    cv.stamp(21, 27, EYE_L, EYE_LEG)
-    cv.stamp(36, 27, EYE_R, EYE_LEG)
-    cv.set(33, 33, 'k1'); cv.set(33, 34, 'k1'); cv.set(32, 35, 'k2')   # nose
-    cv.set(23, 34, 'bl'); cv.set(24, 34, 'bl'); cv.set(40, 34, 'bl'); cv.set(41, 34, 'bl')
+    cv.stamp(21, 25, BROW_L, {'a': 'h1'})
+    cv.stamp(38, 25, BROW_R, {'a': 'h1'})
+    cv.stamp(20, 28, EYE_L, EYE_LEG)
+    cv.stamp(35, 28, EYE_R, EYE_LEG)
+    cv.set(19, 29, 'e0'); cv.set(18, 28, 'e0')                       # outer lash flicks
+    cv.set(44, 29, 'e0'); cv.set(45, 28, 'e0')
+    cv.set(32, 37, 'k1')                                              # tiny nose
+    for bx in (19, 40):                                               # rosy cheeks with blush lines
+        for i in range(5):
+            cv.set(bx + i, 38, 'bl')
+        for i in (1, 3):
+            cv.set(bx + i, 39, 'bl')
     rows, (mx, my) = MOUTH[frame]
     cv.stamp(mx, my, rows, {'m': 'm1', 'r': 'm2', 'k': 'k1'})
     return cv.image()
