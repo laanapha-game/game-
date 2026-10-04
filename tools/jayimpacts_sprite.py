@@ -6,9 +6,10 @@ Hand-placed pixel maps, one character per pixel (legend PAL below). Same cell an
 conventions as the bird costumes: 32 x 36 frames, feet on row 35, side view faces
 LEFT, sheets at RENDER_SCALE (3) x with nearest neighbour.
 
-Style (Stardew Valley inspired): a slim farmer-proportion figure about 18 px wide and
-33 px tall, soft coloured outlines per material (dark hair, warm brown around skin,
-charcoal around the jacket) instead of pure black, three tones per material, a small
+Style (Stardew Valley inspired, owner references): a compact chibi about 18 px wide and
+34 px tall with the head close to half his height and short legs, near-black tinted
+outlines per material (dark hair, dark brown around skin, charcoal around the jacket),
+three tones per material, textured hair with sheen strands, a small
 face (1 x 2 eyes with a white catchlight, brows, blush), hair with a sheen band.
 
 Look from the Drive art (sprite_jayimpacts_character / avatar): spiky black hair swept
@@ -41,22 +42,22 @@ ANIM = {
 
 PAL = {
     # hair
-    'a': '#1A1626', 'b': '#2C2638', 'c': '#4A4260',
+    'a': '#141020', 'b': '#2C2638', 'c': '#4A4260', 'C': '#6A6488',
     # skin: outline, base, light, shade; eyes, catchlight, mouth, blush
-    'k': '#8A4A34', 's': '#F2B98A', 'l': '#FCD7A8', 'd': '#D88C68',
+    'k': '#5C3024', 's': '#F2B98A', 'l': '#FCD7A8', 'd': '#D88C68',
     'e': '#1A1626', 'w': '#FFFFFF', 'm': '#B0604C', 'r': '#EE9A80',
     # houndstooth jacket: outline, light, mid, dark
-    'J': '#2E2A30', '1': '#C8C4C0', '2': '#8C8888', '3': '#5A5658',
+    'J': '#1E1B22', '1': '#C8C4C0', '2': '#8C8888', '3': '#5A5658',
     # black tee, belt, gold buckle
     't': '#2A2630', 'u': '#3E3A46', 'B': '#2A1E1A', 'g': '#E8C060',
     # cream trousers: outline, light, base, shade
-    'P': '#6E6250', '4': '#F4EEE0', '5': '#E0D4BC', '6': '#B8A88E',
+    'P': '#4E4434', '4': '#F4EEE0', '5': '#E0D4BC', '6': '#B8A88E',
     # shoes
     'x': '#20140F', 'y': '#4A3028',
     # wings: outline, white, lilac shade, yellow tips
-    'q': '#8A7E90', '7': '#FFFFFF', '8': '#E4E2F0', '9': '#FFE070', '0': '#F0B830',
+    'q': '#6A5E72', '7': '#FFFFFF', '8': '#E4E2F0', '9': '#FFE070', '0': '#F0B830',
     # halo
-    'Y': '#FFF27A', 'O': '#F0C030', 'h': '#9A6A10',
+    'Y': '#FFF27A', 'O': '#F0C030', 'h': '#7A4E0A',
 }
 
 
@@ -88,36 +89,35 @@ def stamp(g, rows, dx=0, dy=0, under=False, mirror=False):
 
 # ---------------------------------------------------------------- front
 HALO = {0: (11, 'hYYYYYYYYh'), 1: (10, 'hY........Yh'), 2: (11, 'hOOOOOOOOh')}
+# Head rows 6-19 (about 45% of his height, like the reference chibis), torso 20-28,
+# short legs 29-32, shoes 33-35. Halo floats at rows 2-4.
 F_HEAD = {
-    3: (9, '..a.aa..a.a...'),
-    4: (8, '.aabbaabbabbaba.'),
-    5: (7, '.abbbbccbbbbbcbba.'),
-    6: (7, 'abbbcccbbbbbccbbba'),
-    7: (7, 'abbbbbbbbbbbbbbbba'),
-    8: (7, 'abbbbbbbbbbsbbbbba'),
-    9: (7, 'abbbbbbsllllssbbba'),
-    10: (7, 'abbsaaallllaaasbba'),
-    11: (7, 'ksbsssslllllsssbsk'),
-    12: (7, 'ksbswesslsssewsbsk'),
-    13: (7, 'kssssesslsssessdsk'),
-    14: (8, 'kdssssssssssssdk'),
-    15: (8, 'kdsrsssmmsssrsdk'),
-    16: (9, 'kdssssssssssdk'),
+    6: (9, '..a.aa..a.a...'),
+    7: (8, '.aabbaabbabbaba.'),
+    8: (7, '.abbbbccbbbbbcbba.'),
+    9: (7, 'abbbcCcbbbbbcCbbba'),
+    10: (7, 'abbcbbbbbcbbbbbcba'),
+    11: (7, 'abbbbbbbbbbsbbbbba'),
+    12: (7, 'abbbbbbsllllssbbba'),
+    13: (7, 'abbsaaallllaaasbba'),
+    14: (7, 'ksbsssslllllsssbsk'),
+    15: (7, 'ksbswesslsssewsbsk'),
+    16: (7, 'kssssesslsssessdsk'),
+    17: (8, 'kdssssssssssssdk'),
+    18: (8, 'kdsrsssmmsssrsdk'),
+    19: (9, 'kdssssssssssdk'),
 }
 F_BODY = {
-    17: (10, 'JJkkdssdkkJJ'),
-    18: (7, 'J1212J1tuut1J2121J'),
-    19: (7, 'J21J12JtuutJ21J12J'),
-    20: (7, 'J12J21JtuutJ12J21J'),
-    21: (7, 'J21J12JttutJ21J12J'),
-    22: (7, 'J12J21JtuutJ12J21J'),
-    23: (7, 'J21J12JtuutJ21J12J'),
-    24: (7, 'klsJ212tttt212Jslk'),
-    25: (7, 'kssJBBBBggBBBBJssk'),
-    26: (7, '.kkP4455555544Pkk.'),
-    27: (10, 'P4455555446P'),
-    28: (10, 'P4456PP4456P'),
-    29: (10, 'P456P..P456P'),
+    20: (10, 'JJkkdssdkkJJ'),
+    21: (7, 'J1212J1tuut1J2121J'),
+    22: (7, 'J21J12JtuutJ21J12J'),
+    23: (7, 'J12J21JtuutJ12J21J'),
+    24: (7, 'J21J12JttutJ21J12J'),
+    25: (7, 'J12J21JtuutJ12J21J'),
+    26: (7, 'klsJ212tttt212Jslk'),
+    27: (7, 'kssJBBBBggBBBBJssk'),
+    28: (7, '.kkP4455555544Pkk.'),
+    29: (10, 'P4456PP4456P'),
     30: (10, 'P456P..P456P'),
     31: (10, 'P456P..P456P'),
     32: (10, 'P566P..P566P'),
@@ -137,69 +137,67 @@ def front(frame):
     hb = 1 if frame == 'idle1' else 0
     stamp(g, F_BODY)
     stamp(g, F_HEAD, dy=hb)
-    stamp(g, HALO, dy=hb)
+    stamp(g, HALO, dy=2 + hb)
     if frame == 'blink':
-        put(g, 12, 11, 'ss')
-        put(g, 12, 19, 'ss')
-        put(g, 13, 11, 'aa')
-        put(g, 13, 19, 'aa')
+        put(g, 15, 11, 'ss')
+        put(g, 15, 19, 'ss')
+        put(g, 16, 11, 'aa')
+        put(g, 16, 19, 'aa')
     if frame.startswith('wave'):
         w = F_WAVE[int(frame[-1])]
         # the raised arm replaces the hanging one: jacket edge and hand area cleared
-        for y in range(18, 27):
+        for y in range(21, 29):
             for x in (22, 23, 24):
                 g[y][x] = '.'
-        for y in range(18, 25):
+        for y in range(21, 28):
             g[y][21] = 'J'
-        put(g, 25, 21, 'J')
-        put(g, 26, 21, 'P')
-        stamp(g, w)
-    stamp(g, WING, under=True)
-    stamp(g, WING, under=True, mirror=True)
+        put(g, 28, 21, 'P')
+        stamp(g, w, dy=3)
+    stamp(g, WING, dy=3, under=True)
+    stamp(g, WING, dy=3, under=True, mirror=True)
     return g
 
 
 # ---------------------------------------------------------------- side (faces left)
 S_HALO = {0: (10, 'hYYYYYYh'), 1: (9, 'hY......Yh'), 2: (10, 'hOOOOOOh')}
 S_HEAD = {
-    3: (10, '.a.aa..a..'),
-    4: (9, '.abbaabbaba.'),
-    5: (8, '.abbbccbbbbcba'),
-    6: (7, 'abbbcccbbbbbbbba'),
-    7: (7, 'abbbbbbbbbbbbbba'),
-    8: (6, 'aabbbbbbbbbbbbbba'),
-    9: (6, '.absllls' + 'bbbbbbbba'),
-    10: (6, '.kaaasls' + 'bbbbbbbba'),
-    11: (6, '.kswesssbksdkbbba'),
-    12: (5, 'kssssesssbksdkbbba'),
-    13: (6, 'kssrsssssdbbbbbba'),
-    14: (7, 'kssssssssdbbbba'),
-    15: (7, 'kmsssssssdkbba'),
-    16: (8, 'kdsssssddk'),
+    6: (10, '.a.aa..a..'),
+    7: (9, '.abbaabbaba.'),
+    8: (8, '.abbbccbbbbcba'),
+    9: (7, 'abbcCcbbbbcCbbba'),
+    10: (7, 'abbbbbcbbbbbbcba'),
+    11: (6, 'aabbbbbbbbbbbbbba'),
+    12: (6, '.absllls' + 'bbbbcbbba'),
+    13: (6, '.kaaasls' + 'bbbbbbbba'),
+    14: (6, '.kswesssbksdkbbba'),
+    15: (5, 'kssssesssbksdkbbba'),
+    16: (6, 'kssrsssssdbbbbbba'),
+    17: (7, 'kssssssssdbbbba'),
+    18: (7, 'kmsssssssdkbba'),
+    19: (8, 'kdsssssddk'),
 }
 S_TORSO = {
-    17: (10, 'JJkdsdkJJ'),
-    18: (9, 'JtuJ1212121J'),
-    19: (9, 'JtuJ1212121J'),
-    20: (9, 'JtuJ2121212J'),
+    20: (10, 'JJkdsdkJJ'),
     21: (9, 'JtuJ1212121J'),
     22: (9, 'JtuJ2121212J'),
-    23: (9, 'JttJ1212121J'),
-    24: (9, 'J1212121212J'),
-    25: (9, 'JgBBBBBBBBBJ'),
-    26: (9, '.P44555556P.'),
+    23: (9, 'JtuJ1212121J'),
+    24: (9, 'JtuJ2121212J'),
+    25: (9, 'JttJ1212121J'),
+    26: (9, 'J1212121212J'),
+    27: (9, 'JgBBBBBBBBBJ'),
+    28: (9, '.P44555556P.'),
 }
 WING_SIDE = {15: (20, 'qq'), 16: (19, 'q77q'), 17: (19, 'q7787q'), 18: (20, 'q78897q'), 19: (20, 'q7890q'), 20: (21, 'q09q'), 21: (22, 'qq')}
 
 
 def side_arm(g, dy, swing):
-    """Hanging arm on the near side: sleeve rows 18-24, hand 25-26. swing: -1 forward, 0, +1 back."""
-    for i, y in enumerate(range(18, 25)):
+    """Hanging arm on the near side: sleeve rows 21-26, hand 27-28. swing: -1 forward, 0, +1 back."""
+    for i, y in enumerate(range(21, 27)):
         off = round(swing * i / 3)
         put(g, y + dy, 13 + off, 'J' + ('12' if (y + i) % 2 else '21') + '1J'[:2])
-    off = round(swing * 7 / 3)
-    put(g, 25 + dy, 13 + off, 'klsdk')
-    put(g, 26 + dy, 13 + off, '.kkk.')
+    off = round(swing * 6 / 3)
+    put(g, 27 + dy, 13 + off, 'klsdk')
+    put(g, 28 + dy, 13 + off, '.kkk.')
 
 
 def side_leg(g, top, xt, xb, lift, back):
@@ -236,19 +234,19 @@ def side(frame):
     p = SIDE_POSE[frame]
     up = p['bob']
     hb = p.get('hb', 0)
-    top = 27 - up
+    top = 29 - up
     bt, bb, bl = p['back']
     ft, fb, fl = p['front']
     side_leg(g, top, bt, bb, bl, back=True)
     side_leg(g, top, ft, fb, fl, back=False)
     stamp(g, S_TORSO, dy=-up)
     stamp(g, S_HEAD, dy=-up + hb)
-    stamp(g, S_HALO, dy=-up + hb)
+    stamp(g, S_HALO, dy=2 - up + hb)
     if p['arm'] is not None:
         side_arm(g, -up, p['arm'])
     else:
-        stamp(g, S_WAVE[int(frame[-1])])
-    stamp(g, WING_SIDE, dy=-up, under=True)
+        stamp(g, S_WAVE[int(frame[-1])], dy=3)
+    stamp(g, WING_SIDE, dy=3 - up, under=True)
     return g
 
 
