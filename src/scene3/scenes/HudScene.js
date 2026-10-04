@@ -6,7 +6,7 @@
 import Phaser from 'phaser';
 import { label, wrap } from '../ui/text.js';
 import { Dialogue } from '../ui/Dialogue.js';
-import { GOALS, LABELS, chipText, CHIP_DONE, WELCOME_PAGES, WELCOME_SPEAKER, AFTER_WELCOME_BANNER, ZOOM_HINT, VOUCHER_BANNER, PRIZE_BANNER, PRIZE_CHECK } from '../data/script.js';
+import { GOALS, LABELS, chipText, CHIP_DONE, WELCOME_PAGES, WELCOME_SPEAKER, AFTER_WELCOME_BANNER, ZOOM_HINT, VOUCHER_BANNER, PRIZE_BANNER, PRIZE_CHECK, THANKS } from '../data/script.js';
 import { ZOOM_LEVELS, MIN_TOUCH_CSS_PX, PLATE_RANGE, URLS, STALL_BOOKING, TALK_RANGE, ZOOM_HINT_MS } from '../config.js';
 import { ZONES, dist, inZone } from '../logic/layout.js';
 import { STALL_ROW, GHOSTS } from '../logic/npcs.js';
@@ -112,6 +112,7 @@ export class HudScene extends Phaser.Scene {
     }
     w.stopAuto();
     if (this.dialogue.open) return this.dialogue.tap(x, y, (r, a, b) => this.hit(r, a, b));
+    if (this.overlay === 'thanks') return this.tapThanks(x, y);
     if (this.overlay) return this.closeOverlay();
     if (w.welcome.locked) {
       const r = w.welcome.tap();
@@ -281,6 +282,10 @@ export class HudScene extends Phaser.Scene {
         audio.sfx('angel_appear');
         this.showBanner([VOUCHER_BANNER]);
       }
+      if (e.type === 'allGoals') {
+        this.world.stopAuto();
+        this.time.delayedCall(1200, () => this.openThanks()); // after a moment on the sixth place's banner
+      }
       if (e.type === 'prize') this.showBanner([PRIZE_BANNER]);
       if (e.type === 'exitEarly') this.showBanner([e.text]);
       if (e.type === 'exit') {
@@ -340,6 +345,63 @@ export class HudScene extends Phaser.Scene {
     this.overlayTexts.push(label(this, W / 2, 0, LABELS.map, { depth: 301, align: 'center', color: '#FFFF4F' }));
   }
 
+  /** All six places explored: thank you, book, IG, Google Map; then end the game or keep talking. */
+  openThanks() {
+    const w = this.world;
+    if (w.ended) return;
+    if (this.dialogue.open) return this.time.delayedCall(500, () => this.openThanks());
+    this.closeOverlay();
+    this.banners = []; // the panel replaces any queued banners
+    this.banner?.remove();
+    this.nextBanner();
+    this.hintUntil = 0;
+    this.overlay = 'thanks';
+    const g = this.overlayG.clear().setVisible(true);
+    const add = (x, y, s, o = {}) => {
+      const t = label(this, x, y, s, { depth: 301, align: 'center', ...o });
+      this.overlayTexts.push(t);
+      return t;
+    };
+    const lines = (y, text, color = '#FFFFFF') => {
+      const ls = wrap(text, 148);
+      ls.forEach((l, i) => add(W / 2, y + i * 16 - 4, l, { color }));
+      return y + ls.length * 16;
+    };
+    const button = (x, y, bw, text, fill) => {
+      const r = [x, y, bw, 18];
+      g.fillStyle(fill, 1).fillRect(r[0], r[1], r[2], r[3]).lineStyle(1, 0xffff4f, 1).strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
+      add(x + bw / 2, y, text, { color: '#FFFFFF', px: wrap(text, bw - 6, 12).length > 1 ? 10 : 12 }).setOrigin(0.5, 0.5).setY(y + 8);
+      return r;
+    };
+    // Measure first, then centre the panel above the bottom buttons.
+    const n = (t) => wrap(t, 148).length;
+    const h = 22 + n(THANKS.body) * 16 + 26 + n(THANKS.mapLine) * 16 + 26 + n(THANKS.choose) * 16 + 28;
+    const y0 = Math.max(22, Math.round((298 - h) / 2));
+    g.fillStyle(0x000000, 0.95).fillRect(6, y0, 168, h).lineStyle(1, 0xffff4f, 1).strokeRect(6.5, y0 + 0.5, 167, h - 1);
+    let y = lines(y0 + 4, THANKS.title, '#FFFF4F') + 2;
+    y = lines(y, THANKS.body);
+    const book = button(14, y + 2, 74, THANKS.bookButton, 0x8f2f20);
+    const ig = button(92, y + 2, 74, THANKS.igButton, 0x8f2f20);
+    y = lines(y + 26, THANKS.mapLine);
+    const map = button(20, y + 2, 140, THANKS.mapButton, 0x2f4f8f);
+    y = lines(y + 26, THANKS.choose, '#FFFF4F');
+    const end = button(14, y + 4, 60, THANKS.end, 0x000000);
+    const more = button(78, y + 4, 88, this.world.progress.targets.every((k) => this.world.progress.talked.has(k)) ? THANKS.keepWalking : THANKS.keepTalking, 0x000000);
+    this.thanksBtns = { book, ig, map, end, more };
+  }
+
+  tapThanks(x, y) {
+    const b = this.thanksBtns;
+    if (this.hit(b.book, x, y)) return openUrl(URLS.booking);
+    if (this.hit(b.ig, x, y)) return openUrl(URLS.instagram);
+    if (this.hit(b.map, x, y)) return openUrl(URLS.map);
+    if (this.hit(b.end, x, y)) {
+      this.closeOverlay();
+      return this.onEvents(this.world.finish());
+    }
+    if (this.hit(b.more, x, y)) this.closeOverlay();
+  }
+
   closeOverlay() {
     if (this.overlay === 'map') this.worldScene().setMap(false);
     this.overlay = null;
@@ -352,7 +414,7 @@ export class HudScene extends Phaser.Scene {
   update(time) {
     const S = this.S;
     const w = this.world;
-    S.paused = this.dialogue.open || this.overlay === 'missions';
+    S.paused = this.dialogue.open || this.overlay === 'missions' || this.overlay === 'thanks';
     // Walk to a tapped character (path straight; collision slides), then talk.
     S.input.dir = this.keyDir();
     if (this.walkTo && !w.locked) {

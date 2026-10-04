@@ -154,6 +154,31 @@ for (const size of [
   await page.close();
 }
 
+// ---------------------------------------------------------------- all six places: thank-you panel
+{
+  const page = await open('?skip=1');
+  await page.waitForTimeout(FADE_MS);
+  await page.evaluate(() => {
+    const s = window.__scene3;
+    const ev = ['lane', 'shops', 'desk', 'tables', 'cinema', 'haunted'].flatMap((z) => s.world.progress.enterZone(z));
+    s.game.scene.getScene('S3Hud').onEvents(ev);
+  });
+  await page.waitForFunction(() => window.__scene3.game.scene.getScene('S3Hud').overlay === 'thanks', null, { timeout: 15000 }).then(
+    () => ok(true, 'the thank-you panel opens after the sixth place'),
+    () => ok(false, 'the thank-you panel opens after the sixth place'),
+  );
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${OUT}/thanks_day.png` });
+  const b = await page.evaluate(() => window.__scene3.game.scene.getScene('S3Hud').thanksBtns);
+  await tapDesign(page, b.more[0] + b.more[2] / 2, b.more[1] + 9);
+  ok(!(await page.evaluate(() => window.__scene3.game.scene.getScene('S3Hud').overlay)), 'คุยกับทีมงานต่อ closes it');
+  await page.evaluate(() => window.__scene3.game.scene.getScene('S3Hud').openThanks());
+  await tapDesign(page, b.end[0] + b.end[2] / 2, b.end[1] + 9);
+  await page.waitForTimeout(800);
+  ok(await page.evaluate(() => window.__scene3.game.scene.isActive('S3Ending')), 'จบเกม opens the ending');
+  await page.close();
+}
+
 // ---------------------------------------------------------------- screenshots, day and night
 const views = {
   lane: (w) => (w.teleport(372, 700), w.setZoom(1)),

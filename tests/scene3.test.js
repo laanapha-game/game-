@@ -218,6 +218,16 @@ test('goals: six zones tick once each; the exit ends only when all are done', ()
   assert.ok(ev.some((e) => e.type === 'exit'));
 });
 
+test('after all six places: allGoals once, and finish() ends without the exit walk', () => {
+  const w = new World({ skipWelcome: true });
+  assert.deepEqual(w.finish(), [], 'no early finish');
+  const ev = GOALS.flatMap((g) => w.progress.enterZone(g.id));
+  assert.equal(ev.filter((e) => e.type === 'allGoals').length, 1);
+  assert.deepEqual(w.finish(), [{ type: 'exit' }]);
+  assert.equal(w.ended, true);
+  assert.deepEqual(w.finish(), []);
+});
+
 test('only people and the player: no bird-costume characters, no band', () => {
   assert.deepEqual(NPCS.map((n) => n.costume), ['jayimpacts']);
   assert.deepEqual(MUSICIANS, []);

@@ -69,6 +69,13 @@ remain; the talk targets are Jayimpacts and the stall row (two vouchers, then th
 removed characters' lines are still in `NPC_LINES` (`src/scene3/data/script.js`); the removed entries are
 in git history (commit before "only people and the player").
 
+## After all six places
+
+A thank-you panel opens (text in `THANKS`, `src/scene3/data/script.js`): ขอบคุณที่เล่นเกมของเรา, buttons for
+booking (`URLS.booking`), IG (`URLS.instagram`) and Google Map (`URLS.map`, still a Maps search for
+เมื่อคืนผมนอนไม่หลับ until the owner gives the place link), then a choice: จบเกม (straight to the ending)
+or คุยกับทีมงานต่อ (keep playing to collect vouchers; the exit still ends the game).
+
 ## Add a character
 
 1. Add an entry to `NPCS` in `src/scene3/logic/npcs.js`: `key`, `name` (speaker tag), `costume` (a scene 1

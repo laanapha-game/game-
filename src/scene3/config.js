@@ -63,6 +63,8 @@ export const TABLE_GRID = { cols: 4, rows: 5 };
 export const URLS = {
   booking: 'https://www.hellobooku.com/laanapha2026',
   instagram: 'https://www.instagram.com/jayimpacts/',
+  // TODO(owner): the exact Google Maps place link; until then a Maps search for the name.
+  map: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('เมื่อคืนผมนอนไม่หลับ')}`,
 };
 
 // ---- Ticket phases (from the poster), Asia/Bangkok calendar days, inclusive ----

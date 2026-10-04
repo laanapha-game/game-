@@ -92,6 +92,19 @@ export const summaryText = (goals, talked, targets) => `สำรวจ ${goals}
 export const voucherHowTo = (how) => `วิธีใช้คูปอง: ${how}`;
 export const prizeHowTo = (how) => `รางวัลพิเศษ ✓ วิธีรับ: ${how}`;
 export const ENDING_BUTTONS = { book: 'จองบัตรเลย', instagram: 'IG @jayimpacts', credits: 'เครดิต', home: 'หน้าแรก' };
+// ---- All six places explored (owner): thank you, book, IG, Google Map, then end or keep talking ----
+export const THANKS = {
+  title: 'ขอบคุณที่เล่นเกมของเรา!',
+  body: 'กดเข้าลิงก์ไปจองในเว็บหลัก และติดตาม IG เป็นกำลังใจและติดตามข่าวสารให้ทีมพวกเรากัน',
+  bookButton: 'จองบัตร',
+  igButton: 'IG',
+  mapLine: 'เจอกันที่ Google Map:',
+  mapButton: 'เมื่อคืนผมนอนไม่หลับ',
+  choose: 'จะจบเกมเลย หรือคุยกับทีมงานให้ครบเพื่อรับ voucher?',
+  end: 'จบเกม',
+  keepTalking: 'คุยกับทีมงานต่อ',
+  keepWalking: 'เดินเล่นต่อ', // when everyone has been talked to already
+};
 export const AFTER_EVENT_LINE = 'งานจัดไปแล้ว ติดตามเราไว้พบกันปีหน้า';
 
 // ---- Credits: copied from the prototype's CREDITS ----

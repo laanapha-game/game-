@@ -190,6 +190,14 @@ export class World {
     return ev;
   }
 
+  /** End now (the thank-you panel's จบเกม), without walking to the exit. */
+  finish() {
+    if (!this.progress.allGoals || this.ended) return [];
+    this.ended = true;
+    this.stopAuto();
+    return [{ type: 'exit' }];
+  }
+
   updateNpcs(dt) {
     for (const n of this.npcs) {
       n.moving = false;
