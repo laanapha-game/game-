@@ -77,6 +77,13 @@ stall touch point and the exit can still be reached by walking.
 3. Optionally add a tour stop to `TOUR` in `world.js`. The chip text says `n/6`; if the number of goals
    changes, update `chipText`, `exitTooEarly` and `summaryText` in `script.js` (the 6 is in the owner's text).
 
+## Text
+
+All scene 3 text is Serithai 12 px (Kanit as the web fallback), rasterised at `TEXT_RES` (config, 2)
+canvas px per design px and scaled up with hard edges: pixelated like the art but readable. At 1 the
+12 px Thai loses letters (m merges into n, stacked marks crowd), so 2 is the setting. Thai wraps at
+word boundaries (Intl.Segmenter).
+
 ## Controls
 
 Hold a finger anywhere to walk toward it (a cross marks the target), or arrows/WASD. Tap a character to

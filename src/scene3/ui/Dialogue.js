@@ -51,7 +51,7 @@ export class Dialogue {
       const w = Math.ceil(this.tag.width) - 8 + 10;
       g.fillStyle(0xf02df0, 1).fillRect(BOX.x + 6, BOX.y - 8, w, 15);
       g.lineStyle(1, 0x000000, 1).strokeRect(BOX.x + 6.5, BOX.y - 7.5, w - 1, 14);
-      this.tag.setPosition(BOX.x + 6 + 5 - 4, BOX.y - 8 - 4 + 1);
+      this.tag.setPosition(BOX.x + 6 + 5 - 4, BOX.y - 8 - 4 - 1);
     } else this.tag.setVisible(false);
     this.lines.forEach((t, k) => t.setText(b.lines[k] ?? '').setVisible(true));
     this.portrait.setVisible(!!this.opts.portrait).setFrame(0);

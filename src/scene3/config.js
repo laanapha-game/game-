@@ -77,6 +77,9 @@ export const EVENT_END = '2026-10-25';
 // TODO(owner): the Serithai licence for web embedding is still open. Kanit is the web fallback.
 export const FONT = '"Lannapha Serithai", "Kanit", sans-serif';
 export const FONT_PX = 12;
+// Text is rasterised at TEXT_RES canvas px per design px and scaled up with hard edges:
+// pixelated like the art, still easy to read (scene 2's chatbox uses 2 as well).
+export const TEXT_RES = 2;
 export const LINE_H = 16; // 3 lines of 12 px Thai text in the dialogue box, stacked marks included
 
 // ---- Day / night ----
