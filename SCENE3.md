@@ -28,7 +28,7 @@ registers scene 3 with scene 1 (the only change outside `src/scene3/`). Back goe
 
 | Path | What |
 |---|---|
-| `src/scene3/config.js` | **The one config file**: spread LS, zoom levels, speeds, talk range, voucher rules, special prize, stall booking, event card, URLs, ticket phases, font. Every TODO is here |
+| `src/scene3/config.js` | **The one config file**: spread LS, zoom levels, speeds, talk range, voucher rules, special prize, stall booking, event card, URLs, font. Every TODO is here. Ticket dates and prices: the whole game shares `src/data/ticketPhases.js` (the poster) |
 | `src/scene3/data/script.js` | All scene 3 text (exact Thai). Characters' dialogue and credits are TODO placeholders |
 | `src/scene3/logic/layout.js` | The map: regions, fences, objects, zones, start, exit, guides, collision |
 | `src/scene3/logic/npcs.js` | The characters (now only Jayimpacts), the band (empty), the lane stall row, the ghosts, the talk targets |

@@ -255,6 +255,11 @@ export class World {
       return null;
     }
     const t = a.path[0];
+    // Line up exactly with the waypoint on an axis it is nearly on. Waypoints are free cell
+    // centres, but a float residual (x 169.99999 for 170) puts the feet box one collision
+    // column over, into the wall beside a narrow gap, and the tour stops for good.
+    if (Math.abs(t.x - this.player.x) < 0.5 && boxFree(t.x, this.player.y, PLAYER_BOX)) this.player.x = t.x;
+    if (Math.abs(t.y - this.player.y) < 0.5 && boxFree(this.player.x, t.y, PLAYER_BOX)) this.player.y = t.y;
     return { x: t.x - this.player.x, y: t.y - this.player.y };
   }
 

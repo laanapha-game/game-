@@ -196,7 +196,7 @@ const views = {
 };
 for (const night of [false, true]) {
   const tag = night ? 'night' : 'day';
-  const q = `?skip=1${night ? '&night=1' : ''}&today=2026-10-04`;
+  const q = `?skip=1${night ? '&night=1' : ''}&today=2026-10-10`; // the poster's one gap day (Flash over, Early Bird next)
   if (night) {
     const page = await open('?night=1');
     await tapDesign(page, 90, 160);

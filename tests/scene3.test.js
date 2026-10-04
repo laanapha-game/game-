@@ -11,7 +11,8 @@ import { NPCS, STALL_ROW, TALK_TARGETS, MUSICIANS } from '../src/scene3/logic/np
 import { resetWelcomeSession, welcomePlayed } from '../src/scene3/logic/welcome.js';
 import { ticketLine } from '../src/scene3/logic/ticketLine.js';
 import { WELCOME_PAGES, STALL_ROW_PAGES, STALL_ROW_SPEAKER, GOALS } from '../src/scene3/data/script.js';
-import { TALK_RANGE, PLAYER_BOX, LS } from '../src/scene3/config.js';
+import { TALK_RANGE, PLAYER_BOX, LS, TICKET_PHASES } from '../src/scene3/config.js';
+import { PHASES } from '../src/data/ticketPhases.js';
 
 /** Walk the player along an A* path with the game's own sliding movement; returns the end point. */
 function walk(from, to) {
@@ -235,6 +236,25 @@ test('ซุ้มผี: the seventh place, in front of the ghost stalls, reach
   assert.ok(ev.some((e) => e.type === 'goal' && e.goal.id === 'ghosts'));
 });
 
+test('AUTO: the tour walks every stop with the real movement and reaches all seven places, at any frame rate', () => {
+  // The real autopilot (World.update), not walk() above: it once stopped for good between the
+  // shops and the tables (x 169.99999 for a waypoint at 170, beside a narrow gap).
+  let seed = 7;
+  const jitter = () => (8 + ((seed = (seed * 16807) % 2147483647) / 2147483647) * 40) / 1000;
+  for (const [name, dt] of [['60 fps', () => 1 / 60], ['30 fps', () => 1 / 30], ['144 fps', () => 1 / 144], ['uneven frames', jitter]]) {
+    const w = new World({ skipWelcome: true });
+    w.startAuto();
+    let t = 0;
+    while (w.auto && t < 240) {
+      const d = dt();
+      w.update(d, {});
+      t += d;
+    }
+    assert.equal(w.auto, null, `${name}: the tour ends (still at stop ${w.auto?.stop} ${TOUR[w.auto?.stop]?.name} after ${t.toFixed(0)} s)`);
+    assert.equal(w.progress.goals.size, GOALS.length, `${name}: all seven places (${[...w.progress.goals]})`);
+  }
+});
+
 test('after all seven places: allGoals once, and finish() ends without the exit walk', () => {
   const w = new World({ skipWelcome: true });
   assert.deepEqual(w.finish(), [], 'no early finish');
@@ -257,12 +277,13 @@ test('only people and the player: Jayimpacts and the team in his model, no birds
 });
 
 test('ticket line by date (Asia/Bangkok, poster phases)', () => {
-  assert.equal(ticketLine('2026-09-20'), 'Flash Ticket เปิดขาย 29 ก.ย. ราคา 189 บาท');
-  assert.equal(ticketLine('2026-09-29'), 'ตอนนี้ Flash Ticket 189 บาท วันนี้วันเดียวเท่านั้น!');
-  assert.equal(ticketLine('2026-10-04'), 'Flash Ticket หมดแล้ว! Early Bird เปิด 12 ต.ค. ราคา 320 บาท');
-  assert.equal(ticketLine('2026-10-12'), 'ตอนนี้ Early Bird 320 บาท ขายถึง 14 ต.ค.');
-  assert.equal(ticketLine('2026-10-15'), 'Early Bird หมดแล้ว! General เปิด 18 ต.ค. ราคา 390 บาท');
-  assert.equal(ticketLine('2026-10-20'), 'ตอนนี้ General 390 บาท ขายถึง 23 ต.ค.');
+  assert.equal(TICKET_PHASES, PHASES, "scene 3 uses scene 2's ticket table (one source)");
+  assert.equal(ticketLine('2026-09-20'), 'Flash Ticket เปิดขาย 9 ต.ค. ราคา 189 บาท');
+  assert.equal(ticketLine('2026-10-04'), 'Flash Ticket เปิดขาย 9 ต.ค. ราคา 189 บาท');
+  assert.equal(ticketLine('2026-10-09'), 'ตอนนี้ Flash Ticket 189 บาท วันนี้วันเดียวเท่านั้น!');
+  assert.equal(ticketLine('2026-10-10'), 'Flash Ticket หมดแล้ว! Early Bird เปิด 12 ต.ค. ราคา 320 บาท');
+  assert.equal(ticketLine('2026-10-12'), 'ตอนนี้ Early Bird 320 บาท ขายถึง 16 ต.ค.');
+  assert.equal(ticketLine('2026-10-17'), 'ตอนนี้ General Ticket 390 บาท ขายถึง 23 ต.ค.');
   assert.equal(ticketLine('2026-10-24'), 'วันงานซื้อบัตรหน้างานได้ ราคา 450 บาท');
   assert.equal(ticketLine('2026-10-26'), 'งานจัดไปแล้ว ติดตามเราไว้พบกันปีหน้า');
 });

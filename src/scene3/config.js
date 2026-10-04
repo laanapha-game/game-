@@ -67,14 +67,9 @@ export const URLS = {
   map: 'https://maps.app.goo.gl/XxkVruXCpHoy5VWr5', // Google Maps: เมื่อคืนผมนอนไม่หลับ
 };
 
-// ---- Ticket phases (from the poster), Asia/Bangkok calendar days, inclusive ----
-export const TICKET_PHASES = [
-  { id: 'flash', name: 'Flash Ticket', start: '2026-09-29', end: '2026-09-29', price: 189 },
-  { id: 'early', name: 'Early Bird', start: '2026-10-12', end: '2026-10-14', price: 320 },
-  { id: 'general', name: 'General', start: '2026-10-18', end: '2026-10-23', price: 390 },
-  { id: 'door', name: 'หน้างาน', start: '2026-10-24', end: '2026-10-25', price: 450 },
-];
-export const EVENT_END = '2026-10-25';
+// ---- Ticket phases: the one table the whole game uses (scene 2's stall 3 and this ending), ----
+// from the official ticket poster: src/data/ticketPhases.js. Edit dates and prices there.
+export { PHASES as TICKET_PHASES, EVENT_END } from '../data/ticketPhases.js';
 
 // ---- Font ----
 // TODO(owner): the Serithai licence for web embedding is still open. Kanit is the web fallback.
