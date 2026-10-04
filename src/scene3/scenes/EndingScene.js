@@ -80,7 +80,7 @@ export class EndingScene extends Phaser.Scene {
     // Buttons, anchored to the bottom.
     const B = (this.buttons = {
       book: { r: [10, 252, 160, 20], fill: 0xffff4f, color: '#000000', text: ENDING_BUTTONS.book, act: () => openUrl(URLS.booking) },
-      instagram: { r: [10, 276, 160, 18], fill: 0xf02df0, color: '#000000', text: ENDING_BUTTONS.instagram, act: () => openUrl(URLS.instagram) },
+      instagram: { r: [10, 276, 160, 18], fill: 0xf02df0, color: '#000000', text: ENDING_BUTTONS.instagram, act: () => openUrl(URLS.eventInstagram) },
       credits: { r: [10, 298, 78, 18], fill: 0x000000, color: '#FFFFFF', text: ENDING_BUTTONS.credits, act: () => this.scene.start('S3Credits') },
       home: { r: [92, 298, 78, 18], fill: 0x000000, color: '#FFFFFF', text: ENDING_BUTTONS.home, act: () => S.callbacks.onHome() },
     });

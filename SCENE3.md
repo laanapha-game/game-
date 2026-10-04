@@ -72,8 +72,8 @@ in git history (commit before "only people and the player").
 ## After all six places
 
 A thank-you panel opens (text in `THANKS`, `src/scene3/data/script.js`): ขอบคุณที่เล่นเกมของเรา, buttons for
-booking (`URLS.booking`), IG (`URLS.instagram`) and Google Map (`URLS.map`, still a Maps search for
-เมื่อคืนผมนอนไม่หลับ until the owner gives the place link), then a choice: จบเกม (straight to the ending)
+booking (`URLS.booking`), IG @laanapha (`URLS.eventInstagram`) and Google Map (`URLS.map`, the owner's link to
+เมื่อคืนผมนอนไม่หลับ), then a choice: จบเกม (straight to the ending)
 or คุยกับทีมงานต่อ (keep playing to collect vouchers; the exit still ends the game).
 
 ## Add a character

@@ -393,7 +393,7 @@ export class HudScene extends Phaser.Scene {
   tapThanks(x, y) {
     const b = this.thanksBtns;
     if (this.hit(b.book, x, y)) return openUrl(URLS.booking);
-    if (this.hit(b.ig, x, y)) return openUrl(URLS.instagram);
+    if (this.hit(b.ig, x, y)) return openUrl(URLS.eventInstagram);
     if (this.hit(b.map, x, y)) return openUrl(URLS.map);
     if (this.hit(b.end, x, y)) {
       this.closeOverlay();

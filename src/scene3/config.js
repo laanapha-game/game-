@@ -62,9 +62,9 @@ export const TABLE_GRID = { cols: 4, rows: 5 };
 // ---- Links (open in a new tab) ----
 export const URLS = {
   booking: 'https://www.hellobooku.com/laanapha2026',
-  instagram: 'https://www.instagram.com/jayimpacts/',
-  // TODO(owner): the exact Google Maps place link; until then a Maps search for the name.
-  map: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('เมื่อคืนผมนอนไม่หลับ')}`,
+  instagram: 'https://www.instagram.com/jayimpacts/', // Jayimpacts' own IG (his dialogue button)
+  eventInstagram: 'https://www.instagram.com/laanapha/', // the team's IG (thank-you panel, ending)
+  map: 'https://maps.app.goo.gl/XxkVruXCpHoy5VWr5', // Google Maps: เมื่อคืนผมนอนไม่หลับ
 };
 
 // ---- Ticket phases (from the poster), Asia/Bangkok calendar days, inclusive ----

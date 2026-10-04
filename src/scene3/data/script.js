@@ -91,7 +91,7 @@ export const NPC_LINES = {
 export const summaryText = (goals, talked, targets) => `สำรวจ ${goals}/6 จุด · คุยกับทีมงาน ${talked}/${targets}`;
 export const voucherHowTo = (how) => `วิธีใช้คูปอง: ${how}`;
 export const prizeHowTo = (how) => `รางวัลพิเศษ ✓ วิธีรับ: ${how}`;
-export const ENDING_BUTTONS = { book: 'จองบัตรเลย', instagram: 'IG @jayimpacts', credits: 'เครดิต', home: 'หน้าแรก' };
+export const ENDING_BUTTONS = { book: 'จองบัตรเลย', instagram: 'IG @laanapha', credits: 'เครดิต', home: 'หน้าแรก' };
 // ---- All six places explored (owner): thank you, book, IG, Google Map, then end or keep talking ----
 export const THANKS = {
   title: 'ขอบคุณที่เล่นเกมของเรา!',
