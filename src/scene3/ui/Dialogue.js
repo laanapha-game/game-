@@ -47,7 +47,8 @@ export class Dialogue {
     g.lineStyle(1, 0xffff4f, 1).strokeRect(BOX.x + 0.5, BOX.y + 0.5, BOX.w - 1, BOX.h - 1);
     const speaker = this.opts.speaker;
     if (speaker) {
-      this.tag.setText(speaker).setVisible(true);
+      this.tag.setText(speaker).setFontSize(12).setVisible(true);
+      if (this.tag.width - 8 > BOX.w - 24) this.tag.setFontSize(10); // long tags (role in brackets) stay inside the box
       const w = Math.ceil(this.tag.width) - 8 + 10;
       g.fillStyle(0xf02df0, 1).fillRect(BOX.x + 6, BOX.y - 8, w, 15);
       g.lineStyle(1, 0x000000, 1).strokeRect(BOX.x + 6.5, BOX.y - 7.5, w - 1, 14);

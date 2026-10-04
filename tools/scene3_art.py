@@ -434,30 +434,36 @@ def town_house(night, roof):
     return c
 
 
+HOUSE_SRC = Path('assets/incoming/scene3/haunted_house_124x60.png')  # the owner's photo, pixel-converted (from the prototype)
+# Lit windows (halved from the prototype's HOUSE_WINDOWS on the 124 x 60 sprite): x, y, w, h, colour
+HOUSE_WINDOWS = [(6, 11, 4, 4, '#FFFF4F'), (28, 8, 2, 5, '#FFFF4F'), (34, 10, 5, 4, '#FFFF4F'), (44, 10, 5, 4, '#FFFF4F'), (33, 22, 4, 4, '#F02DF0')]
+
+
+def halve_majority(im):
+    """124 x 60 -> 62 x 30: each 2 x 2 block takes its most common colour (transparent wins ties)."""
+    src = im.convert('RGBA').load()
+    w, h = im.size[0] // 2, im.size[1] // 2
+    out = Image.new('RGBA', (w, h))
+    o = out.load()
+    for y in range(h):
+        for x in range(w):
+            block = [src[2 * x + i, 2 * y + j] for j in (0, 1) for i in (0, 1)]
+            block = [(0, 0, 0, 0) if p[3] < 128 else p[:3] + (255,) for p in block]
+            o[x, y] = max(block, key=lambda p: (block.count(p), p[3] == 0))
+    return out
+
+
 def haunted_house(night):
-    """TODO(asset): replace with haunted_house_124x60.png halved to 62 x 30 (majority-colour
-    downsample) when the file arrives. Placeholder in the same size and spirit: dark old
-    house, glowing windows, two glowing pumpkins, magenta dithered halo."""
+    """The venue's haunted house (บ้านเมื่อคืนผมนอนไม่หลับ) from the owner's photo: halved to 62 x 30,
+    two glowing pumpkins, a magenta dithered halo. Windows flicker at runtime (haunted_windows)."""
     c = C(62, 30)
-    body = '#3A2A30' if not night else '#1E1418'
-    roof = '#2A1E24' if not night else '#120C0E'
-    c.rect(8, 12, 46, 16, body)
-    c.poly([(4, 13), (16, 3), (46, 3), (58, 13)], roof)
-    c.poly([(22, 6), (31, 0), (40, 6)], roof)  # gable
-    for x in range(9, 54, 3):
-        c.rect(x, 12, 1, 16, dim(body, 0.8))
-    win = '#FFFF4F' if night else '#F7E27A'
-    for wx in (13, 24, 36, 46):
-        c.rect(wx, 16, 4, 5, win)
-        c.rect(wx + 1, 18, 2, 1, '#8F2F20')
-    c.rect(28, 20, 6, 8, '#120A0C')
-    for px_ in (6, 55):  # glowing pumpkins
-        c.ell(px_, 27, 2.6, 2, '#DE5238')
+    c.im.alpha_composite(halve_majority(Image.open(HOUSE_SRC)))
+    c.p = c.im.load()
+    for px_ in (4, 57):  # glowing pumpkins at the corners
+        c.ell(px_, 27.5, 2.6, 2, '#DE5238')
         c.px(px_ - 1, 27, '#FFFF4F')
         c.px(px_ + 1, 27, '#FFFF4F')
-        c.px(px_, 24, '#3A6A2A')
-    c.outline('#000000')
-    # magenta dithered halo around the silhouette
+        c.px(px_, 25, '#3A6A2A')
     src = c.im.copy().load()
     for y in range(30):
         for x in range(62):
@@ -470,10 +476,12 @@ def haunted_house(night):
 
 
 def haunted_windows():
-    """Window glow overlay (flickered at runtime)."""
+    """Window light overlay, flickered at runtime: yellow windows, one magenta, with a dark cross."""
     c = C(62, 30)
-    for wx in (13, 24, 36, 46):
-        c.rect(wx, 16, 4, 5, '#FFFFB0')
+    for x, y, w, h, col in HOUSE_WINDOWS:
+        c.rect(x, y, w, h, col)
+        c.rect(x + w // 2, y, 1, h, '#000000')
+        c.rect(x, y + h // 2, w, 1, '#000000')
     return c
 
 

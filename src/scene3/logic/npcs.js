@@ -1,9 +1,9 @@
 // Scene 3 characters and talk targets (pure data).
 // Positions are base units (see layout.js) and spread like every other anchor.
-// Costumes are scene 1's eight birds as placeholders.
-// TODO(owner): real names and looks for the team.
+// Speaker tags, dialogue and costumes (scene 1's birds) follow the prototype's NPC_DEFS.
+// TODO(owner): real looks for the team (the costumes are still placeholders).
 import { spread, SHOPS, DESK, BAND, LANE_TOUCH, LANE_STALLS, TABLES, R } from './layout.js';
-import { NPC_LINES, STALL_ROW_PAGES, STALL_ROW_SPEAKER } from '../data/script.js';
+import { NPC_LINES, NPC_NAMES, STALL_ROW_PAGES, STALL_ROW_SPEAKER } from '../data/script.js';
 
 const staff = (shop) => ({ x: shop.x, y: shop.y - shop.staffDy }); // feet on the counter top, inside the opening
 const base = (x, y) => spread({ x, y });
@@ -29,25 +29,25 @@ const walkY = SHOPS[0].y + 12; // the walkway in front of the shop row
  */
 export const NPCS = [
   { key: 'bas', name: 'น้องบาส', costume: 'mahidol', at: { x: DESK.x, y: DESK.y - 9 } }, // behind the registration desk
-  { key: 'djton', name: 'ดีเจต้น', costume: 'silpakorn', acc: 'headphones', at: base(236, 116) },
-  { key: 'wizard', name: 'จอมเวทย์ลึกลับ', costume: 'vampire', patrol: [{ x: 60, y: pathRowY }, { x: 320, y: pathRowY }] },
-  { key: 'pan', name: 'น้องปัน', costume: 'pumpkin', at: base(150, 132) },
-  { key: 'chef', name: 'เชฟตูน', costume: 'nuannapa', acc: 'chef_hat', at: staff(SHOPS[2]) },
+  { key: 'djton', name: 'ดีเจต้น', costume: 'nuannapa', acc: 'headphones', at: base(236, 116) },
+  { key: 'wizard', name: 'จอมเวทย์ลึกลับ', costume: 'onryo', patrol: [{ x: 60, y: pathRowY }, { x: 320, y: pathRowY }] },
+  { key: 'pan', name: 'น้องปัน', costume: 'silpakorn', at: base(150, 132) },
+  { key: 'chef', name: 'เชฟตูน', costume: 'pumpkin', acc: 'chef_hat', at: staff(SHOPS[2]) },
   { key: 'beer', name: 'น้าเบียร์', costume: 'ramwong', at: staff(SHOPS[1]) },
-  { key: 'khaopan', name: 'น้องข้าวปั้น', costume: 'onryo', patrol: tableAisles },
+  { key: 'khaopan', name: 'น้องข้าวปั้น', costume: 'nuannapa', acc: 'straw_hat', patrol: tableAisles },
   { key: 'golf', name: 'น้องกอล์ฟ', costume: 'slasher', at: staff(SHOPS[3]) },
-  { key: 'nid', name: 'ป้านิด', costume: 'ramwong', acc: 'straw_hat', at: staff(SHOPS[0]) },
-  { key: 'nok', name: 'พี่นก', costume: 'nuannapa', acc: 'straw_hat', at: { x: R.lane[0] - 14, y: R.soi[1] + 14 } }, // soi, west corner of the lane mouth
+  { key: 'nid', name: 'ป้านิด', costume: 'silpakorn', at: staff(SHOPS[0]) },
+  { key: 'nok', name: 'พี่นก', costume: 'mahidol', at: { x: R.lane[0] - 14, y: R.soi[1] + 14 } }, // soi, west corner of the lane mouth
   { key: 'jay', name: 'Jayimpacts', costume: 'jayimpacts', at: { x: SHOPS[4].x + 20, y: SHOPS[4].y - 3 }, ig: true }, // beside the Rotary stall
-  { key: 'kaiching', name: 'Kaiching', costume: 'pumpkin', at: { x: DESK.x + 15, y: DESK.y + 8 } }, // Jintanakarn team, east of the desk
-  { key: 'captain', name: 'Captain', costume: 'silpakorn', acc: 'cap', patrol: [{ x: 40, y: walkY }, { x: 310, y: walkY }] },
-].map((n) => ({ ...n, pages: NPC_LINES[n.key] }));
+  { key: 'kaiching', name: 'Kaiching', costume: 'vampire', at: { x: DESK.x + 15, y: DESK.y + 8 } }, // Jintanakarn team, east of the desk
+  { key: 'captain', name: 'Captain', costume: 'slasher', acc: 'cap', patrol: [{ x: 40, y: walkY }, { x: 310, y: walkY }] },
+].map((n) => ({ ...n, short: n.name, name: NPC_NAMES[n.key], pages: NPC_LINES[n.key] })); // short: the name plate over the head
 
 // The band: scenery, no dialogue.
 export const MUSICIANS = [
-  { key: 'guitar', costume: 'pumpkin', acc: 'guitar', at: { x: BAND.deck.x - 12, y: BAND.stageY } },
+  { key: 'guitar', costume: 'silpakorn', acc: 'guitar', at: { x: BAND.deck.x - 12, y: BAND.stageY } },
   { key: 'singer', costume: 'ramwong', acc: 'mic', at: { x: BAND.deck.x, y: BAND.stageY - 1 } },
-  { key: 'cajon', costume: 'slasher', acc: 'cajon', at: { x: BAND.deck.x + 12, y: BAND.stageY } },
+  { key: 'cajon', costume: 'pumpkin', acc: 'cajon', at: { x: BAND.deck.x + 12, y: BAND.stageY } },
 ];
 
 // The lane stall row: one talk target, five touch points, one "!" over the middle stall.

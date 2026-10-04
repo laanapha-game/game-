@@ -1,11 +1,8 @@
 // Scene 3 text. Lines from the owner's brief are final and used exactly.
 //
-// TODO(prototype): the characters' dialogue (NPC_DEFS) and the credits (CREDITS) live in
-// the prototype lannapha-home.html, which has not been delivered to this repo yet. Their
-// pages below are visible placeholders (PENDING). Paste the prototype's Thai lines into
-// NPC_LINES and CREDITS: nothing else needs to change.
-
-export const PENDING = (who) => `[บทพูดของ ${who}: รอคัดลอกจากต้นแบบ]`;
+// The characters' dialogue, speaker tags and credits are copied exactly from the prototype
+// (lannapha-home.html, its scene 3 NPC_DEFS and CREDITS). The haunted house's goal name is
+// the owner's later change (บ้านเมื่อคืนผมนอนไม่หลับ).
 
 // ---- Opening welcome (final, Jay laughs โฮะๆ at the end) ----
 export const WELCOME_SPEAKER = 'Jayimpacts';
@@ -51,21 +48,36 @@ export const LABELS = {
 export const STALL_ROW_SPEAKER = 'ซุ้มเปิดจองพื้นที่';
 export const STALL_ROW_PAGES = ['ใครอยากมาเป็นส่วนหนึ่งของงาน สามารถจับจองพื้นที่เปิดซุ้มกับเราได้เลยครับ'];
 
-// ---- Characters' dialogue: TODO(prototype) copy NPC_DEFS pages here (key -> pages) ----
+// ---- Characters' dialogue and speaker tags: copied exactly from the prototype's NPC_DEFS ----
+export const NPC_NAMES = {
+  bas: 'น้องบาส (จุดลงทะเบียน)',
+  djton: 'ดีเจต้น (มิกซ์เพลง/หนังกลางแปลง)',
+  wizard: 'จอมเวทย์ลึกลับ',
+  pan: 'น้องปัน (โซนที่นั่งชมจอกลางแปลง)',
+  chef: 'เชฟตูน (ร้านพิซซ่า)',
+  beer: 'น้าเบียร์ (ร้านเครื่องดื่ม)',
+  khaopan: 'น้องข้าวปั้น (โซนโต๊ะจัดเลี้ยง)',
+  golf: 'น้องกอล์ฟ (จุดถ่ายรูป Photo Booth)',
+  nid: 'ป้านิด (ของทานเล่น/ของเล็กๆ Local)',
+  nok: 'พี่นก (ทางเชื่อมออกซอย)',
+  jay: 'Jayimpacts · ซุ้ม Rotary',
+  kaiching: 'Kaiching · ทีม Jintanakarn',
+  captain: 'Captain',
+};
 export const NPC_LINES = {
-  bas: [PENDING('น้องบาส')],
-  djton: [PENDING('ดีเจต้น')],
-  wizard: [PENDING('จอมเวทย์ลึกลับ')],
-  pan: [PENDING('น้องปัน')],
-  chef: [PENDING('เชฟตูน')],
-  beer: [PENDING('น้าเบียร์')],
-  khaopan: [PENDING('น้องข้าวปั้น')],
-  golf: [PENDING('น้องกอล์ฟ')],
-  nid: [PENDING('ป้านิด')],
-  nok: [PENDING('พี่นก')],
-  jay: [PENDING('Jayimpacts')], // his last page gets the "เปิด IG" button
-  kaiching: [PENDING('Kaiching')],
-  captain: [PENDING('Captain')],
+  bas: ['สวัสดีครับ ตรงนี้คือจุดลงทะเบียนหน้างานนะครับ', 'งานนี้จะมีโซนที่นั่งชมจอกลางแปลง โซนโต๊ะจัดเลี้ยง และร้านค้าอีกหลายร้านมากมายครับ', 'เดินชมรอบๆ ได้เลยครับ มีอะไรถามผมได้ตลอดนะ'],
+  djton: ['สวัสดีครับ ผมคุมเพลงกับเสียงของโซนหนังกลางแปลงเองเลย', 'ก่อนหนังฉาย จะเปิดเพลย์ลิสต์ชิลล์ๆ คลอไปก่อนสักพักครับ', 'หนังสั้น ชักศอกไม่ถึงใจ เริ่มฉาย 1 ทุ่ม โปรแกรมหลักเริ่ม 1 ทุ่มครึ่งนะครับ'],
+  wizard: ['โฮ่ๆ... เจอผู้กล้าอีกคนแล้วสินะ', 'ข้าแค่แวะเดินผ่านงานนี้ ไม่ได้ตั้งใจจะมาทำนายดวงใครหรอกนะ...', 'แต่ถ้าอยากรู้ว่าวันนี้จะสนุกไหม บอกได้เลยว่า แน่นอน'],
+  pan: ['โซนนี้เป็นที่นั่งบีนแบ็กสำหรับดูจอกลางแปลงครับ จอใหญ่ตั้งอยู่ทางโน้นเลย', 'ลองนึกภาพเอนหลังบนบีนแบ็กนุ่มๆ มีลมเย็นจากคลองบางหลวงพัดมาเบาๆ พร้อมเสียงหัวเราะของเพื่อนๆ รอบตัว', 'ตกเย็นแดดร่มลมตก หยิบของกินเล่นจากร้านใกล้ๆ มานั่งดูหนังกลางแปลงด้วยกัน บรรยากาศดีสุดๆ เลยครับ'],
+  chef: ['สวัสดีครับ ร้านผมอยู่ตรงนี้เลย หนึ่งในร้านค้ามากมายของงาน', 'แผนคือให้แขกได้ลองนวดแป้งและโรยหน้าพิซซ่าเองก่อนเข้าเตาถ่านครับ', 'รอบถัดไปน่าจะเปิดให้จองได้เร็วๆ นี้ครับ'],
+  beer: ['ร้านน้านี่ขายเครื่องดื่มเย็นๆ ค่ะ มีทั้งชา กาแฟ และโซดาผลไม้', 'วันงานตั้งใจจะเตรียมเมนูพิเศษไว้ต้อนรับแขกด้วยนะ', 'แวะมาชิมกันได้เลยค่ะ'],
+  khaopan: ['สวัสดีค่ะ ตรงนี้คือโซนโต๊ะจัดเลี้ยงของงานนะคะ', 'จัดวางเป็นแถวให้แขกนั่งกินข้าวพร้อมชมบรรยากาศงานได้สบายๆ เลยค่ะ', 'ใกล้ๆ กันก็มีร้านค้าให้เดินเลือกซื้อของกินมานั่งทานที่โต๊ะได้ด้วยนะคะ'],
+  golf: ['สวัสดีครับ ตรงนี้คือจุด Photo Booth ของงานเลยครับ', 'มีฉากหลังสวยๆ ให้ถ่ายรูปเก็บบรรยากาศงาน แล้วก็มีของประกอบฉากให้หยิบเล่นด้วยนะ', 'ถ่ายเสร็จอย่าลืมแท็กมาให้ดูกันด้วยนะครับ เดี๋ยวจะรวบรวมรูปสวยๆ ไปโชว์หน้างาน'],
+  nid: ['ร้านของป้าขายของทานเล่น กับของฝาก local เล็กๆน้อยๆ ค่ะ', 'แถวนี้มีของกินเล่นเยอะแยะ แวะดูได้นะคะ'],
+  nok: ['Welcome to Laanapha ยินดีต้อนรับค่ะ', 'ทางนี้เป็นทางเชื่อมออกไปต่อซอยด้านหน้าค่ะ รถเข้า-ออกทางนี้เลย', 'แถวนี้เป็นย่านใกล้คลองบางหลวง ตอนเย็นลมเย็นดีมากค่ะ', 'พร้อมจะสำรวจพื้นที่ใน ลาน ณ ภา รึยังคะ??', 'เชิญเดินตรงไปด้านในเลยค่ะ'],
+  jay: ['ยินดีต้อนรับสู่ซุ้ม Rotary! ข้า Jayimpacts เฝ้าซุ้มนี้อยู่', 'ถ้าชอบงานนี้ อย่าลืมกดติดตาม IG ของข้าด้วยนะ'], // the last page gets the "เปิด IG" button
+  kaiching: ['ข้า Kaiching จากทีม Jintanakarn ยินดีที่ได้เจอ', 'หนังสั้น ชักศอกไม่ถึงใจ เริ่มฉาย 1 ทุ่มตรงเป๊ะ อย่ามาสายนะ'],
+  captain: ['Captain รายงานตัว! ข้าเดินตรวจงานอยู่', 'โปรแกรมหลักเริ่ม 1 ทุ่มครึ่ง ห้ามพลาด', 'บัตรราคาขึ้นตามช่วงวัน จองเร็วถูกกว่านะ'],
 };
 
 // ---- Ending (final) ----
@@ -75,7 +87,25 @@ export const prizeHowTo = (how) => `รางวัลพิเศษ ✓ วิ
 export const ENDING_BUTTONS = { book: 'จองบัตรเลย', instagram: 'IG @jayimpacts', credits: 'เครดิต', home: 'หน้าแรก' };
 export const AFTER_EVENT_LINE = 'งานจัดไปแล้ว ติดตามเราไว้พบกันปีหน้า';
 
-// ---- Credits: TODO(prototype) copy CREDITS here ({ name, role, sprite }) ----
-// Until then the credits list the team characters by name with a pending role.
-export const CREDITS = null;
-export const CREDITS_PENDING_ROLE = 'รอข้อมูลเครดิต'; // TODO(prototype)
+// ---- Credits: copied from the prototype's CREDITS ----
+// h: heading, t: text line, p: a person with their sprite (costume, accessory), gap: space
+export const CREDITS = [
+  { h: 'ลานนภา Halloween Fest' },
+  { t: '24-25 ต.ค. 2569' },
+  { gap: 10 },
+  { h: 'ทีมงาน' },
+  { p: true, who: 'jayimpacts', n: 'Jayimpacts', r: 'ซุ้ม Rotary' },
+  { p: true, who: 'vampire', n: 'Kaiching', r: 'ทีม Jintanakarn' },
+  { p: true, who: 'slasher', acc: 'cap', n: 'Captain', r: 'ทีมงาน' },
+  { t: 'น้องบาส · ดีเจต้น · เชฟตูน' },
+  { t: 'น้าเบียร์ · น้องข้าวปั้น · น้องกอล์ฟ' },
+  { t: 'ป้านิด · พี่นก · น้องปัน' },
+  { t: 'และทีมงานทุกคน' },
+  { gap: 10 },
+  { h: 'ภาพยนตร์สั้น' },
+  { t: 'ชักศอกไม่ถึงใจ' },
+  { t: 'เริ่มฉาย 1 ทุ่ม' },
+  { gap: 12 },
+  { t: 'ขอบคุณที่มาเยือนลานนภา' },
+  { t: 'แล้วพบกันที่งาน!' },
+];

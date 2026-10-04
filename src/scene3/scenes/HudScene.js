@@ -11,6 +11,7 @@ import { ZOOM_LEVELS, MIN_TOUCH_CSS_PX, PLATE_RANGE, URLS, STALL_BOOKING, TALK_R
 import { ZONES, dist, inZone } from '../logic/layout.js';
 import { STALL_ROW } from '../logic/npcs.js';
 import { audio } from '../../audio/engine.js';
+import { openUrl } from '../ui/openUrl.js';
 
 const W = 180;
 const H = 320;
@@ -235,8 +236,8 @@ export class HudScene extends Phaser.Scene {
     this.pendingTalk = null;
     const isJay = key === 'jay';
     let button = null;
-    if (t.ig) button = { label: LABELS.igButton, onPress: () => window.open(URLS.instagram, '_blank', 'noopener') };
-    if (key === STALL_ROW.key && STALL_BOOKING.url) button = { label: STALL_BOOKING.label, onPress: () => window.open(STALL_BOOKING.url, '_blank', 'noopener') };
+    if (t.ig) button = { label: LABELS.igButton, onPress: () => openUrl(URLS.instagram) };
+    if (key === STALL_ROW.key && STALL_BOOKING.url) button = { label: STALL_BOOKING.label, onPress: () => openUrl(STALL_BOOKING.url) };
     this.dialogue.show(t.pages, {
       speaker: t.speaker,
       portrait: isJay,
@@ -400,7 +401,7 @@ export class HudScene extends Phaser.Scene {
       const z = ws.designZoom;
       const sx = (n.x - cam.worldView.x) * z;
       const sy = (n.y - 14 - cam.worldView.y) * z;
-      this.plate.setText(n.def.name).setPosition(Math.round(sx), Math.round(sy - 16 - (z >= 2 ? 6 : 0))).setVisible(sy > 24 && sy < 290);
+      this.plate.setText(n.def.short).setPosition(Math.round(sx), Math.round(sy - 16 - (z >= 2 ? 6 : 0))).setVisible(sy > 24 && sy < 290);
       if (this.plate.visible) {
         const pw = Math.ceil(this.plate.width) - 8 + 6;
         g.fillStyle(0x000000, 0.75).fillRect(Math.round(sx - pw / 2), this.plate.y + 4, pw, 13);

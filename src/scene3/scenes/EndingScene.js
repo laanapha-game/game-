@@ -4,12 +4,12 @@
 // Instagram, เครดิต, หน้าแรก. Links open in a new tab.
 import Phaser from 'phaser';
 import { label, wrap } from '../ui/text.js';
-import { summaryText, voucherHowTo, prizeHowTo, ENDING_BUTTONS, CREDITS, CREDITS_PENDING_ROLE } from '../data/script.js';
+import { summaryText, voucherHowTo, prizeHowTo, ENDING_BUTTONS, CREDITS } from '../data/script.js';
 import { EVENT_CARD, URLS, VOUCHER, SPECIAL_PRIZE, MIN_TOUCH_CSS_PX } from '../config.js';
 import { ticketLine } from '../logic/ticketLine.js';
-import { NPCS } from '../logic/npcs.js';
 import { COSTUMES } from '../assets.js';
 import { audio } from '../../audio/engine.js';
+import { openUrl } from '../ui/openUrl.js';
 
 const W = 180;
 const H = 320;
@@ -79,8 +79,8 @@ export class EndingScene extends Phaser.Scene {
 
     // Buttons, anchored to the bottom.
     const B = (this.buttons = {
-      book: { r: [10, 252, 160, 20], fill: 0xffff4f, color: '#000000', text: ENDING_BUTTONS.book, act: () => window.open(URLS.booking, '_blank', 'noopener') },
-      instagram: { r: [10, 276, 160, 18], fill: 0xf02df0, color: '#000000', text: ENDING_BUTTONS.instagram, act: () => window.open(URLS.instagram, '_blank', 'noopener') },
+      book: { r: [10, 252, 160, 20], fill: 0xffff4f, color: '#000000', text: ENDING_BUTTONS.book, act: () => openUrl(URLS.booking) },
+      instagram: { r: [10, 276, 160, 18], fill: 0xf02df0, color: '#000000', text: ENDING_BUTTONS.instagram, act: () => openUrl(URLS.instagram) },
       credits: { r: [10, 298, 78, 18], fill: 0x000000, color: '#FFFFFF', text: ENDING_BUTTONS.credits, act: () => this.scene.start('S3Credits') },
       home: { r: [92, 298, 78, 18], fill: 0x000000, color: '#FFFFFF', text: ENDING_BUTTONS.home, act: () => S.callbacks.onHome() },
     });
@@ -111,21 +111,32 @@ export class CreditsScene extends Phaser.Scene {
   create() {
     designCamera(this);
     this.cameras.main.setBackgroundColor('#000000');
-    // TODO(prototype): CREDITS from lannapha-home.html. Until then: the team characters by name.
-    const list = CREDITS ?? [{ name: 'Jayimpacts', role: CREDITS_PENDING_ROLE, sprite: 'jayimpacts' }, ...NPCS.filter((n) => n.key !== 'jay').map((n) => ({ name: n.name, role: CREDITS_PENDING_ROLE, sprite: n.costume }))];
+    // CREDITS (prototype): headings, lines, and team members with their sprite beside the name.
     this.rollY = H - 120;
     this.roll = this.add.container(0, this.rollY);
     let y = 0;
-    this.roll.add(label(this, W / 2, y, 'ลานนภา Halloween Fest', { align: 'center', color: '#FFFF4F' }));
-    y += 34;
-    for (const e of list) {
-      const id = COSTUMES[e.sprite] ? e.sprite : 'nuannapa';
+    for (const e of CREDITS) {
+      if (e.gap) {
+        y += e.gap;
+        continue;
+      }
+      if (e.h) {
+        this.roll.add(label(this, W / 2, y, e.h, { align: 'center', color: '#FFFF4F' }));
+        y += 22;
+        continue;
+      }
+      if (e.t) {
+        this.roll.add(label(this, W / 2, y, e.t, { align: 'center', color: '#FFFFFF' }));
+        y += 18;
+        continue;
+      }
+      const id = COSTUMES[e.who] ? e.who : 'nuannapa';
       const cell = COSTUMES[id].cell;
-      const s = this.add.sprite(40, y + cell.h, `ch_${id}_front`, 0).setOrigin(0.5, 1).setScale(1 / 3).play(`${id}_front_idle`);
-      this.roll.add(s);
-      this.roll.add(label(this, 66, y + cell.h / 2 - 16, e.name, { color: '#FFFFFF' }));
-      this.roll.add(label(this, 66, y + cell.h / 2, e.role, { color: '#888888', px: 10 }));
-      y += Math.max(cell.h, 36) + 12;
+      this.roll.add(this.add.sprite(40, y + cell.h, `ch_${id}_front`, 0).setOrigin(0.5, 1).setScale(1 / 3).play(`${id}_front_idle`));
+      if (e.acc) this.roll.add(this.add.image(40, y + 10, `c_acc_${e.acc}`).setOrigin(0.5, 1).setScale(1 / 3));
+      this.roll.add(label(this, 66, y + cell.h / 2 - 16, e.n, { color: '#FFFFFF' }));
+      this.roll.add(label(this, 66, y + cell.h / 2, e.r, { color: '#AAAAAA', px: 10 }));
+      y += Math.max(cell.h, 36) + 8;
     }
     this.rollH = y;
     this.input.on('pointerdown', () => {
