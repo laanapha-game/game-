@@ -102,7 +102,8 @@ export const NPC_LINES = {
   aomsin: ['หวัดดีครับ Aomsin ทีมงานลานนภาครับ', 'อย่าลืมแวะซุ้มผีด้านนอกงานด้วยนะ มีผีรอทักทายอยู่'],
   // owner: Nemo tells players the game keeps improving; the last page gets the IG button (laanapha).
   nemo: ['สวัสดีครับ Nemo ทีมงานลานนภาครับ', 'เกมนี้จะยังถูกพัฒนาขึ้นเรื่อยๆ ระหว่างช่วงขายบัตรนี้นะครับ', 'สามารถเข้าไป Feedback กันได้ผ่าน DM Instagram Laanapha เลยครับ'],
-  nuea: ['สวัสดีครับ Nuea ทีมงานลานนภาครับ', 'เดินสำรวจให้ครบทุกจุด แล้วคุยกับทีมงานให้ครบนะครับ'], // TODO(owner): Nuea's own lines
+  // owner: Nuea invites players to the behind-the-scenes clips; the last page gets the IG button (nuannapha.pov).
+  nuea: ['สวัสดีครับ Nuea ทีมงานลานนภาครับ', 'อย่าลืมไปติดตามคลิปเบื้องหลังของพวกเราบน Instagram ด้วยนะครับ', 'nuannapha.pov สนุกๆ ทั้งนั้นเลย!'],
   captain: ['Captain รายงานตัว! ข้าเดินตรวจงานอยู่', 'โปรแกรมหลักเริ่ม 1 ทุ่มครึ่ง ห้ามพลาด', 'บัตรราคาขึ้นตามช่วงวัน จองเร็วถูกกว่านะ'],
 };
 

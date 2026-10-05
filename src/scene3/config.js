@@ -61,6 +61,7 @@ export const URLS = {
   booking: 'https://www.hellobooku.com/laanapha2026',
   instagram: 'https://www.instagram.com/jayimpacts/', // Jayimpacts' own IG (his dialogue button)
   eventInstagram: 'https://www.instagram.com/laanapha/', // the team's IG (thank-you panel, ending)
+  povInstagram: 'https://www.instagram.com/nuannapha.pov/', // behind-the-scenes clips (Nuea's button)
   map: 'https://maps.app.goo.gl/XxkVruXCpHoy5VWr5', // Google Maps: เมื่อคืนผมนอนไม่หลับ
 };
 

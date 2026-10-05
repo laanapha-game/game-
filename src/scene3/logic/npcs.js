@@ -11,7 +11,8 @@ import { NPC_LINES, NPC_NAMES, STALL_ROW_PAGES, STALL_ROW_SPEAKER, GHOST_NAMES, 
 /**
  * key: dialogue key; name: speaker tag (exact Thai); costume: scene 1 id; acc: accessory sprite;
  * at: standing spot (world); patrol: waypoints for walkers; link: the last page gets an IG
- * button to URLS[link] ('instagram' = Jayimpacts' own, 'eventInstagram' = @laanapha).
+ * button to URLS[link] ('instagram' = Jayimpacts' own, 'eventInstagram' = @laanapha,
+ * 'povInstagram' = @nuannapha.pov, behind the scenes).
  */
 export const NPCS = [
   { key: 'po', name: 'Po', costume: 'team_po', at: { x: DESK.x, y: DESK.y - 9 } }, // behind the registration desk
@@ -19,7 +20,7 @@ export const NPCS = [
   { key: 'peay', name: 'Peay', costume: 'team_peay', at: { x: SHOPS[1].x + 22, y: SHOPS[1].y - 3 } }, // between the drinks and pizza stalls
   { key: 'aomsin', name: 'Aomsin', costume: 'team_aomsin', at: { x: (TABLES[1].x + TABLES[2].x) / 2, y: TABLES[5].y + 6 } }, // the banquet tables' middle aisle
   { key: 'nemo', name: 'Nemo', costume: 'team_nemo', at: spread({ x: 150, y: 132 }), link: 'eventInstagram' }, // the beanbags in front of the screen; feedback by DM to the event's IG
-  { key: 'nuea', name: 'Nuea', costume: 'team_nuea', at: { x: BAND.rug.x + 14, y: BAND.rug.y - 2 } }, // the band corner's rug (owner's Drive art)
+  { key: 'nuea', name: 'Nuea', costume: 'team_nuea', at: { x: BAND.rug.x + 14, y: BAND.rug.y - 2 }, link: 'povInstagram' }, // the band corner's rug (owner's Drive art)
   { key: 'jay', name: 'Jayimpacts', costume: 'jayimpacts', at: { x: SHOPS[4].x + 20, y: SHOPS[4].y - 3 }, link: 'instagram' }, // beside the Rotary stall
 ].map((n) => ({ ...n, short: n.name, name: NPC_NAMES[n.key], pages: NPC_LINES[n.key] })); // short: the name plate over the head
 

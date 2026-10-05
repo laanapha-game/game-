@@ -109,6 +109,8 @@ test('talk targets (the team, Jayimpacts and the stall row): each opens its dial
   assert.equal(w.progress.vouchers, 1, 'talking with everyone = 1 special-prize coupon (owner)');
   assert.equal(NPCS.find((n) => n.key === 'jay').link, 'instagram', "Jayimpacts' own IG button");
   assert.equal(NPCS.find((n) => n.key === 'nemo').link, 'eventInstagram', 'Nemo: feedback by DM to @laanapha');
+  assert.equal(NPCS.find((n) => n.key === 'nuea').link, 'povInstagram', 'Nuea: behind-the-scenes clips on @nuannapha.pov');
+  assert.ok(NPC_LINES.nuea.some((l) => l.includes('nuannapha.pov')), 'Nuea names the channel');
   assert.ok(NPC_LINES.nemo.some((l) => l.includes('Feedback') && l.includes('DM Instagram')), 'Nemo says the game keeps improving, feedback by DM');
 });
 

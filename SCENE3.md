@@ -82,7 +82,8 @@ Preview: `docs/scene3/team_contact_sheet.png`.
 Talk targets: the six, Jayimpacts and the lane stall row. Each counts once; talking with all eight gives one
 special-prize coupon (owner; no coupon per talk), and the team announces later what it is. Nemo tells players the
 game keeps improving during ticket sales and asks for feedback by DM; his last page has an IG button to @laanapha.
-Po, Peay, Aomsin and Nuea's lines and roles are placeholders (`TODO(owner)` in `src/scene3/data/script.js`); Kaiching keeps
+Nuea invites players to the behind-the-scenes clips on Instagram, with an IG button to @nuannapha.pov.
+Po, Peay and Aomsin's lines and roles are placeholders (`TODO(owner)` in `src/scene3/data/script.js`); Kaiching keeps
 the prototype's lines. The ghosts outside talk too (they do not count). The bird-costume staff and the band were removed earlier; their lines are still in `NPC_LINES`.
 
 Regenerate the team after new Drive art: `pip install pillow numpy scipy && python3 tools/team_from_drive.py`
