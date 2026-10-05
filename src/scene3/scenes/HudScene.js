@@ -1,5 +1,5 @@
 // Scene 3 HUD and input (spec 6.2): every pointer and key goes through here first.
-// Buttons: back (top left), progress chip (top centre, opens the checklist), MAP, ภารกิจ,
+// Buttons: back (top left), music on/off (top right), progress chip (top centre, opens the checklist), MAP, ภารกิจ,
 // AUTO/TALK, DAY/NIGHT, + and - zoom on the right edge. Then dialogue, overlays, and
 // finally the world: hold a finger to walk toward it, tap a character to talk.
 // Design space 180 x 320; hit areas grow to 44 CSS px.
@@ -18,6 +18,7 @@ const W = 180;
 const H = 320;
 const BTN = {
   back: [2, 2, 22, 17],
+  music: [156, 2, 22, 17], // background music on/off (a drawn note)
   zoomIn: [160, 118, 18, 18],
   zoomOut: [160, 140, 18, 18],
   map: [2, 300, 42, 18],
@@ -45,7 +46,7 @@ export class HudScene extends Phaser.Scene {
 
     this.g = this.add.graphics().setDepth(10);
     this.texts = {};
-    for (const [k, txt] of Object.entries({ back: '<', zoomIn: '+', zoomOut: '-', map: LABELS.map, missions: LABELS.missions, act: LABELS.auto, night: LABELS.night })) {
+    for (const [k, txt] of Object.entries({ back: '<', music: '', zoomIn: '+', zoomOut: '-', map: LABELS.map, missions: LABELS.missions, act: LABELS.auto, night: LABELS.night })) {
       this.texts[k] = label(this, 0, 0, txt, { depth: 11, align: 'center' });
     }
     this.chip = label(this, W / 2, 0, '', { depth: 11, align: 'center' });
@@ -115,6 +116,8 @@ export class HudScene extends Phaser.Scene {
       this.S.input.target = null;
       return;
     }
+    // Music works at any time, even in the welcome and in conversations.
+    if (!this.S.mapOpen && !w.ended && this.hit(BTN.music, x, y)) return this.press('music');
     w.stopAuto();
     if (this.dialogue.open) return this.dialogue.tap(x, y, (r, a, b) => this.hit(r, a, b));
     if (this.overlay === 'thanks') return this.tapThanks(x, y);
@@ -227,6 +230,15 @@ export class HudScene extends Phaser.Scene {
     const S = this.S;
     const w = this.world;
     if (k === 'back') return S.callbacks.onBack();
+    if (k === 'music') {
+      // The note answers for the music the player hears: with all sound off (scene 1's
+      // speaker), turning it on brings the sound back too.
+      if (!audio.sound) {
+        audio.setSound(true);
+        audio.setMusic(true);
+      } else audio.setMusic(!audio.musicOn);
+      return;
+    }
     if (k === 'zoomIn') return this.zoomStep(-1);
     if (k === 'zoomOut') return this.zoomStep(1);
     if (k === 'map') return this.openMap();
@@ -573,6 +585,20 @@ export class HudScene extends Phaser.Scene {
     this.hintTexts.forEach((t, i) => t.setOrigin(0.5, 0).setPosition(bx + bw / 2, by - 3 + i * 13));
   }
 
+  /** Eighth note; struck through in red when the music is off. */
+  drawMusicButton(g, r, box) {
+    const on = audio.sound && audio.musicOn;
+    box(r, 0x000000, 0xffff4f);
+    const x = r[0] + 9;
+    const y = r[1] + 4;
+    g.fillStyle(on ? 0xffffff : 0x888888, 1);
+    g.fillRect(x + 3, y, 1, 8); // stem
+    g.fillRect(x + 4, y, 3, 1); // flag
+    g.fillRect(x + 6, y + 1, 1, 2);
+    g.fillEllipse(x + 1.5, y + 8, 4, 3); // head
+    if (!on) g.lineStyle(1.5, 0xde5238, 1).lineBetween(r[0] + 5, r[1] + 14, r[0] + 17, r[1] + 3);
+  }
+
   drawHud(time) {
     const g = this.g.clear();
     const w = this.world;
@@ -589,6 +615,10 @@ export class HudScene extends Phaser.Scene {
       const t = this.texts[k];
       t.setVisible(!hidden);
       if (hidden) continue;
+      if (k === 'music') {
+        this.drawMusicButton(g, r, box);
+        continue;
+      }
       const active = (k === 'act' && (talkable || w.auto)) || (k === 'map' && this.overlay === 'map');
       box(r, active ? 0x8f2f20 : 0x000000, locked ? 0x666666 : 0xffff4f);
       t.setOrigin(0.5, 0.5).setPosition(Math.round(r[0] + r[2] / 2), Math.round(r[1] + r[3] / 2) - 1).setColor(locked ? '#777777' : k === 'act' && talkable ? '#FFFF4F' : '#FFFFFF');

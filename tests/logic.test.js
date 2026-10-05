@@ -157,7 +157,7 @@ test('Krahang-riding art exists for every scene 1 character, 2 frames, feet cent
 
 test('music patterns use known instruments, sane notes and lengths', async () => {
   const { MOODS } = await import('../src/audio/music.js');
-  const INSTR = ['box', 'pluck', 'bass', 'pad', 'stab', 'organ', 'clav', 'theremin', 'drone', 'scream', 'hat', 'kick', 'snare'];
+  const INSTR = ['box', 'pluck', 'bass', 'pad', 'stab', 'organ', 'clav', 'theremin', 'drone', 'scream', 'hat', 'kick', 'snare', 'keys', 'upright', 'vibes', 'brush', 'ride'];
   for (const [name, m] of Object.entries(MOODS)) {
     for (const x of [0, 0.5, 1]) {
       assert.ok(m.bpm(x) >= 60 && m.bpm(x) <= 180, name);

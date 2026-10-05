@@ -67,7 +67,8 @@ export async function startScene3({ parent = 'game', character, onBack, onHome, 
       G.progress.scene3 = world.snapshot();
     },
   };
-  audio.mood(null); // no music in scene 3
+  audio.ambient(null);
+  audio.mood('jazz'); // chill jazz town (src/audio/music.js)
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: parentEl,

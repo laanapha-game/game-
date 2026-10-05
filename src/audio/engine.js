@@ -4,7 +4,7 @@
 //   audio.setSound(on)   master switch (scene 1's speaker, scene 2's speaker button)
 //   audio.setMusic(on)   music only (scene 2's note button); ambience and effects stay
 //   audio.sfx(name, o)   one-shot effect (SFX in synth.js)
-//   audio.mood(name, o)  background music: 'title' | 'calm' | 'funky' | 'chase' | null
+//   audio.mood(name, o)  background music: 'title' | 'calm' | 'funky' | 'chase' | 'jazz' | null
 //   audio.ambient(name)  'night' (wind and crickets) | null
 //   audio.hold(name, on) held sound on/off (LOOPS in synth.js: 'aura')
 //   audio.intensity(x)   0..1, chase tempo and lead
@@ -221,6 +221,9 @@ export const audio = {
       if (!ensureContext()) return;
       bus.master.gain.value = 1;
       startScheduler();
+      // A context made inside the tap may already be running: start what is waiting
+      // (scene 3's own page sets its music before the first tap).
+      if (ctx.state === 'running') return restartLayers();
     }
     if (ctx.state !== 'running') ctx.resume?.().then(() => restartLayers(), () => {});
   },

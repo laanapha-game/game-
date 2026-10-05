@@ -33,6 +33,32 @@ const FUNK_THEREMIN = { 0: 76, 16: 75 };
 const CHASE_PULSE = [45, 45, 45, 45, 45, 45, 45, 45, /**/ 46, 46, 46, 46, 45, 45, 44, 44];
 const CHASE_SCREAM = { 6: 81, 7: 82, 14: 81, 15: 80, 22: 81, 23: 82, 24: 87, 30: 86, 31: 85 };
 
+// Scene 3 (the festival grounds): chill jazz town. Swung 8ths at an easy tempo, a walking
+// upright bass, rootless Rhodes voicings, brushes and ride, and a vibraphone tune every
+// other chorus. Changes in D major: Em7 A7 Dmaj7 Bm7 | Gmaj7 F#7 Bm7 E7-A7.
+const JAZZ_CHORDS = [
+  [55, 59, 62, 66], [55, 59, 61, 66], [54, 57, 61, 64], [50, 54, 57, 61],
+  [54, 57, 59, 62], [52, 55, 58, 61], [50, 54, 57, 61], [50, 54, 56, 59],
+];
+const JAZZ_TURN = [55, 59, 61, 66]; // A13 on the last bar's beat 3
+const JAZZ_WALK = [
+  [40, 43, 47, 46], [45, 49, 52, 51], [38, 42, 45, 46], [47, 50, 54, 44],
+  [43, 47, 50, 41], [42, 46, 49, 48], [47, 45, 43, 41], [40, 44, 45, 41],
+];
+// step -> [midi, length in steps] over the 64-step chorus
+const JAZZ_TUNE = {
+  2: [71, 1], 3: [74, 1], 4: [76, 3],
+  8: [73, 1], 9: [71, 1], 10: [69, 4], 15: [67, 1],
+  16: [66, 3], 20: [69, 1], 21: [73, 1], 22: [76, 2],
+  24: [74, 4], 29: [73, 1], 30: [71, 2],
+  34: [71, 1], 35: [74, 1], 36: [78, 4],
+  40: [76, 1], 41: [73, 1], 42: [70, 3], 46: [73, 1],
+  48: [74, 2], 50: [73, 1], 51: [71, 1], 52: [69, 3],
+  56: [68, 2], 58: [71, 1], 59: [74, 1], 60: [73, 3],
+};
+// Comping rhythm in a bar of 8 swung 8ths: [step, length, gain scale].
+const JAZZ_COMP = [[[0, 3, 1], [3, 1, 0.7]], [[1, 1, 0.7], [4, 3, 1]], [[0, 2, 1], [5, 2, 0.8]], [[3, 1, 0.8], [6, 2, 0.9]]];
+
 export const MOODS = {
   title: {
     bpm: () => 84,
@@ -83,6 +109,26 @@ export const MOODS = {
       if (s % 16 === 0 || s % 16 === 6 || s % 16 === 10) out.push(['kick', 0, 1, 0.26]);
       if (s % 8 === 4) out.push(['snare', 0, 1, 0.15]);
       if (s % 2 === 0) out.push(['hat', 0, 1, s % 4 === 2 ? 0.045 : 0.025]);
+      return out;
+    },
+  },
+  jazz: {
+    bpm: () => 92,
+    stepsPerBeat: 2,
+    swing: 0.3,
+    length: 128, // two choruses: the tune, then the band alone
+    notes(s) {
+      const out = [];
+      const c = s % 64;
+      const bar = Math.floor(c / 8);
+      const b = c % 8;
+      if (b % 2 === 0) out.push(['upright', JAZZ_WALK[bar][b / 2], 2, 0.16]);
+      const voicing = bar === 7 && b >= 4 ? JAZZ_TURN : JAZZ_CHORDS[bar];
+      for (const [at, len, k] of JAZZ_COMP[(bar + (s >= 64 ? 1 : 0)) % 4]) if (b === at) out.push(...chord('keys', voicing, len, 0.03 * k));
+      if (s < 64 && JAZZ_TUNE[c]) out.push(['vibes', JAZZ_TUNE[c][0], JAZZ_TUNE[c][1], 0.07]);
+      if (b % 2 === 0 || b === 3 || b === 7) out.push(['ride', 0, 1, b % 2 ? 0.018 : 0.026]);
+      if (b === 2 || b === 6) out.push(['brush', 0, 1, 0.05]);
+      if (b === 0 && bar % 2 === 0) out.push(['kick', 0, 1, 0.1]);
       return out;
     },
   },

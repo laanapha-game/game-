@@ -124,6 +124,29 @@ export const INSTRUMENTS = {
   scream(B, t, m, dur, g) {
     tone(B, t, midiHz(m), { type: 'sawtooth', dur: Math.max(0.1, dur), gain: g, attack: 0.01, lp: 2600, vib: 18, vibHz: 9 });
   },
+  // Scene 3's jazz: electric piano (Rhodes-like: sine body, soft bell partial, slow tremolo).
+  keys(B, t, m, dur, g) {
+    tone(B, t, midiHz(m), { dur: Math.max(0.3, dur), gain: g, attack: 0.008, vib: 1.5, vibHz: 4.5 });
+    tone(B, t, midiHz(m) * 2, { type: 'triangle', dur: Math.max(0.15, dur * 0.4), gain: g * 0.22, lp: 2400 });
+  },
+  // Upright bass: round triangle, plucked, dark.
+  upright(B, t, m, dur, g) {
+    tone(B, t, midiHz(m), { type: 'triangle', dur: Math.max(0.2, dur * 0.85), gain: g, attack: 0.006, lp: 700 });
+  },
+  // Vibraphone lead: sine with a shimmer and a long ring.
+  vibes(B, t, m, dur, g) {
+    tone(B, t, midiHz(m), { dur: Math.max(0.7, dur * 1.6), gain: g, attack: 0.004, vib: 2.5, vibHz: 5.5 });
+    tone(B, t, midiHz(m) * 4, { dur: 0.12, gain: g * 0.1 });
+  },
+  // Brushes on the snare: a soft swish.
+  brush(B, t, m, dur, g) {
+    noise(B, t, { dur: 0.16, gain: g, attack: 0.03, type: 'bandpass', freq: 3200, freqTo: 2200, q: 0.7 });
+  },
+  // Ride cymbal: a longer, gentler hat.
+  ride(B, t, m, dur, g) {
+    noise(B, t, { dur: 0.14, gain: g, type: 'highpass', freq: 6000 });
+    tone(B, t, 5200, { type: 'triangle', dur: 0.1, gain: g * 0.15 });
+  },
   hat(B, t, m, dur, g) {
     noise(B, t, { dur: 0.03, gain: g, type: 'highpass', freq: 7000 });
   },
