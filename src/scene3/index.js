@@ -90,7 +90,10 @@ export async function startScene3({ parent = 'game', character, onBack, onHome, 
     },
   };
   game.registry.set('scene3', S);
-  game.events.once('ready', () => installScene3Scale(game));
+  game.events.once('ready', () => {
+    installScene3Scale(game);
+    phoneGestures(game.canvas);
+  });
   S.publish();
   if (isDev) {
     window.__scene3 = {
@@ -113,4 +116,19 @@ export async function startScene3({ parent = 'game', character, onBack, onHome, 
     };
   }
   return game;
+}
+
+/**
+ * Phones: scene 3 has its own pinch zoom and hold-to-walk, so the browser must not pinch-zoom
+ * the page, pan it or pull it to refresh while a finger is on the game.
+ */
+const guarded = new WeakSet();
+function phoneGestures(canvas) {
+  if (!canvas || guarded.has(canvas)) return;
+  guarded.add(canvas);
+  canvas.style.touchAction = 'none';
+  const stop = (e) => e.preventDefault();
+  canvas.addEventListener('touchmove', stop, { passive: false });
+  canvas.addEventListener('contextmenu', stop);
+  document.addEventListener('gesturestart', (e) => canvas.isConnected && e.preventDefault(), { passive: false }); // iOS Safari pinch
 }

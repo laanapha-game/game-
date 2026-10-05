@@ -19,7 +19,8 @@
     "build:site": "vite build --config vite.site.config.js",
     "preview:site": "vite preview --config vite.site.config.js --host",
     "site:assets": "node tools/site-assets.mjs",
-    "test:full": "node tests/e2e/fullgame.mjs"
+    "test:full": "node tests/e2e/fullgame.mjs",
+    "test:phone": "node tests/e2e/phone.mjs"
   },
   "repository": {
     "type": "git",
