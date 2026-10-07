@@ -66,7 +66,8 @@ export function wrapText(text, maxWidth, measure) {
     }
     // A single word wider than the box: break after '/' or '.' (URLs) if that
     // fits, otherwise between grapheme clusters.
-    const parts = word.split(/(?<=[/.])/);
+    // (Not split(/(?<=[/.])/): regex lookbehind throws on iOS Safari before 16.4.)
+    const parts = word.match(/[^/.]*[/.]|[^/.]+$/g) ?? [word];
     if (parts.length > 1 && parts.every((p) => measure(p) <= maxWidth)) {
       for (const part of parts) {
         if (line !== '' && measure(line + part) > maxWidth) push();
