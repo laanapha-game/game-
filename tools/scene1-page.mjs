@@ -7,12 +7,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { scene1SourceFile } from './scene1-characters.mjs';
 
 // Owner edits to scene 1's home screen: the event's own Instagram (@laanapha) as the
-// main social button. Bottom rows become [start | tickets] and [IG LAANAPHA | IG JAYIMPACTS].
+// main social button. Bottom rows become [start | tickets] and [IG LAANAPHA | IG NUANNAPHA] (@nuannapha.pov, was @jayimpacts).
 const EDITS = [
   {
     what: 'event Instagram URL',
     find: "const FOLLOW_URL = 'https://www.instagram.com/jayimpacts/';",
-    replace: "const FOLLOW_URL = 'https://www.instagram.com/jayimpacts/';\nconst EVENT_IG_URL = 'https://www.instagram.com/laanapha/';   /* owner edit: the event's main Instagram */",
+    replace: "const FOLLOW_URL = 'https://www.instagram.com/nuannapha.pov/';   /* owner edit: was instagram.com/jayimpacts */\nconst EVENT_IG_URL = 'https://www.instagram.com/laanapha/';   /* owner edit: the event's main Instagram */",
   },
   {
     what: 'hook for the event Instagram',
@@ -54,7 +54,12 @@ function drawIgLabel(b,p,label){`,
   {
     what: 'draw the event Instagram button',
     find: "button('follow','JAYIMPACTS','small',t,false);",
-    replace: "button('follow','JAYIMPACTS','small',t,false); drawEventIg(BTN.eventig,t);",
+    replace: "button('follow','NUANNAPHA','small',t,false); drawEventIg(BTN.eventig,t);",
+  },
+  {
+    what: 'second Instagram button is Nuannapha (was Jayimpacts): its fallback link text',
+    find: "openLink(FOLLOW_URL,'INSTAGRAM.COM/JAYIMPACTS')",
+    replace: "openLink(FOLLOW_URL,'INSTAGRAM.COM/NUANNAPHA.POV')",
   },
 ];
 

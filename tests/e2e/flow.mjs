@@ -228,7 +228,7 @@ for (const id of ids) {
   await ctx.close();
 }
 
-// Home screen links (owner edit): the event's Instagram, Jayimpacts' and tickets.
+// Home screen links (owner edit): the event's Instagram, Nuannapha's (@nuannapha.pov, was Jayimpacts) and tickets.
 if (!only) {
   const { ctx, page, errors } = await open();
   await page.evaluate(() => {
@@ -241,8 +241,8 @@ if (!only) {
   }
   const opened = await page.evaluate(() => window.__opened);
   check(
-    JSON.stringify(opened) === JSON.stringify(['https://www.instagram.com/laanapha/', 'https://www.instagram.com/jayimpacts/', 'https://www.hellobooku.com/laanapha2026']),
-    `home: IG LAANAPHA, IG JAYIMPACTS and tickets open their links (${opened.join(', ')})`,
+    JSON.stringify(opened) === JSON.stringify(['https://www.instagram.com/laanapha/', 'https://www.instagram.com/nuannapha.pov/', 'https://www.hellobooku.com/laanapha2026']),
+    `home: IG LAANAPHA, IG NUANNAPHA and tickets open their links (${opened.join(', ')})`,
   );
   check(errors.length === 0, `no console errors on home links (${errors.join(' | ')})`);
   await ctx.close();
