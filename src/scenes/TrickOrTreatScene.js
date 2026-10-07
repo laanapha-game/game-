@@ -204,36 +204,13 @@ export class TrickOrTreatScene extends Phaser.Scene {
     await this.scrollTo(i, C.WALK_SEGMENT_S * 1000, C.WALK_SPEED_PX_S / C.RUN_SPEED_PX_S);
   }
 
-  // S0: angel intro, 5 pages, no timer, then the angel disappears.
+  // S0: intro pages, no timer. Spoken by Nuannapha (NAMES.angel) with no character on
+  // screen (the Jayimpacts angel sprite was removed by the owner).
   async s0Angel() {
     this.setState('S0');
     this.bird.play('idle', 'side');
-    const angelY = C.GROUND_Y - 8;
-    // Pops in with a poof and sparkles, then just floats (one frame, no frame swaps).
-    const angel = this.add.sprite(52, angelY + 6, 'angel_jayimpacts', 0).setOrigin(0.5, 1).setDepth(40).setAlpha(0);
-    // The real angel sheet has the halo drawn in; the separate halo is only for marker art.
-    const halo = this.add.image(52, angelY - 43, 'angel_halo').setDepth(41).setAlpha(0).setVisible(!this.registry.get('realArt')?.has('angel_jayimpacts'));
-    burst(this, 'angel_poof', 52, angelY - 28, { depth: 43 });
-    audio.sfx('angel_poof');
-    audio.sfx('angel_appear');
-    audio.hold('aura', true); // her aura: a faint shimmer while she is here
-    for (let i = 0; i < 4; i++) burst(this, 'angel_glint', 52 + Phaser.Math.Between(-18, 18), angelY - Phaser.Math.Between(8, 56), { depth: 42 });
-    await this.tweenP({ targets: [angel, halo], alpha: 1, y: '-=6', duration: 350, ease: 'Back.easeOut' });
-    this.tweens.add({ targets: [angel, halo], y: '-=3', duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    const glints = this.time.addEvent({
-      delay: 600,
-      loop: true,
-      callback: () => {
-        burst(this, 'angel_glint', 52 + Phaser.Math.Between(-16, 16), angel.y - Phaser.Math.Between(10, 46), { depth: 42 });
-      },
-    });
+    await this.wait(300);
     await this.talk(ANGEL_PAGES, { speaker: NAMES.angel });
-    glints.remove();
-    burst(this, 'angel_poof', 52, angel.y - 24, { depth: 43 });
-    audio.hold('aura', false);
-    audio.sfx('angel_poof');
-    angel.destroy();
-    halo.destroy();
     await this.wait(400);
   }
 

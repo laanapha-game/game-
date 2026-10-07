@@ -60,7 +60,7 @@ export const REPLY_RUDE = 'เรื่องของมึง จะหนี�
 // ---- Speaker names and UI labels ----
 // TODO: not in the spec script. Placeholders until the owner supplies copy.
 export const NAMES = {
-  angel: 'Jayimpacts',
+  angel: 'Nuannapha', // the intro speaker (was 'Jayimpacts')
   stall1: 'กระหัง', // TODO copy
   stall2: 'ผีในไห', // TODO copy
   stall3: 'ผีนางรำสุดสวย',
