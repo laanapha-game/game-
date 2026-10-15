@@ -14,6 +14,8 @@
 import { startScene2 } from './scene2.js';
 import { characterFromScene1 } from './integration/scene1.js';
 import { audio } from './audio/engine.js';
+import { createHub } from './hub/hub.js';
+import { createStore, parseScan } from './hub/store.js';
 
 const G = window.LannaphaGame;
 const box = document.getElementById('game');
@@ -38,6 +40,7 @@ let scene1Sound = false; // scene 1's own flag, as followed here
 let pressed = null;
 let syncing = false;
 let inScene2 = false;
+let inHub = false; // scene 3, the sticker hub (src/hub/): it has its own speaker button
 
 function toScene1(e) {
   const r = canvas.getBoundingClientRect();
@@ -55,12 +58,12 @@ function onHomeScreen() {
   return d[0] === 255 && d[1] === 255 && d[2] === 79;
 }
 canvas.addEventListener('pointerdown', (e) => {
-  if (syncing || inScene2) return;
+  if (syncing || inScene2 || inHub) return;
   const p = toScene1(e);
   pressed = onSpeaker(p) ? { ...p, home: onHomeScreen() } : null;
 });
 canvas.addEventListener('pointerup', (e) => {
-  if (syncing || inScene2 || !pressed) return;
+  if (syncing || inScene2 || inHub || !pressed) return;
   const p = toScene1(e);
   const swipe = !pressed.home && pressed.y < 134 && Math.abs(p.x - pressed.x) > 16 && Math.abs(p.y - pressed.y) < 24;
   if (onSpeaker(p) && !swipe) {
@@ -96,7 +99,7 @@ document.addEventListener(
   function firstTap(e) {
     if (!e.isTrusted) return;
     document.removeEventListener('pointerdown', firstTap, true);
-    if (!inScene2) syncScene1Speaker();
+    if (!inScene2 && !inHub) syncScene1Speaker();
   },
   true,
 );
@@ -135,7 +138,7 @@ G.registerScene('scene2', {
         if (registered.has('scene3')) {
           stopScene2();
           audio.mood(null); // scene 3 sets its own sound
-          G.go('scene3', c);
+          G.go('scene3', { character: c, fromGame: true });
         } else scene.scene.start('Scene3Stub', { character: c });
       },
       onGameOver: () => {
@@ -153,3 +156,41 @@ G.registerScene('scene2', {
   onTap() {},
   exit: stopScene2,
 });
+
+// ---------- scene 3: the sticker hub ----------
+// After scene 2 the player lands on the hub: 8 stall stickers to collect by scanning each
+// stall's QR. Progress is saved in this browser (src/hub/store.js). Opening the site again,
+// or scanning a stall QR with the phone camera (laanapha.com/?cp=<code>), goes straight to
+// the hub; its back button returns to scene 1's home to play the game again.
+const store = createStore();
+const hub = createHub({
+  G,
+  store,
+  onEnter() {
+    inHub = true;
+    box.hidden = true;
+  },
+  onExit() {
+    inHub = false;
+    setTimeout(syncScene1Speaker, 450);
+  },
+  onBack: () => G.goHome(),
+});
+G.registerScene('scene3', hub.scene);
+if (import.meta.env.DEV) window.__hub = { store, hub };
+
+{
+  const url = new URL(window.location.href);
+  const cpParam = url.searchParams.get('cp');
+  const saveParam = url.searchParams.get('save');
+  if (cpParam || saveParam) {
+    url.searchParams.delete('cp');
+    url.searchParams.delete('save');
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+  let toast = null;
+  if (saveParam) toast = store.importCode(saveParam) ? 'ย้ายข้อมูลเรียบร้อย' : 'โค้ดย้ายเครื่องไม่ถูกต้อง';
+  const scan = cpParam ? parseScan(cpParam) : null;
+  if (cpParam && !scan) toast = 'QR นี้ไม่ใช่ของลานนภา';
+  if (scan || saveParam || store.state.unlocked || url.hash === '#stickers') G.go('scene3', { scan, toast });
+}

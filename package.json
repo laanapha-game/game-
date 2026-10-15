@@ -11,8 +11,9 @@
     "sprites": "node tools/prep-sprites.mjs",
     "build:demo": "vite build --config vite.demo.config.js",
     "check:dialogue": "node tests/e2e/dialogue-check.mjs",
-    "scene1": "node tools/scene1-page.mjs && node tools/prep-sprites.mjs scene1 && python3 tools/krahang_combo.py",
-    "test:flow": "node tests/e2e/flow.mjs"
+    "scene1": "node tools/scene1-page.mjs && node tools/hub-brand.mjs && node tools/prep-sprites.mjs scene1 && python3 tools/krahang_combo.py",
+    "test:flow": "node tests/e2e/flow.mjs",
+    "qr": "node tools/make-qr.mjs"
   },
   "repository": {
     "type": "git",
@@ -23,7 +24,9 @@
   },
   "homepage": "https://github.com/trerapop/Lannapa-Halloween-Fest#readme",
   "dependencies": {
-    "phaser": "^4.2.1"
+    "jsqr": "^1.4.0",
+    "phaser": "^4.2.1",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "playwright": "^1.56.1",
