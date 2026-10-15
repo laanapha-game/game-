@@ -138,6 +138,14 @@ const clockIcon = sprite(11, 11, (x, y) => {
   if ((x === 5 && y >= 2 && y <= 5) || (y === 5 && x >= 5 && x <= 8)) return COL.black;
   return COL.white;
 });
+const giftIcon = sprite(11, 11, (x, y) => {
+  if (y === 0 && (x === 3 || x === 7)) return COL.black;
+  if (y === 1 && (x === 2 || x === 4 || x === 6 || x === 8)) return COL.black;
+  if (y === 2 && x >= 1 && x <= 9) return COL.black;
+  if (y >= 3 && y <= 4 && x >= 1 && x <= 9) return x === 5 ? COL.yellow : COL.black;
+  if (y >= 5 && y <= 10 && x >= 2 && x <= 8) return x === 5 ? COL.yellow : x === 2 || x === 8 || y === 10 ? COL.black : COL.white;
+  return null;
+});
 const miniPumpkin = (lit) =>
   sprite(11, 10, (x, y) => {
     if (x === 5 && y === 0) return COL.green;
@@ -262,7 +270,7 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
   const viewerHint = document.createElement('p');
   viewerHint.style.margin = '0';
   viewerHint.style.fontSize = '18px';
-  viewerHint.textContent = 'กดค้างที่รูปเพื่อบันทึกลงเครื่อง';
+  viewerHint.innerHTML = 'กดค้างที่รูป แล้วเลือก <b>บันทึกรูปภาพ</b><br>จากนั้นเปิด IG Story แล้วแท็ก <b>@laanapha</b>';
   const viewerRow = document.createElement('div');
   Object.assign(viewerRow.style, { display: 'flex', gap: '12px' });
   const btnCss = { font: 'inherit', fontSize: '18px', padding: '8px 18px', border: `2px solid ${COL.yellow}`, background: '#000', color: COL.yellow, textDecoration: 'none', cursor: 'pointer' };
@@ -278,7 +286,6 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
   viewer.append(viewerImg, viewerHint, viewerRow);
   viewerClose.addEventListener('click', () => {
     viewer.style.display = 'none';
-    if (viewerImg.src) URL.revokeObjectURL(viewerImg.src);
   });
   document.body.append(video, fileInput, input, viewer);
 
@@ -493,27 +500,50 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
       getSprite: (id, view, frame) => G.getSprite(id, view, frame),
     };
   }
+  // The story image is made as soon as the summary opens, so the save tap can open the
+  // share sheet straight away (iOS only allows it right after a tap).
+  let story = null; // { key, blob, dataUrl }
+  const storyKey = () => JSON.stringify([store.state.stamps, store.state.name, store.state.finishedAt, store.status(), character()]);
+  async function prepareStory() {
+    const key = storyKey();
+    if (story?.key === key) return story;
+    const blob = await exportCard(cardData(), 0.4);
+    if (!blob) return null;
+    const dataUrl = await new Promise((res) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = () => res(null);
+      r.readAsDataURL(blob);
+    });
+    story = { key, blob, dataUrl };
+    return story;
+  }
   function openSummary(note) {
     endSeen = true;
     open('summary');
     if (note) showToast(note, 2400);
+    const tryPrep = () => (artReady ? prepareStory() : setTimeout(tryPrep, 200));
+    tryPrep();
   }
   async function saveImage() {
-    showToast('กำลังสร้างรูป...', 1500);
-    const blob = await exportCard(cardData(), performance.now() / 1000);
-    if (!blob) return showToast('สร้างรูปไม่สำเร็จ', 2000);
-    const file = new File([blob], 'laanapha-sticker-hunt.png', { type: 'image/png' });
+    let st = story?.key === storyKey() ? story : null;
+    if (!st) {
+      showToast('กำลังสร้างรูป...', 1500);
+      st = await prepareStory();
+    }
+    if (!st) return showToast('สร้างรูปไม่สำเร็จ', 2000);
+    const file = new File([st.blob], 'laanapha-sticker-hunt.png', { type: 'image/png' });
     try {
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'ลานนภา ล่าสติกเกอร์ผี' });
+        await navigator.share({ files: [file] });
         return;
       }
     } catch (e) {
       if (e?.name === 'AbortError') return;
     }
-    const url = URL.createObjectURL(blob);
-    viewerImg.src = url;
-    viewerDl.href = url;
+    // no file sharing here (e.g. Instagram's in-app browser): show the image to long-press
+    viewerImg.src = st.dataUrl;
+    viewerDl.href = st.dataUrl;
     viewer.style.display = 'flex';
   }
 
@@ -794,6 +824,12 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
         audio.sfx('choice_press');
         startScan();
       });
+    } else if (st === 'complete') {
+      bigButton(SCAN_BTN, 'รับรางวัล!', pressed === 'scan', t, giftIcon);
+      hit('scan', SCAN_BTN, () => {
+        audio.sfx('choice_press');
+        open('reward');
+      });
     } else {
       bigButton(SCAN_BTN, 'ดูสรุปผล', pressed === 'scan', t);
       hit('scan', SCAN_BTN, () => {
@@ -1042,92 +1078,125 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
       click();
       openInput('name', { x: 20, y: 132, w: 140, h: 22 }, 'summary');
     }, 0);
+    // close: an X in the corner
+    const X = { x: 158, y: 34, w: 16, h: 16 };
+    rect(X.x - 1, X.y - 1, X.w + 2, X.h + 2, COL.yellow);
+    rect(X.x, X.y, X.w, X.h, pressed === 'close' ? COL.yellow : COL.black);
+    textS('X', X.x + 8, X.y + 5, pressed === 'close' ? COL.black : COL.yellow, 'c');
+    hit('close', X, () => {
+      click();
+      close();
+    }, 4);
     const done = store.status() === 'complete';
-    const S = { x: 8, y: 295, w: done ? 74 : 100, h: 16 };
-    bigButton(S, 'บันทึกรูป', pressed === 'save', t);
+    if (done) {
+      // the prize button pops up once all 8 are in
+      const k = Math.min(1, (now - modal.t0) / 450);
+      const rise = Math.round((1 - k) ** 2 * 30);
+      const R = { x: 8, y: 295 + rise, w: 84, h: 16 };
+      bigButton(R, 'รับรางวัล', pressed === 'prizebtn', t, giftIcon);
+      if (Math.floor(t * 4) % 2 === 0) {
+        sparkle(R.x + 2, R.y - 3, true);
+        sparkle(R.x + R.w - 3, R.y + R.h + 2, false);
+      }
+      if (k >= 1)
+        hit('prizebtn', R, () => {
+          audio.sfx('choice_press');
+          open('reward');
+        });
+    }
+    const S = done ? { x: 100, y: 295, w: 72, h: 16 } : { x: 8, y: 295, w: 164, h: 16 };
+    smallButton(S, done ? 'บันทึกรูป' : 'บันทึกรูปลงสตอรี่', pressed === 'save', { px: 12 });
     hit('save', S, () => {
       audio.sfx('choice_press');
       saveImage();
     });
-    let x = S.x + S.w + 6;
-    if (done) {
-      const R = { x, y: 295, w: 46, h: 16 };
-      smallButton(R, 'รางวัล', pressed === 'prizebtn', { px: 12, fill: COL.dmagenta });
-      hit('prizebtn', R, () => {
-        click();
-        open('reward');
-      });
-      x += 52;
-    }
-    closeButton({ x, y: 295, w: 172 - x, h: 16 });
   }
 
   function drawReward(now, t) {
     const done = store.complete();
     const claimed = store.state.claimedAt;
-    dim(0.85);
-    bulbPanel(6, 14, 168, 292, t);
+    dim(0.88);
     if (!done) {
+      bulbPanel(6, 14, 168, 292, t);
       thaiS('ของรางวัลรออยู่!', 90, 24, COL.yellow, 13);
       ctx.drawImage(pumpkinDark, 82, 58);
       thai(`เก็บแล้ว ${store.count()} จาก ${TOTAL} ดวง`, 90, 82, COL.white, 12);
       CHECKPOINTS.forEach((c, i) => ctx.drawImage(store.has(c.id) ? pipOn : pipOff, 30 + i * 15, 104));
-      para(`เก็บครบ ${TOTAL} ดวงภายใน ${HUNT_MINUTES} นาที แล้วไปรับ${REWARD.title}ที่${REWARD.where}`, 18, 126, 144, COL.white, 12, 15, 'c');
+      para(`เก็บครบ ${TOTAL} ดวงภายใน ${HUNT_MINUTES} นาที ปุ่มรับรางวัลจะโผล่ขึ้นมา`, 18, 126, 144, COL.white, 12, 15, 'c');
       closeButton({ x: 50, y: 282, w: 80, h: 15 });
       return;
     }
-    thaiS(claimed ? 'รับรางวัลแล้ว' : `ครบ ${TOTAL} ดวงแล้ว!`, 90, 20, COL.yellow, 16);
-    if (house.complete && house.naturalWidth) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(14, 48, 152, 74);
-      ctx.clip();
-      for (let yy = 48; yy < 122; yy++) rect(14, yy, 152, 1, Math.floor((yy + 400 + Math.round(Math.sin(t) * 2)) / 11) % 2 ? COL.dred : COL.orange);
-      ctx.drawImage(house, 28, 56);
-      drawHouseWindows(ctx, 28, 56, t, true);
-      rect(14, 114, 152, 8, COL.black);
-      ctx.restore();
+    const k = (now - modal.t0) / 1000;
+    if (!modal.cheered) {
+      modal.cheered = true;
+      modal.confetti = makeConfetti();
+      audio.sfx('scene3_chime');
+      setTimeout(() => audio.sfx('angel_appear'), 150);
     }
-    G.drawChar(character(), 'side', G.walkFrame(t), 60, 120 + (Math.sin(t * 8) > 0 ? -2 : 0), 1, 0);
-    ctx.drawImage(pumpkinLit, 100, 106);
-    box(14, 128, 152, 1, COL.yellow);
-    thai(REWARD.title, 90, 130, COL.yellow, 13);
-    const ww = thaiWidth(REWARD.where, 12) + 10;
-    ctx.drawImage(pinIcon, Math.round(90 - ww / 2), 152);
-    thai(REWARD.where, Math.round(90 - ww / 2) + 10, 148, COL.white, 12, 'l');
+    bulbPanel(4, 4, 172, 312, t);
+    thaiS('ยินดีด้วย!', 90, 8, COL.yellow, 18);
+    thai('คุณสำเร็จภารกิจ', 90, 32, COL.white, 13);
+    thaiS('TRICK OR TREAT แล้ว', 90, 48, COL.magenta, 13);
+    // the mascot (นวลนภา) celebrating on a beam of light
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(10, 68, 160, 92);
+    ctx.clip();
+    ctx.drawImage(rays[Math.floor(t * 8) % RAY_N], 10, 34);
+    (modal.confetti || []).forEach((p) => {
+      const kk = (k % 2.6) + 0.1;
+      const x = Math.round(p.x + p.vx * kk * 0.6);
+      const y = Math.round(p.y - 40 + p.vy * kk * 0.5 + 120 * kk * kk);
+      rect(x, y, p.w, 2, p.c);
+    });
+    const hop = Math.abs(Math.sin(t * 5)) * 8;
+    const frame = Math.floor(t * 3) % 4 === 3 ? 'blink' : 'idle0';
+    const m = G.getSprite('nuannapa', 'front', frame);
+    rect(64, 154, 52, 4, COL.black);
+    ctx.drawImage(m, 90 - m.width, 154 - m.height * 2 - Math.round(hop), m.width * 2, m.height * 2);
+    // the player's own character cheering next to the mascot
+    G.drawChar(character(), 'front', Math.floor(t * 2.2) % 2 ? 'idle1' : 'idle0', 140, 156 - (Math.sin(t * 5 + 1.5) > 0.3 ? 3 : 0), 1, 0);
+    sparkle(30, 84, Math.floor(t * 4) % 2 === 0);
+    sparkle(150, 78, Math.floor(t * 4) % 2 === 1);
+    ctx.restore();
+    // who and how fast
+    box(12, 162, 156, 20, COL.black, COL.yellow);
+    const nm = store.state.name || 'ผู้กล้าไร้นาม';
+    thai(nm, 16, 161, COL.yellow, 12, 'l');
+    text(`${fmtTime(store.timeUsed())}  8/8`, 164, 169, COL.green, 'r');
+    thai('โชว์หน้านี้ให้กับพนักงาน', 90, 184, COL.white, 12);
+    thai('ภายในงาน เพื่อรับรางวัล', 90, 199, COL.yellow, 12);
+    // live clock: a screenshot will not tick
     const d = new Date();
     const pad = (v) => String(v).padStart(2, '0');
-    box(14, 172, 152, 26, COL.black, Math.floor(t * 2) % 2 ? COL.magenta : COL.yellow);
-    textS(`${pad(d.getDate())}/${pad(d.getMonth() + 1)}  ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`, 90, 176, COL.white, 'c');
-    text(`TIME ${fmtTime(store.timeUsed())}  8/8`, 90, 187, COL.yellow, 'c');
+    box(12, 220, 156, 16, COL.black, Math.floor(t * 2) % 2 ? COL.magenta : COL.yellow);
+    textS(`${pad(d.getDate())}/${pad(d.getMonth() + 1)}  ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`, 90, 225, COL.white, 'c');
     if (claimed) {
       const c = new Date(claimed);
-      rect(20, 212, 140, 40, COL.magenta);
-      rect(22, 214, 136, 36, COL.black);
-      rect(24, 216, 132, 32, COL.magenta);
-      thai('รับรางวัลแล้ว', 90, 214, COL.black, 16);
-      text(`${pad(c.getDate())}/${pad(c.getMonth() + 1)} ${pad(c.getHours())}:${pad(c.getMinutes())}`, 90, 238, COL.black, 'c');
-      closeButton({ x: 50, y: 282, w: 80, h: 15 });
-      return;
-    }
-    para(REWARD.howTo, 14, 202, 152, COL.white, 12, 14, 'c');
-    const HB = { x: 18, y: 248, w: 144, h: 22 };
-    const holding = pressed === 'claim';
-    const k = holding ? Math.min(1, (now - holdStart) / HOLD_MS) : 0;
-    rect(HB.x - 2, HB.y - 2, HB.w + 4, HB.h + 4, COL.yellow);
-    rect(HB.x, HB.y, HB.w, HB.h, COL.black);
-    rect(HB.x, HB.y, Math.round(HB.w * k), HB.h, COL.green);
-    thai(holding ? 'กดค้างไว้...' : 'สตาฟ: กดค้างเพื่อยืนยัน', 90, HB.y, holding ? COL.black : COL.yellow, 13);
-    hit('claim', HB, () => {});
-    if (holding && k >= 1) {
-      pressed = null;
-      if (store.claim()) {
-        audio.sfx('meter_full');
-        setTimeout(() => audio.sfx('scene3_chime'), 200);
-        buzz([60, 40, 120]);
+      rect(14, 240, 152, 36, COL.magenta);
+      rect(16, 242, 148, 32, COL.black);
+      rect(18, 244, 144, 28, COL.magenta);
+      thai('รับรางวัลแล้ว', 90, 241, COL.black, 16);
+      text(`${pad(c.getDate())}/${pad(c.getMonth() + 1)} ${pad(c.getHours())}:${pad(c.getMinutes())}`, 90, 262, COL.black, 'c');
+    } else {
+      const HB = { x: 16, y: 244, w: 148, h: 22 };
+      const holding = pressed === 'claim';
+      const kh = holding ? Math.min(1, (now - holdStart) / HOLD_MS) : 0;
+      rect(HB.x - 2, HB.y - 2, HB.w + 4, HB.h + 4, COL.yellow);
+      rect(HB.x, HB.y, HB.w, HB.h, COL.black);
+      rect(HB.x, HB.y, Math.round(HB.w * kh), HB.h, COL.green);
+      thai(holding ? 'กดค้างไว้...' : 'พนักงาน: กดค้างเพื่อยืนยัน', 90, HB.y, holding ? COL.black : COL.yellow, 12);
+      hit('claim', HB, () => {});
+      if (holding && kh >= 1) {
+        pressed = null;
+        if (store.claim()) {
+          audio.sfx('meter_full');
+          setTimeout(() => audio.sfx('scene3_chime'), 200);
+          buzz([60, 40, 120]);
+        }
       }
     }
-    closeButton({ x: 50, y: 284, w: 80, h: 14 });
+    closeButton({ x: 50, y: 288, w: 80, h: 16 });
   }
 
   function drawScan(now, t) {

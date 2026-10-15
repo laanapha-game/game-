@@ -185,13 +185,36 @@ export function drawCard(ctx, data, t, opts = {}) {
   }
 }
 
-/** The card as a 1080 x 1920 PNG blob. */
+/**
+ * The card as a 1080 x 1920 PNG for an Instagram story: the player's background fills the
+ * frame and the card sits inside the story's safe area (IG covers about the top 200 px with
+ * the profile bar and the bottom 250 px with the reply bar).
+ */
 export function exportCard(data, t = 0) {
-  const c = mkCanvas(W, H);
-  drawCard(c.getContext('2d'), data, t, { footer: true });
+  const card = mkCanvas(W, H);
+  drawCard(card.getContext('2d'), data, t, { footer: true });
+  // background layer at design size, with a tag line above the reply bar
+  const bg = mkCanvas(W, H);
+  const g = bg.getContext('2d');
+  drawBackground(g, data.characterId, t + 1.7);
+  g.globalAlpha = 0.35;
+  g.fillStyle = '#000000';
+  g.fillRect(0, 0, W, H);
+  g.globalAlpha = 1;
+  const k = kit(g);
+  k.textS('FOLLOW IG LAANAPHA', 90, 281, COL.yellow, 'c');
   const big = mkCanvas(W * 6, H * 6);
   const bx = big.getContext('2d');
   bx.imageSmoothingEnabled = false;
-  bx.drawImage(c, 0, 0, big.width, big.height);
+  bx.drawImage(bg, 0, 0, big.width, big.height);
+  const cw = 810;
+  const ch = 1440;
+  const cx = (big.width - cw) / 2;
+  const cy = 200;
+  bx.fillStyle = '#000000';
+  bx.fillRect(cx - 6, cy - 6, cw + 30, ch + 30); // drop shadow
+  bx.fillStyle = COL.yellow;
+  bx.fillRect(cx - 12, cy - 12, cw + 24, ch + 24);
+  bx.drawImage(card, cx, cy, cw, ch);
   return new Promise((res) => big.toBlob((b) => res(b), 'image/png'));
 }
