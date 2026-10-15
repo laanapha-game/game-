@@ -1,7 +1,9 @@
 // Sticker hub save data. Kept in this browser's localStorage, so it survives closing the
 // page, reloading and coming back later. A short transfer code moves it to another
 // browser (for example from Instagram's in-app browser to Safari).
-import { CHECKPOINTS } from '../data/checkpoints.js';
+import { CHECKPOINTS, HUNT_MINUTES } from '../data/checkpoints.js';
+
+export const HUNT_MS = HUNT_MINUTES * 60 * 1000;
 
 export const STORAGE_KEY = 'laanapha.stickers.v1';
 
@@ -9,7 +11,7 @@ export const STORAGE_KEY = 'laanapha.stickers.v1';
 export const CHARACTER_IDS = ['nuannapa', 'ramwong', 'pumpkin', 'vampire', 'slasher', 'onryo', 'mahidol', 'silpakorn'];
 
 export function emptyState() {
-  return { v: 1, character: null, unlocked: false, stamps: {}, claimedAt: null, startedAt: null, seenHelp: false };
+  return { v: 1, character: null, name: '', unlocked: false, stamps: {}, claimedAt: null, startedAt: null, finishedAt: null, seenHelp: false };
 }
 
 function sanitize(s) {
@@ -22,6 +24,8 @@ function sanitize(s) {
   if (typeof s.claimedAt === 'number') out.claimedAt = s.claimedAt;
   if (typeof s.startedAt === 'number') out.startedAt = s.startedAt;
   out.seenHelp = !!s.seenHelp;
+  if (typeof s.finishedAt === 'number') out.finishedAt = s.finishedAt;
+  if (typeof s.name === 'string') out.name = s.name.slice(0, 24);
   return out;
 }
 
@@ -82,17 +86,44 @@ export function createStore(backend = storage()) {
     unlock(character) {
       state.unlocked = true;
       if (character?.id) state.character = { id: character.id, name: character.name || '' };
-      if (!state.startedAt) state.startedAt = Date.now();
       persist();
     },
-    /** @returns {'new'|'dup'|'unknown'} */
+    /** @returns {'new'|'dup'|'unknown'|'timeout'} */
     collect(id, now = Date.now()) {
       if (!CHECKPOINTS.some((cp) => cp.id === id)) return 'unknown';
       if (state.stamps[id]) return 'dup';
+      if (this.status(now) === 'timeout') return 'timeout';
       state.stamps[id] = now;
       if (!state.startedAt) state.startedAt = now;
+      if (this.complete() && !state.finishedAt) state.finishedAt = now;
       persist();
       return 'new';
+    },
+    /** Start the hunt clock (once). */
+    start(name, now = Date.now()) {
+      if (typeof name === 'string' && name.trim()) state.name = name.trim().slice(0, 24);
+      if (!state.startedAt) state.startedAt = now;
+      persist();
+    },
+    setName(name) {
+      state.name = String(name || '').trim().slice(0, 24);
+      persist();
+    },
+    /** 'idle' (clock not started) | 'running' | 'complete' (8/8 in time) | 'timeout' */
+    status(now = Date.now()) {
+      if (state.finishedAt) return 'complete';
+      if (!state.startedAt) return 'idle';
+      return now - state.startedAt >= HUNT_MS ? 'timeout' : 'running';
+    },
+    /** ms left on the clock */
+    timeLeft(now = Date.now()) {
+      if (!state.startedAt) return HUNT_MS;
+      const end = state.finishedAt || now;
+      return Math.max(0, HUNT_MS - (end - state.startedAt));
+    },
+    /** ms the player used (until 8/8, or the whole clock on a timeout) */
+    timeUsed(now = Date.now()) {
+      return HUNT_MS - this.timeLeft(now);
     },
     markHelpSeen() {
       state.seenHelp = true;
@@ -114,7 +145,9 @@ export function createStore(backend = storage()) {
       if (d.claimed && !state.claimedAt) state.claimedAt = now;
       if (d.character && !state.character) state.character = { id: d.character, name: '' };
       state.unlocked = true;
-      if (!state.startedAt) state.startedAt = now;
+      if (d.startedAt && (!state.startedAt || d.startedAt < state.startedAt)) state.startedAt = d.startedAt;
+      if (d.finishedAt && !state.finishedAt) state.finishedAt = d.finishedAt;
+      if (this.complete() && !state.finishedAt) state.finishedAt = now;
       persist();
       return true;
     },
@@ -155,10 +188,15 @@ export function parseScan(text) {
 }
 
 // ---------- transfer code ----------
-// 8 sticker bits, 1 claimed bit, 4 character bits, then an 8-bit check, in base 36:
-// "LNP-" + 5 characters. It only guards against typos.
+// Packs the stickers (8 bits), claimed (1), character (4), when the clock started (minutes
+// since 2026-01-01, 20 bits, 0 = not started) and the seconds used when finished (12 bits,
+// 0 = not finished), then an 8-bit check, in base 36: "LNP-" + about 11 characters.
+// The check only guards against typos.
+const EPOCH = Date.UTC(2026, 0, 1);
 function check(n) {
-  return (Math.imul(n ^ 0x5bd1e995, 0x2c1b3c6d) >>> 24) & 0xff;
+  let h = 0x811c9dc5;
+  for (const ch of n.toString(16)) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193);
+  return BigInt((h >>> 24) & 0xff);
 }
 
 export function encodeSave(state) {
@@ -167,18 +205,29 @@ export function encodeSave(state) {
     if (state.stamps[cp.id]) mask |= 1 << i;
   });
   const ci = CHARACTER_IDS.indexOf(state.character?.id);
-  const n = mask | ((state.claimedAt ? 1 : 0) << 8) | ((ci < 0 ? 15 : ci) << 9);
-  const v = n * 256 + check(n);
-  return 'LNP-' + v.toString(36).toUpperCase().padStart(5, '0');
+  const startMin = state.startedAt ? Math.min(0xfffff, Math.max(1, Math.round((state.startedAt - EPOCH) / 60000))) : 0;
+  const usedSec = state.finishedAt && state.startedAt ? Math.min(0xfff, Math.max(1, Math.round((state.finishedAt - state.startedAt) / 1000))) : 0;
+  let n = BigInt(mask) | (BigInt(state.claimedAt ? 1 : 0) << 8n) | (BigInt(ci < 0 ? 15 : ci) << 9n) | (BigInt(startMin) << 13n) | (BigInt(usedSec) << 33n);
+  const v = (n << 8n) | check(n);
+  return 'LNP-' + v.toString(36).toUpperCase();
 }
 
 export function decodeSave(code) {
-  const m = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').match(/^LNP([0-9A-Z]{5,6})$/);
+  const m = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').match(/^LNP([0-9A-Z]{2,12})$/);
   if (!m) return null;
-  const v = parseInt(m[1], 36);
-  if (!Number.isFinite(v)) return null;
-  const n = Math.floor(v / 256);
-  if (n >= 1 << 13 || v % 256 !== check(n)) return null;
-  const ci = (n >> 9) & 15;
-  return { mask: n & 255, claimed: !!((n >> 8) & 1), character: CHARACTER_IDS[ci] || null };
+  let v = 0n;
+  for (const ch of m[1]) v = v * 36n + BigInt(parseInt(ch, 36));
+  const n = v >> 8n;
+  if (n >= 1n << 45n || (v & 0xffn) !== check(n)) return null;
+  const num = (shift, bits) => Number((n >> BigInt(shift)) & ((1n << BigInt(bits)) - 1n));
+  const startMin = num(13, 20);
+  const usedSec = num(33, 12);
+  const startedAt = startMin ? EPOCH + startMin * 60000 : null;
+  return {
+    mask: num(0, 8),
+    claimed: !!num(8, 1),
+    character: CHARACTER_IDS[num(9, 4)] || null,
+    startedAt,
+    finishedAt: startedAt && usedSec ? startedAt + usedSec * 1000 : null,
+  };
 }

@@ -1,15 +1,15 @@
-// The 8 sticker checkpoints (ซุ้ม) of the sticker hub (scene 3), in walking order.
+// The 8 checkpoints of the sticker hunt (scene 3), in walking order.
 // Everything the event team may want to change lives here.
 //
-// TODO(owner): names, descriptions and where each stall stands are placeholders taken from
-// the game's own ghosts. Replace them with the real stalls at the event.
-//
-// QR codes: each stall's QR holds   https://laanapha.com/?cp=<code>
-// (tools/make-qr.mjs prints them to docs/qr/). Scanning it with the phone camera opens the
-// site and collects the sticker; the in-game scan button reads the same QR (or the bare code).
+// QR codes: each checkpoint's QR holds   https://laanapha.com/?cp=<code>
+// (npm run qr prints them to docs/qr/). Scanning it with the phone camera opens the site and
+// collects the sticker; the in-game scan button reads the same QR (or the typed code).
 // Changing a code makes the old printed QR stop working.
 
 export const SITE_URL = 'https://laanapha.com';
+
+/** The hunt clock: counts down from the moment the player presses start (or scans first). */
+export const HUNT_MINUTES = 45;
 
 /** Where the prize is collected when all 8 are found. TODO(owner): real prize and place. */
 export const REWARD = {
@@ -18,97 +18,91 @@ export const REWARD = {
   howTo: 'ให้สตาฟกดค้างปุ่มด้านล่าง',
 };
 
-// art: the sticker. `sheet` = a sprite strip in src/assets/art (frame = sheet width / frames),
-// `stall` = stall art A (yellow), B (magenta), C (black/yellow) from assets/stalls,
-// `code` = drawn in code: 'screenGhost' (scene 1's cinema ghost) or 'mascot' (the chosen-colour นวลนภา bird).
+// art: the sticker.
+//   { draw: '<name>' }            pixel art drawn in code (src/hub/stickers.js)
+//   { sheet, frames, frame, flip, tint }   a frame of a sprite strip in src/assets/art
+// stall: stall art behind it in the detail view, A (yellow), B (magenta), C (black/yellow), or null.
+// where: TODO(owner) where each checkpoint stands at the event.
 export const CHECKPOINTS = [
   {
     id: 'cp1',
     code: 'LNP-K7QX2M',
-    name: 'กระหัง',
-    title: 'ซุ้มกระหังกระโดดเกาะ',
+    name: 'ผงพราย',
+    title: 'ขวดผงต้องห้าม',
     stall: 'A',
-    art: { sheet: 'krahang', frames: 8, frame: 0, flip: true },
-    desc: 'ผีกระหังติดกระด้งบินได้ ชอบกระโดดเกาะหลังคนที่เดินผ่าน ถ้าสลัดหลุดก็รอดไป',
-    where: 'ปากซอยทางเข้า ซุ้มแรกทางซ้ายมือ',
-    line: 'สลัดข้าหลุดได้ด้วย เก่งนี่!',
+    art: { draw: 'powder' },
+    brief: 'ผงบดจากคางของผีตายทั้งกลม โรยใส่ใคร คนนั้นจะหลงจนถอนตัวไม่ขึ้น... ระวังอย่าให้ปลิวโดนตัว',
+    where: 'จุดที่ 1 ปากซอยทางเข้า',
   },
   {
     id: 'cp2',
     code: 'LNP-R4WN9P',
-    name: 'ผีในไห',
-    title: 'ซุ้มไหสลับไห',
+    name: 'คุณไสย',
+    title: 'ตุ๊กตาฟางปักเข็ม',
     stall: 'B',
-    art: { sheet: 'jar', frames: 7, frame: 3 },
-    desc: 'ไหสองใบ ใบหนึ่งมีผี อีกใบมีจดหมาย ทายถูกได้ไปต่อ ทายผิดเจอผีโผล่',
-    where: 'ถัดจากซุ้มกระหัง ซุ้มหลังคาชมพู',
-    line: 'คราวนี้ไม่หลอกแล้ว เอาสติกเกอร์ไป',
+    art: { draw: 'doll' },
+    brief: 'เข็มเล่มใหม่ถูกปักลงบนตุ๊กตาฟาง ที่ไหนสักแห่ง ใครบางคนกำลังเจ็บตรงจุดเดียวกัน',
+    where: 'จุดที่ 2',
   },
   {
     id: 'cp3',
     code: 'LNP-T8HV3C',
-    name: 'ผีนางรำสุดสวย',
-    title: 'ซุ้มนางรำ',
-    stall: 'A',
-    art: { sheet: 'stall_ghost_3', frames: 6, frame: 0 },
-    desc: 'นางรำร่ายรำไม่หยุดทั้งคืน ใครตอบสุภาพจะได้รับรอยยิ้มกลับไป',
-    where: 'กลางซอย ข้างเวทีหน้าบ้าน',
-    line: 'รำสวยไหมจ๊ะ เก็บไว้เป็นที่ระลึก',
+    name: 'หนังควาย',
+    title: 'หนังควายเข้าท้อง',
+    stall: 'C',
+    art: { draw: 'hide' },
+    brief: 'หนังควายแห้งชิ้นเท่าเล็บ ถูกเสกให้ไปพองอยู่ในท้อง หมอที่ไหนก็หาสาเหตุไม่เจอ',
+    where: 'จุดที่ 3',
   },
   {
     id: 'cp4',
     code: 'LNP-M2ZD6K',
-    name: 'ซอมบี้ Cozy ราชพฤกษ์ 6',
-    title: 'ซุ้มซอมบี้',
-    stall: 'B',
-    art: { sheet: 'stall_ghost_4', frames: 4, frame: 0 },
-    desc: 'ซอมบี้ประจำซอยที่บอกทางให้คนหลงทาง ว่าอีกนิดเดียวก็ถึงแล้ว',
-    where: 'หัวมุมก่อนออกซอย',
-    line: 'อีกนิดเดียว... ถึงแล้วววว',
+    name: 'ผีกระหัง',
+    title: 'ปีกกระด้งกลางดึก',
+    stall: 'A',
+    art: { sheet: 'krahang', frames: 8, frame: 0, flip: true },
+    brief: 'ได้ยินเสียงกระด้งกระพือเหนือหลังคาไหม? นั่นกระหังออกหากิน อย่าเผลอเงยหน้ามอง',
+    where: 'จุดที่ 4',
   },
   {
     id: 'cp5',
     code: 'LNP-P9FJ4T',
-    name: 'ผีกุมารตัวน้อย',
-    title: 'ซุ้มกุมาร',
-    stall: 'C',
-    art: { sheet: 'stall_ghost_5', frames: 2, frame: 0 },
-    desc: 'กุมารตัวเล็กชวนทุกคนประกวดชุดผี ใครแต่งมาเต็มได้คะแนนพิเศษ',
-    where: 'หน้าร้านสะดวกซื้อ ริมถนน',
-    line: 'ชุดสวยมากเลยพี่ เอานี่ไป!',
+    name: 'ศาลเจ้าที่',
+    title: 'ศาลหน้าบ้าน',
+    stall: null,
+    art: { draw: 'shrine' },
+    brief: 'จะเข้าบ้านใครต้องบอกเจ้าที่ก่อน คนที่ลบหลู่ คืนนั้นจะมีใครมายืนอยู่ปลายเตียง',
+    where: 'จุดที่ 5',
   },
   {
     id: 'cp6',
     code: 'LNP-W3XB7R',
-    name: 'ผีจอหนัง',
-    title: 'หนังกลางแปลงผี',
-    stall: null,
-    art: { code: 'screenGhost' },
-    desc: 'จอหนังกลางแปลงที่ฉายหนังผีทั้งคืน มีผีหลุดออกมาจากจอบ่อยๆ',
-    where: 'ลานหนังกลางแปลง ข้างบ้าน',
-    line: 'BOO! ตกใจไหม',
+    name: 'กุมารทอง',
+    title: 'เด็กทองมุมห้อง',
+    stall: 'B',
+    art: { sheet: 'stall_ghost_5', frames: 2, frame: 0, tint: 'gold' },
+    brief: 'เสียงเด็กหัวเราะคิกคักอยู่มุมห้อง ทั้งที่บ้านนี้ไม่มีเด็ก... อย่าลืมวางน้ำแดงไว้ให้เขา',
+    where: 'จุดที่ 6',
   },
   {
     id: 'cp7',
     code: 'LNP-H6NQ2V',
-    name: 'ผีไล่ล่า',
-    title: 'ด่านหนีผี',
-    stall: null,
-    art: { sheet: 'chaser', frames: 7, frame: 0, flip: true },
-    desc: 'ผีตัวที่ไล่ตามมาตลอดทาง ถ้าวิ่งหนีทันจะเจอทางแสงสีขาว',
-    where: 'ทางเดินสว่างก่อนเข้าบ้าน',
-    line: 'คราวนี้หนีพ้น... แต่ครั้งหน้าไม่แน่',
+    name: 'ตะปู',
+    title: 'ตะปูตอกโลง',
+    stall: 'C',
+    art: { draw: 'nails' },
+    brief: 'ตะปูที่ถูกถอนออกจากฝาโลง ใครเก็บไว้ เจ้าของโลงจะตามมาทวงคืนทุกคืน',
+    where: 'จุดที่ 7',
   },
   {
     id: 'cp8',
     code: 'LNP-C5LT8Y',
-    name: 'นวลนภา',
-    title: 'บ้านนวลนภา',
-    stall: 'C',
-    art: { code: 'mascot' },
-    desc: 'นวลนภา เจ้าของบ้านลานนภา รอต้อนรับทุกคนที่เดินมาถึงปลายทาง',
-    where: 'หน้าบ้านลานนภา ปลายทาง',
-    line: 'มาถึงแล้ว! ยินดีต้อนรับสู่ลานนภา',
+    name: 'ผีปอบ',
+    title: 'ปอบหิวตอนตีสาม',
+    stall: null,
+    art: { sheet: 'chaser_red', frames: 7, frame: 0, flip: true },
+    brief: 'ปอบชอบตับไตไส้พุงสดๆ ถ้าเห็นยายข้างบ้านยิ้มให้ตอนตีสาม... วิ่ง อย่าหันหลังกลับ',
+    where: 'จุดที่ 8 ปลายทางหน้าบ้าน',
   },
 ];
 

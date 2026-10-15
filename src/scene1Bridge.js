@@ -183,13 +183,19 @@ if (import.meta.env.DEV) window.__hub = { store, hub };
   const url = new URL(window.location.href);
   const cpParam = url.searchParams.get('cp');
   const saveParam = url.searchParams.get('save');
+  const nameParam = url.searchParams.get('n');
   if (cpParam || saveParam) {
     url.searchParams.delete('cp');
     url.searchParams.delete('save');
+    url.searchParams.delete('n');
     history.replaceState(null, '', url.pathname + url.search + url.hash);
   }
   let toast = null;
-  if (saveParam) toast = store.importCode(saveParam) ? 'ย้ายข้อมูลเรียบร้อย' : 'โค้ดย้ายเครื่องไม่ถูกต้อง';
+  if (saveParam) {
+    const ok = store.importCode(saveParam);
+    if (ok && nameParam && !store.state.name) store.setName(nameParam);
+    toast = ok ? 'ย้ายข้อมูลเรียบร้อย' : 'โค้ดย้ายเครื่องไม่ถูกต้อง';
+  }
   const scan = cpParam ? parseScan(cpParam) : null;
   if (cpParam && !scan) toast = 'QR นี้ไม่ใช่ของลานนภา';
   if (scan || saveParam || store.state.unlocked || url.hash === '#stickers') G.go('scene3', { scan, toast });

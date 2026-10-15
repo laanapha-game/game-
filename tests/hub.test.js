@@ -1,7 +1,7 @@
 // Sticker hub save data and QR parsing (src/hub/store.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createStore, parseScan, encodeSave, decodeSave, STORAGE_KEY } from '../src/hub/store.js';
+import { createStore, parseScan, encodeSave, decodeSave, STORAGE_KEY, HUNT_MS } from '../src/hub/store.js';
 import { CHECKPOINTS, TOTAL } from '../src/data/checkpoints.js';
 
 function memory() {
@@ -65,25 +65,69 @@ test('claim only when all 8 are collected, once', () => {
   assert.equal(s.state.claimedAt, 123);
 });
 
-test('transfer code round-trips and merges into another browser', () => {
+test('transfer code round-trips (stickers, character, clock) and merges into another browser', () => {
   const a = createStore(memory());
   a.unlock({ id: 'onryo' });
-  ['cp1', 'cp4', 'cp8'].forEach((id) => a.collect(id));
+  const t0 = Date.UTC(2026, 9, 24, 12, 0);
+  a.start('มิว', t0);
+  ['cp1', 'cp4', 'cp8'].forEach((id, i) => a.collect(id, t0 + (i + 1) * 60000));
   const code = a.exportCode();
-  assert.match(code, /^LNP-[0-9A-Z]{5}$/);
-  assert.deepEqual(decodeSave(code), { mask: 0b10001001, claimed: false, character: 'onryo' });
+  assert.match(code, /^LNP-[0-9A-Z]{4,12}$/);
+  const d = decodeSave(code);
+  assert.equal(d.mask, 0b10001001);
+  assert.equal(d.character, 'onryo');
+  assert.equal(d.startedAt, t0);
+  assert.equal(d.finishedAt, null);
   const b = createStore(memory());
-  b.collect('cp2');
-  assert.equal(b.importCode(code.toLowerCase()), true);
+  b.collect('cp2', t0 + 30000);
+  assert.equal(b.importCode(code.toLowerCase(), t0 + 300000), true);
   assert.equal(b.count(), 4);
   assert.equal(b.state.character.id, 'onryo');
+  assert.equal(b.state.startedAt, t0); // the earlier start wins
   assert.equal(b.importCode('LNP-00000'), false);
-  // one changed character is caught
   const bad = code.slice(0, -1) + (code.endsWith('A') ? 'B' : 'A');
   assert.equal(decodeSave(bad), null);
 });
 
+test('finished time survives a transfer', () => {
+  const a = createStore(memory());
+  const t0 = Date.UTC(2026, 9, 24, 18, 0);
+  a.start('', t0);
+  CHECKPOINTS.forEach((cp, i) => a.collect(cp.id, t0 + (i + 1) * 90000));
+  const d = decodeSave(a.exportCode());
+  assert.equal(d.finishedAt - d.startedAt, 8 * 90000);
+});
+
+test('45-minute clock: idle, running, complete in time, timeout blocks new stickers', () => {
+  const s = createStore(memory());
+  const t0 = 1_000_000;
+  assert.equal(s.status(t0), 'idle');
+  assert.equal(s.timeLeft(t0), HUNT_MS);
+  s.start('Ploy', t0);
+  assert.equal(s.state.name, 'Ploy');
+  assert.equal(s.status(t0 + 60000), 'running');
+  assert.equal(s.timeLeft(t0 + 60000), HUNT_MS - 60000);
+  s.collect('cp1', t0 + 120000);
+  assert.equal(s.status(t0 + HUNT_MS), 'timeout');
+  assert.equal(s.collect('cp2', t0 + HUNT_MS + 1), 'timeout');
+  assert.equal(s.count(), 1);
+  assert.equal(s.timeUsed(t0 + HUNT_MS + 5000), HUNT_MS);
+
+  const c = createStore(memory());
+  c.start('', t0);
+  CHECKPOINTS.forEach((cp, i) => c.collect(cp.id, t0 + (i + 1) * 60000));
+  assert.equal(c.status(t0 + HUNT_MS * 2), 'complete');
+  assert.equal(c.timeUsed(t0 + HUNT_MS * 2), 8 * 60000);
+});
+
+test('the first scan starts the clock if start was never pressed', () => {
+  const s = createStore(memory());
+  s.collect('cp3', 5000);
+  assert.equal(s.state.startedAt, 5000);
+  assert.equal(s.status(6000), 'running');
+});
+
 test('encodeSave of an empty state decodes to nothing collected', () => {
   const d = decodeSave(encodeSave({ stamps: {}, claimedAt: null, character: null }));
-  assert.deepEqual(d, { mask: 0, claimed: false, character: null });
+  assert.deepEqual(d, { mask: 0, claimed: false, character: null, startedAt: null, finishedAt: null });
 });
