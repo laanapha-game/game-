@@ -1,0 +1,11 @@
+{
+  "_note": "The real code of each checkpoint (what its QR holds and what players can type). Only tools/make-qr.mjs reads this file; the web page only gets hashes. After a change run: npm run qr",
+  "cp1": "Sunset",
+  "cp2": "Movienight",
+  "cp3": "Laanaphalover",
+  "cp4": "Trickortreat123!",
+  "cp5": "Keepmoving",
+  "cp6": "Staygreat",
+  "cp7": "Youonlyliveonce",
+  "cp8": "RUN"
+}

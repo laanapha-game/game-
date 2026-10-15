@@ -2,6 +2,7 @@
 // page, reloading and coming back later. A short transfer code moves it to another
 // browser (for example from Instagram's in-app browser to Safari).
 import { CHECKPOINTS, HUNT_MINUTES } from '../data/checkpoints.js';
+import { hashCode, normCode } from './codehash.js';
 
 export const HUNT_MS = HUNT_MINUTES * 60 * 1000;
 
@@ -162,11 +163,10 @@ export function createStore(backend = storage()) {
 }
 
 // ---------- scanning ----------
-const norm = (s) => String(s).toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 /**
  * What a scanned QR (or a typed code) points at.
- * Accepts the full URL (…?cp=LNP-K7QX2M), the code with or without "LNP-", any case.
+ * Accepts the full URL (…?cp=<code>) or the code itself, any case, spaces and punctuation ignored.
  * @returns {string|null} checkpoint id
  */
 export function parseScan(text) {
@@ -178,13 +178,9 @@ export function parseScan(text) {
   } catch {
     /* not a URL: a bare code */
   }
-  const n = norm(raw);
-  if (!n) return null;
-  for (const cp of CHECKPOINTS) {
-    const c = norm(cp.code);
-    if (n === c || n === c.replace(/^LNP/, '')) return cp.id;
-  }
-  return null;
+  if (!normCode(raw)) return null;
+  const h = hashCode(raw);
+  return CHECKPOINTS.find((cp) => cp.hash === h)?.id || null;
 }
 
 // ---------- transfer code ----------

@@ -414,8 +414,8 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
   function openInput(mode, field, back) {
     open(mode === 'start' ? 'start' : 'input', { mode, field, back });
     input.value = mode === 'name' || mode === 'start' ? store.state.name || '' : '';
-    input.placeholder = { cp: 'LNP-XXXXXX', save: 'LNP-XXXXXXXX', name: 'ชื่อของคุณ', start: 'ชื่อของคุณ' }[mode];
-    input.autocapitalize = mode === 'cp' || mode === 'save' ? 'characters' : 'words';
+    input.placeholder = { cp: 'รหัสของจุดนี้', save: 'LNP-XXXXXXXX', name: 'ชื่อของคุณ', start: 'ชื่อของคุณ' }[mode];
+    input.autocapitalize = mode === 'save' ? 'characters' : mode === 'cp' ? 'none' : 'words';
     input.maxLength = mode === 'name' || mode === 'start' ? 24 : 20;
     input.setAttribute('aria-label', input.placeholder);
     input.style.display = 'block';

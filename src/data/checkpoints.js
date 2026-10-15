@@ -2,8 +2,10 @@
 // Everything the event team may want to change lives here.
 //
 // QR codes: each checkpoint's QR holds   https://laanapha.com/?cp=<code>
-// (npm run qr prints them to docs/qr/). Scanning it with the phone camera opens the site and
-// collects the sticker; the in-game scan button reads the same QR (or the typed code).
+// The codes themselves are in tools/qr-codes.json; this file (which ships in the page) only
+// holds their hashes. `npm run qr` writes the hashes here and prints the QRs to docs/qr/.
+// Scanning a QR with the phone camera opens the site and collects the sticker; the in-game
+// scan button reads the same QR, and players can also type the code.
 // Changing a code makes the old printed QR stop working.
 
 export const SITE_URL = 'https://laanapha.com';
@@ -26,7 +28,7 @@ export const REWARD = {
 export const CHECKPOINTS = [
   {
     id: 'cp1',
-    code: 'LNP-K7QX2M',
+    hash: '1culz9q7u18', // code in tools/qr-codes.json (npm run qr)
     name: 'ผงพราย',
     title: 'ขวดผงต้องห้าม',
     stall: 'A',
@@ -36,7 +38,7 @@ export const CHECKPOINTS = [
   },
   {
     id: 'cp2',
-    code: 'LNP-R4WN9P',
+    hash: '58b0cv9uif', // code in tools/qr-codes.json (npm run qr)
     name: 'คุณไสย',
     title: 'ตุ๊กตาฟางปักเข็ม',
     stall: 'B',
@@ -46,7 +48,7 @@ export const CHECKPOINTS = [
   },
   {
     id: 'cp3',
-    code: 'LNP-T8HV3C',
+    hash: '1zo8ssqysb7', // code in tools/qr-codes.json (npm run qr)
     name: 'หนังควาย',
     title: 'หนังควายเข้าท้อง',
     stall: 'C',
@@ -56,7 +58,7 @@ export const CHECKPOINTS = [
   },
   {
     id: 'cp4',
-    code: 'LNP-M2ZD6K',
+    hash: '22iauuxpd79', // code in tools/qr-codes.json (npm run qr)
     name: 'ผีกระหัง',
     title: 'ปีกกระด้งกลางดึก',
     stall: 'A',
@@ -66,7 +68,7 @@ export const CHECKPOINTS = [
   },
   {
     id: 'cp5',
-    code: 'LNP-P9FJ4T',
+    hash: '2dpcw06sria', // code in tools/qr-codes.json (npm run qr)
     name: 'ศาลเจ้าที่',
     title: 'ศาลหน้าบ้าน',
     stall: null,
@@ -76,7 +78,7 @@ export const CHECKPOINTS = [
   },
   {
     id: 'cp6',
-    code: 'LNP-W3XB7R',
+    hash: 'uxq5izf88u', // code in tools/qr-codes.json (npm run qr)
     name: 'กุมารทอง',
     title: 'เด็กทองมุมห้อง',
     stall: 'B',
@@ -86,7 +88,7 @@ export const CHECKPOINTS = [
   },
   {
     id: 'cp7',
-    code: 'LNP-H6NQ2V',
+    hash: '1avxr68c24j', // code in tools/qr-codes.json (npm run qr)
     name: 'ตะปู',
     title: 'ตะปูตอกโลง',
     stall: 'C',
@@ -96,7 +98,7 @@ export const CHECKPOINTS = [
   },
   {
     id: 'cp8',
-    code: 'LNP-C5LT8Y',
+    hash: '1dw5ooy1trl', // code in tools/qr-codes.json (npm run qr)
     name: 'ผีปอบ',
     title: 'ปอบหิวตอนตีสาม',
     stall: null,

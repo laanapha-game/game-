@@ -3,27 +3,42 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore, parseScan, encodeSave, decodeSave, STORAGE_KEY, HUNT_MS } from '../src/hub/store.js';
 import { CHECKPOINTS, TOTAL } from '../src/data/checkpoints.js';
+import { hashCode } from '../src/hub/codehash.js';
+import { readFileSync } from 'node:fs';
 
 function memory() {
   const m = new Map();
   return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), m };
 }
 
-test('8 checkpoints with unique ids and codes', () => {
+test('8 checkpoints with unique ids and code hashes', () => {
   assert.equal(TOTAL, 8);
   assert.equal(new Set(CHECKPOINTS.map((c) => c.id)).size, 8);
-  assert.equal(new Set(CHECKPOINTS.map((c) => c.code)).size, 8);
+  assert.equal(new Set(CHECKPOINTS.map((c) => c.hash)).size, 8);
+  const codes = JSON.parse(readFileSync('tools/qr-codes.json', 'utf8'));
+  for (const cp of CHECKPOINTS) assert.equal(hashCode(codes[cp.id]), cp.hash, `${cp.id}: run npm run qr`);
 });
 
-test('parseScan reads the stall URL, the bare code, any case, and rejects others', () => {
-  assert.equal(parseScan('https://laanapha.com/?cp=LNP-K7QX2M'), 'cp1');
-  assert.equal(parseScan('https://www.laanapha.com/?utm=x&cp=lnp-r4wn9p'), 'cp2');
-  assert.equal(parseScan('LNP-T8HV3C'), 'cp3');
-  assert.equal(parseScan(' m2zd6k '), 'cp4');
-  assert.equal(parseScan('lnp p9fj4t'), 'cp5');
+test('the page source holds no plain checkpoint code', () => {
+  const codes = JSON.parse(readFileSync('tools/qr-codes.json', 'utf8'));
+  const src = readFileSync('src/data/checkpoints.js', 'utf8') + readFileSync('src/hub/store.js', 'utf8');
+  for (const [id, code] of Object.entries(codes)) if (!id.startsWith('_') && code.length > 3) assert.ok(!src.includes(code), `${code} is in the source`);
+});
+
+test('parseScan reads the checkpoint URL or the typed code, any case and punctuation', () => {
+  assert.equal(parseScan('https://laanapha.com/?cp=Sunset'), 'cp1');
+  assert.equal(parseScan('https://www.laanapha.com/?utm=x&cp=movienight'), 'cp2');
+  assert.equal(parseScan('LAANAPHALOVER'), 'cp3');
+  assert.equal(parseScan('https://laanapha.com/?cp=Trickortreat123!'), 'cp4');
+  assert.equal(parseScan('https://laanapha.com/?cp=Trickortreat123%21'), 'cp4');
+  assert.equal(parseScan('trick or treat 123'), 'cp4');
+  assert.equal(parseScan(' keep moving '), 'cp5');
+  assert.equal(parseScan('StayGreat'), 'cp6');
+  assert.equal(parseScan('you only live once'), 'cp7');
+  assert.equal(parseScan('run'), 'cp8');
   assert.equal(parseScan('https://laanapha.com/'), null);
-  assert.equal(parseScan('https://example.com/?cp=NOPE'), null);
-  assert.equal(parseScan('hello'), null);
+  assert.equal(parseScan('LNP-K7QX2M'), null); // the old placeholder codes are gone
+  assert.equal(parseScan('Sunrise'), null);
   assert.equal(parseScan(''), null);
   assert.equal(parseScan(null), null);
 });

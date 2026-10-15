@@ -1,25 +1,43 @@
-// Prints the 8 stall QR codes for the sticker hub:
-//   docs/qr/cp1.png … cp8.png   one QR per stall (https://laanapha.com/?cp=<code>)
-//   docs/qr/print.html          A4 sheet, 2 signs per page, with the stall name and typed code
-// Run after changing src/data/checkpoints.js:  node tools/make-qr.mjs
-import { mkdirSync, writeFileSync } from 'node:fs';
+// Checkpoint QR codes for the sticker hunt. Reads the real codes from tools/qr-codes.json,
+// writes their hashes into src/data/checkpoints.js (the page never contains the codes), and prints:
+//   docs/qr/cp1.png … cp8.png   one QR per checkpoint (https://laanapha.com/?cp=<code>)
+//   docs/qr/print.html          A4 sheet, 2 signs per page, with the name and the code to type
+// Run after changing a code:  npm run qr   (then rebuild / redeploy the site)
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import QRCode from 'qrcode';
-import { CHECKPOINTS, SITE_URL } from '../src/data/checkpoints.js';
+import { hashCode, normCode } from '../src/hub/codehash.js';
+
+const CODES = JSON.parse(readFileSync('tools/qr-codes.json', 'utf8'));
+const CP_FILE = 'src/data/checkpoints.js';
+let src = readFileSync(CP_FILE, 'utf8');
+const seen = new Map();
+for (const [id, code] of Object.entries(CODES)) {
+  if (id.startsWith('_')) continue;
+  if (!normCode(code)) throw new Error(`${id}: empty code`);
+  if (seen.has(normCode(code))) throw new Error(`${id} and ${seen.get(normCode(code))} have the same code`);
+  seen.set(normCode(code), id);
+  const re = new RegExp(`(id: '${id}',\\n\\s+hash: ')[^']*(')`);
+  if (!re.test(src)) throw new Error(`${CP_FILE}: no hash line for ${id}`);
+  src = src.replace(re, `$1${hashCode(code)}$2`);
+}
+writeFileSync(CP_FILE, src);
+const { CHECKPOINTS, SITE_URL } = await import(`../src/data/checkpoints.js?${Date.now()}`);
 
 const OUT = 'docs/qr';
 mkdirSync(OUT, { recursive: true });
 
 const cards = [];
 for (const [i, cp] of CHECKPOINTS.entries()) {
-  const url = `${SITE_URL}/?cp=${cp.code}`;
+  const code = CODES[cp.id];
+  const url = `${SITE_URL}/?cp=${encodeURIComponent(code)}`;
   const opts = { errorCorrectionLevel: 'M', margin: 2, width: 900, color: { dark: '#000000', light: '#FFFFFF' } };
   await QRCode.toFile(`${OUT}/${cp.id}.png`, url, opts);
   const svg = await QRCode.toString(url, { ...opts, type: 'svg' });
   cards.push(`<section class="sign">
-  <div class="top"><span class="no">ซุ้มที่ ${i + 1}</span><span class="name">${cp.name}</span></div>
+  <div class="top"><span class="no">จุดที่ ${i + 1}</span><span class="name">${cp.name}</span></div>
   <div class="qr">${svg}</div>
   <p class="cta">สแกนเพื่อเก็บสติกเกอร์ผี</p>
-  <p class="code">${cp.code}</p>
+  <p class="code">รหัส: ${code}</p>
   <p class="url">${SITE_URL.replace('https://', '')}</p>
 </section>`);
   console.log(`${cp.id}  ${cp.name}  ${url}`);
@@ -41,7 +59,7 @@ body{margin:0;font-family:Kanit,sans-serif;background:#fff}
 .qr{background:#fff;width:82mm;height:82mm;margin:3mm 0}
 .qr svg{width:100%;height:100%;display:block}
 .cta{margin:0;font-size:6mm;color:#fff}
-.code{margin:1mm 0 0;font-size:6mm;letter-spacing:1mm;color:#FFFF4F;font-weight:700}
+.code{margin:1mm 0 0;font-size:6mm;letter-spacing:.3mm;color:#FFFF4F;font-weight:700}
 .url{margin:0;font-size:4mm;color:#F02DF0}
 </style></head><body>
 ${cards.join('\n')}
