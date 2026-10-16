@@ -73,6 +73,16 @@ function drawIgLabel(b,p,label){`,
     replace: "{ const b = BTN.start, p = pressed === 'start', o = p ? 1 : 0;   /* owner edit: short start-game button */\n    ctx.fillStyle = COL.yellow; ctx.fillRect(b.x-1,b.y-1+o,b.w+2,b.h+2); ctx.fillStyle = p ? COL.yellow : COL.magenta; ctx.fillRect(b.x,b.y+o,b.w,b.h);\n    if (!p){ ctx.fillStyle = COL.dmagenta; ctx.fillRect(b.x,b.y+b.h-2,b.w,2); }\n    thaiC('เริ่มเกม', b.x+b.w/2, b.y-1+o, COL.black, 13); }",
   },
   {
+    what: 'fill the screen: scale to the exact fit (not whole steps), snapped to device pixels',
+    find: "function fit(){ const r = document.body.getBoundingClientRect(); scale = Math.max(1, Math.floor(Math.min(r.width/W, r.height/H)));\n  cv.style.width = (W*scale)+'px'; cv.style.height = (H*scale)+'px'; }",
+    replace: "function fit(){ const r = document.body.getBoundingClientRect(), d = window.devicePixelRatio || 1;   /* owner edit: exact fit, was whole steps */\n  scale = Math.min(r.width/W, r.height/H);\n  cv.style.width = (Math.round(W*scale*d)/d)+'px'; cv.style.height = (Math.round(H*scale*d)/d)+'px'; }\nwindow.visualViewport && window.visualViewport.addEventListener('resize', () => fit());",
+  },
+  {
+    what: 'page height follows the visible screen on phones (browser bars)',
+    find: 'canvas{display:block;image-rendering:pixelated;',
+    replace: '@supports (height:100dvh){body{height:100dvh}}\ncanvas{position:relative;z-index:2;display:block;image-rendering:pixelated;',
+  },
+  {
     what: 'screen-reader label mentions the Trick or Treat button',
     find: 'aria-label="หน้าแรก ลานนภา Halloween Fest แตะ กดเริ่มเกม เพื่อเริ่มเล่น"',
     replace: 'aria-label="หน้าแรก ลานนภา Halloween Fest แตะ กดเริ่มเกม เพื่อเริ่มเล่น หรือ Trick or Treat เพื่อล่าสติกเกอร์"',

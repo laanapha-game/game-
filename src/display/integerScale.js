@@ -13,7 +13,7 @@ import Phaser from 'phaser';
 import { GAME_W, GAME_H, RENDER_SCALE } from '../config/constants.js';
 import { setTextResolution } from '../ui/text.js';
 
-const SNAP_MIN_FILL = 0.9;
+const SNAP_MIN_FILL = 1; // owner: fill the screen exactly (was 0.9: whole steps when they filled 90%)
 
 export function computeScale(viewW, viewH, dpr) {
   const exact = Math.min((viewW * dpr) / GAME_W, (viewH * dpr) / GAME_H);

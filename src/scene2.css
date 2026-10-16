@@ -3,7 +3,8 @@
 #game {
   position: fixed;
   inset: 0;
-  background: #000000; /* letterbox, keep in sync with LETTERBOX_COLOR */
+  z-index: 3; /* above scene 1's canvas (z-index 2) and the ambient backdrop */
+  background: transparent; /* full game: the ambient backdrop (src/display/ambient.js) shows around the game */
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;

@@ -15,11 +15,19 @@ import { startScene2 } from './scene2.js';
 import { characterFromScene1 } from './integration/scene1.js';
 import { audio } from './audio/engine.js';
 import { createHub } from './hub/hub.js';
+import { createAmbient } from './display/ambient.js';
 import { createStore, parseScan } from './hub/store.js';
 
 const G = window.LannaphaGame;
 const box = document.getElementById('game');
 let game = null;
+
+// Blurred glow of the game behind it, so other screen shapes show no empty bars.
+const ambient = createAmbient();
+(function ambientLoop(now) {
+  if (!game) ambient.capture(G.ctx.canvas, now);
+  requestAnimationFrame(ambientLoop);
+})(performance.now());
 
 // Scene 1 keeps its scene list private, so note which scenes get registered.
 const registered = new Set();
@@ -147,6 +155,7 @@ G.registerScene('scene2', {
       },
     });
     game = await started;
+    game?.events?.on('postrender', () => ambient.capture(game?.canvas));
   },
   // Scene 1's canvas is under #game while scene 2 runs; keep it black for the fades.
   draw() {
