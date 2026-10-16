@@ -21,9 +21,9 @@ const EDITS = [
     replace: '{ onStart:null, onTickets:null, onFollow:null, onEventIg:null, onConfirm:null }',
   },
   {
-    what: 'home buttons: start + tickets, then the two Instagram buttons',
+    what: 'home buttons: [TRICK OR TREAT (long) | start game (short)], then [tickets | IG NUANNAPHA]',
     find: 'start:{x:30,y:246,w:120,h:18}, tickets:{x:10,y:269,w:64,h:18}, follow:{x:78,y:269,w:92,h:18} };',
-    replace: 'start:{x:4,y:246,w:118,h:18}, tickets:{x:128,y:246,w:48,h:18}, eventig:{x:4,y:269,w:84,h:18}, follow:{x:92,y:269,w:84,h:18} };',
+    replace: 'start:{x:122,y:246,w:54,h:18}, tickets:{x:4,y:269,w:84,h:18}, eventig:{x:4,y:246,w:112,h:18}, follow:{x:92,y:269,w:84,h:18} };',
   },
   {
     what: 'event Instagram icon: the IG camera in event colours, its lens a jack-o-lantern',
@@ -63,9 +63,14 @@ function drawIgLabel(b,p,label){`,
     replace: "openLink(FOLLOW_URL,'INSTAGRAM.COM/NUANNAPHA.POV')",
   },
   {
-    what: 'the LAANAPHA button becomes TRICK OR TREAT (the sticker hunt): pumpkin + two-line label',
+    what: 'the LAANAPHA button becomes TRICK OR TREAT (the sticker hunt): the long main button, pumpkin + blinking arrows',
     find: "  const label = 'LAANAPHA', tw = label.length*6-1, gw = IG_EVENT.width+4+tw, x0 = Math.round(b.x+(b.w-gw)/2);\n  ctx.drawImage(IG_EVENT,x0,b.y+1+o); text(label, x0+IG_EVENT.width+4, b.y+6+o, COL.black, 'l');",
-    replace: "  /* owner edit: was the LAANAPHA Instagram button; now starts the Trick or Treat sticker hunt (src/scene1Bridge.js) */\n  const gw = pumpkinSp.width+4+47, x0 = Math.round(b.x+(b.w-gw)/2);\n  ctx.drawImage(pumpkinSp,x0,b.y+2+o); text('TRICK OR', x0+pumpkinSp.width+4, b.y+2+o, COL.black, 'l'); text('TREAT', x0+pumpkinSp.width+4, b.y+10+o, COL.black, 'l');",
+    replace: "  /* owner edit: was the LAANAPHA Instagram button; now starts the Trick or Treat sticker hunt (src/scene1Bridge.js) */\n  const label = 'TRICK OR TREAT', gw = pumpkinSp.width+4+label.length*6-1, x0 = Math.round(b.x+(b.w-gw)/2);\n  ctx.drawImage(pumpkinSp,x0,b.y+2+o); text(label, x0+pumpkinSp.width+4, b.y+6+o, COL.black, 'l');\n  if (Math.floor(t*2) % 2 === 0){ text('>', x0-8, b.y+6+o, COL.black, 'l'); text('<', x0+gw+3, b.y+6+o, COL.black, 'l'); }",
+  },
+  {
+    what: 'start game: the short button beside TRICK OR TREAT (magenta, no arrows)',
+    find: "button('start','','start',t);",
+    replace: "{ const b = BTN.start, p = pressed === 'start', o = p ? 1 : 0;   /* owner edit: short start-game button */\n    ctx.fillStyle = COL.yellow; ctx.fillRect(b.x-1,b.y-1+o,b.w+2,b.h+2); ctx.fillStyle = p ? COL.yellow : COL.magenta; ctx.fillRect(b.x,b.y+o,b.w,b.h);\n    if (!p){ ctx.fillStyle = COL.dmagenta; ctx.fillRect(b.x,b.y+b.h-2,b.w,2); }\n    thaiC('เริ่มเกม', b.x+b.w/2, b.y-1+o, COL.black, 13); }",
   },
   {
     what: 'screen-reader label mentions the Trick or Treat button',
