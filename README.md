@@ -75,8 +75,10 @@ colours and panels (registered as scene 1's `'scene3'`).
 
 - Each QR holds `https://laanapha.com/?cp=<code>` (code from `tools/qr-codes.json`). The phone camera opens the site and collects
   the sticker; the hub's scan button reads the same QR. The code under the QR can be typed instead.
-- Returning visitors (anything collected or scene 2 finished) open straight on the hub; its back
-  button goes to scene 1's home to play again. `/#stickers` opens the hub directly.
+- One flow from scene 1's home: กดเริ่มเกม → character select → scene 2 → the hunt; TRICK OR TREAT
+  (was the LAANAPHA Instagram button) → character select → the hunt straight away. A hunt already
+  under way skips character select. Opening the site shows home, except a checkpoint QR, a transfer
+  link, `/#stickers`, or a hunt whose clock is running. The hunt's back button returns home.
 - Progress (stickers, name, clock) lives in the browser. "ย้ายเครื่อง" gives a code / link
   (`?save=LNP-…&n=name`) that moves it to another browser, e.g. from Instagram's in-app browser to Safari.
 - The camera needs HTTPS (fine on Vercel / laanapha.com, not on a plain-http LAN address).

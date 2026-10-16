@@ -198,5 +198,35 @@ if (import.meta.env.DEV) window.__hub = { store, hub };
   }
   const scan = cpParam ? parseScan(cpParam) : null;
   if (cpParam && !scan) toast = 'QR นี้ไม่ใช่ของลานนภา';
-  if (scan || saveParam || store.state.unlocked || url.hash === '#stickers') G.go('scene3', { scan, toast });
+  // Opening the site shows scene 1's home, except: a checkpoint QR or transfer link, #stickers,
+  // or a hunt whose clock is running (so a reload mid-hunt goes straight back to it).
+  if (scan || saveParam || url.hash === '#stickers' || store.status() === 'running') G.go('scene3', { scan, toast });
 }
+
+// ---------- one flow from the home screen ----------
+// กดเริ่มเกม        -> character select -> ยืนยัน -> scene 2 (the run) -> the sticker hunt
+// TRICK OR TREAT    -> character select -> ยืนยัน -> the sticker hunt (straight away)
+// A hunt already under way skips character select: TRICK OR TREAT goes straight back to it.
+// (The TRICK OR TREAT button was the LAANAPHA Instagram button: tools/scene1-page.mjs.)
+const home = window.LannaphaHome;
+let flow = 'game';
+home.onStart = () => {
+  flow = 'game';
+  G.goSelect();
+};
+home.onEventIg = () => {
+  if (store.status() !== 'idle') {
+    flow = 'game';
+    G.go('scene3', {});
+    return;
+  }
+  flow = 'hunt';
+  G.goSelect();
+};
+home.onConfirm = (selection) => {
+  if (flow === 'hunt') {
+    flow = 'game';
+    G.go('scene3', { character: selection, fromHome: true });
+  } else G.go('scene2', selection);
+};
+if (import.meta.env.DEV) window.__flowMode = () => flow;

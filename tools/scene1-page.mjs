@@ -7,7 +7,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { scene1SourceFile } from './scene1-characters.mjs';
 
 // Owner edits to scene 1's home screen: the event's own Instagram (@laanapha) as the
-// main social button. Bottom rows become [start | tickets] and [IG LAANAPHA | IG NUANNAPHA] (@nuannapha.pov, was @jayimpacts).
+// main social button. Bottom rows become [start | tickets] and [TRICK OR TREAT | IG NUANNAPHA] (@nuannapha.pov, was @jayimpacts);
+// the second-row left button was IG LAANAPHA, now it starts the sticker hunt.
 const EDITS = [
   {
     what: 'event Instagram URL',
@@ -60,6 +61,16 @@ function drawIgLabel(b,p,label){`,
     what: 'second Instagram button is Nuannapha (was Jayimpacts): its fallback link text',
     find: "openLink(FOLLOW_URL,'INSTAGRAM.COM/JAYIMPACTS')",
     replace: "openLink(FOLLOW_URL,'INSTAGRAM.COM/NUANNAPHA.POV')",
+  },
+  {
+    what: 'the LAANAPHA button becomes TRICK OR TREAT (the sticker hunt): pumpkin + two-line label',
+    find: "  const label = 'LAANAPHA', tw = label.length*6-1, gw = IG_EVENT.width+4+tw, x0 = Math.round(b.x+(b.w-gw)/2);\n  ctx.drawImage(IG_EVENT,x0,b.y+1+o); text(label, x0+IG_EVENT.width+4, b.y+6+o, COL.black, 'l');",
+    replace: "  /* owner edit: was the LAANAPHA Instagram button; now starts the Trick or Treat sticker hunt (src/scene1Bridge.js) */\n  const gw = pumpkinSp.width+4+47, x0 = Math.round(b.x+(b.w-gw)/2);\n  ctx.drawImage(pumpkinSp,x0,b.y+2+o); text('TRICK OR', x0+pumpkinSp.width+4, b.y+2+o, COL.black, 'l'); text('TREAT', x0+pumpkinSp.width+4, b.y+10+o, COL.black, 'l');",
+  },
+  {
+    what: 'screen-reader label mentions the Trick or Treat button',
+    find: 'aria-label="หน้าแรก ลานนภา Halloween Fest แตะ กดเริ่มเกม เพื่อเริ่มเล่น"',
+    replace: 'aria-label="หน้าแรก ลานนภา Halloween Fest แตะ กดเริ่มเกม เพื่อเริ่มเล่น หรือ Trick or Treat เพื่อล่าสติกเกอร์"',
   },
 ];
 
