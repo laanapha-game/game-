@@ -16,6 +16,8 @@ import { characterFromScene1 } from './integration/scene1.js';
 import { audio } from './audio/engine.js';
 import { createHub } from './hub/hub.js';
 import { createAmbient } from './display/ambient.js';
+import { createCountdown } from './hub/countdown.js';
+import { isOpen, syncServerTime, tryStaff } from './hub/clock.js';
 import { createStore, parseScan } from './hub/store.js';
 
 const G = window.LannaphaGame;
@@ -147,7 +149,7 @@ G.registerScene('scene2', {
         if (registered.has('scene3')) {
           stopScene2();
           audio.mood(null); // scene 3 sets its own sound
-          G.go('scene3', { character: c, fromGame: true });
+          goHunt({ character: c, fromGame: true });
         } else scene.scene.start('Scene3Stub', { character: c });
       },
       onGameOver: () => {
@@ -188,18 +190,43 @@ const hub = createHub({
 G.registerScene('scene3', hub.scene);
 if (import.meta.env.DEV) window.__hub = { store, hub };
 
+// ---------- the hunt opens at HUNT_OPENS_AT (12:00 Thai time on the 24th) ----------
+// Every way into the hunt goes through goHunt(): before the opening it shows the countdown,
+// which carries on to the same place once it reaches zero.
+syncServerTime();
+const countdown = createCountdown({
+  G,
+  onBack: () => G.goHome(),
+  onOpen: (pending) => {
+    if (pending) G.go('scene3', pending);
+    else {
+      flow = 'hunt';
+      G.goSelect();
+    }
+  },
+});
+G.registerScene('countdown', countdown.scene);
+function goHunt(data) {
+  if (isOpen()) G.go('scene3', data);
+  else G.go('countdown', { pending: data });
+}
+
 {
   const url = new URL(window.location.href);
   const cpParam = url.searchParams.get('cp');
   const saveParam = url.searchParams.get('save');
   const nameParam = url.searchParams.get('n');
-  if (cpParam || saveParam) {
+  const staffParam = url.searchParams.get('staff');
+  if (cpParam || saveParam || staffParam) {
     url.searchParams.delete('cp');
     url.searchParams.delete('save');
     url.searchParams.delete('n');
+    url.searchParams.delete('staff');
     history.replaceState(null, '', url.pathname + url.search + url.hash);
   }
   let toast = null;
+  let staffOk = false;
+  if (staffParam) staffOk = tryStaff(staffParam);
   if (saveParam) {
     const ok = store.importCode(saveParam);
     if (ok && nameParam && !store.state.name) store.setName(nameParam);
@@ -209,7 +236,11 @@ if (import.meta.env.DEV) window.__hub = { store, hub };
   if (cpParam && !scan) toast = 'QR นี้ไม่ใช่ของลานนภา';
   // Opening the site shows scene 1's home, except: a checkpoint QR or transfer link, #stickers,
   // or a hunt whose clock is running (so a reload mid-hunt goes straight back to it).
-  if (scan || saveParam || url.hash === '#stickers' || store.status() === 'running') G.go('scene3', { scan, toast });
+  if (scan || saveParam || url.hash === '#stickers' || store.status() === 'running') goHunt({ scan, toast });
+  else if (staffParam) {
+    // a toast on the home screen is scene 1's own; show the result on the hunt instead
+    if (staffOk) goHunt({ toast: 'โหมดสตาฟ: เล่นก่อนเปิดได้' });
+  }
 }
 
 // ---------- one flow from the home screen ----------
@@ -224,6 +255,11 @@ home.onStart = () => {
   G.goSelect();
 };
 home.onEventIg = () => {
+  if (!isOpen()) {
+    flow = 'game';
+    G.go('countdown', { pending: null });
+    return;
+  }
   if (store.status() !== 'idle') {
     flow = 'game';
     G.go('scene3', {});
@@ -235,7 +271,7 @@ home.onEventIg = () => {
 home.onConfirm = (selection) => {
   if (flow === 'hunt') {
     flow = 'game';
-    G.go('scene3', { character: selection, fromHome: true });
+    goHunt({ character: selection, fromHome: true });
   } else G.go('scene2', selection);
 };
 if (import.meta.env.DEV) window.__flowMode = () => flow;

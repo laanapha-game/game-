@@ -5,6 +5,7 @@ import { createStore, parseScan, encodeSave, decodeSave, STORAGE_KEY, HUNT_MS } 
 import { CHECKPOINTS, TOTAL } from '../src/data/checkpoints.js';
 import { hashCode } from '../src/hub/codehash.js';
 import { readFileSync } from 'node:fs';
+import { OPENS_MS, isOpen, msUntilOpen, STAFF_HASH } from '../src/hub/clock.js';
 
 function memory() {
   const m = new Map();
@@ -145,4 +146,17 @@ test('the first scan starts the clock if start was never pressed', () => {
 test('encodeSave of an empty state decodes to nothing collected', () => {
   const d = decodeSave(encodeSave({ stamps: {}, claimedAt: null, character: null }));
   assert.deepEqual(d, { mask: 0, claimed: false, character: null, startedAt: null, finishedAt: null });
+});
+
+test('the hunt opens at 12:00 Thai time on 24 Oct 2026', () => {
+  assert.equal(new Date(OPENS_MS).toISOString(), '2026-10-24T05:00:00.000Z');
+  assert.equal(isOpen(Date.UTC(2026, 9, 24, 4, 59, 59)), false);
+  assert.equal(isOpen(Date.UTC(2026, 9, 24, 5, 0, 0)), true);
+  assert.equal(msUntilOpen(Date.UTC(2026, 9, 24, 4, 0, 0)), 3600000);
+});
+
+test('the staff code is only in the page as a hash', () => {
+  const codes = JSON.parse(readFileSync('tools/qr-codes.json', 'utf8'));
+  assert.equal(hashCode(codes._staff), STAFF_HASH);
+  assert.ok(!readFileSync('src/hub/clock.js', 'utf8').includes(codes._staff));
 });

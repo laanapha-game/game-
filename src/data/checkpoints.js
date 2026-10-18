@@ -13,6 +13,12 @@ export const SITE_URL = 'https://laanapha.com';
 /** The hunt clock: counts down from the moment the player presses start (or scans first). */
 export const HUNT_MINUTES = 45;
 
+/** When the hunt opens (Thai time, UTC+7). Before this, the hunt shows a countdown instead. */
+export const HUNT_OPENS_AT = '2026-10-24T12:00:00+07:00';
+/** Shown on the countdown. */
+export const HUNT_DAYS_TH = '24 - 25 ตุลาคม 2569';
+export const HUNT_DAYS_EN = 'GAME WILL START ON 24-25 OCT';
+
 /** Where the prize is collected when all 8 are found. TODO(owner): real prize and place. */
 export const REWARD = {
   title: 'ของรางวัลลานนภา',

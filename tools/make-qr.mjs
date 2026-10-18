@@ -21,6 +21,12 @@ for (const [id, code] of Object.entries(CODES)) {
   src = src.replace(re, `$1${hashCode(code)}$2`);
 }
 writeFileSync(CP_FILE, src);
+// the staff code (plays before the opening time): only its hash goes in the page
+if (CODES._staff) {
+  const CLOCK = 'src/hub/clock.js';
+  const c = readFileSync(CLOCK, 'utf8').replace(/export const STAFF_HASH = '[^']*';/, `export const STAFF_HASH = '${hashCode(CODES._staff)}';`);
+  writeFileSync(CLOCK, c);
+}
 const { CHECKPOINTS, SITE_URL } = await import(`../src/data/checkpoints.js?${Date.now()}`);
 
 const OUT = 'docs/qr';

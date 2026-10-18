@@ -81,6 +81,10 @@ colours and panels (registered as scene 1's `'scene3'`).
   link, `/#stickers`, or a hunt whose clock is running. The hunt's back button returns home.
 - Progress (stickers, name, clock) lives in the browser. "ย้ายเครื่อง" gives a code / link
   (`?save=LNP-…&n=name`) that moves it to another browser, e.g. from Instagram's in-app browser to Safari.
+- The hunt opens at `HUNT_OPENS_AT` (12:00 Thai time, 24 Oct; `src/data/checkpoints.js`). Before that every way in
+  (TRICK OR TREAT, a checkpoint QR, the end of scene 2) shows a countdown (`src/hub/countdown.js`) that carries
+  on once it reaches zero. The time is read from the server when possible (`src/hub/clock.js`). Staff can test
+  early: open the site once with `?staff=<"_staff" in tools/qr-codes.json>` and that phone skips the countdown.
 - The camera needs HTTPS (fine on Vercel / laanapha.com, not on a plain-http LAN address).
 
 ## Resolution
