@@ -160,3 +160,43 @@ test('the staff code is only in the page as a hash', () => {
   assert.equal(hashCode(codes._staff), STAFF_HASH);
   assert.ok(!readFileSync('src/hub/clock.js', 'utf8').includes(codes._staff));
 });
+
+test('the entry QR unlocks the hunt; a checkpoint QR does too', () => {
+  const codes = JSON.parse(readFileSync('tools/qr-codes.json', 'utf8'));
+  assert.equal(parseScan(`https://laanapha.com/?cp=${codes._entry}`), 'entry');
+  const s = createStore(memory());
+  assert.equal(s.entered, false);
+  assert.equal(s.enter(), true);
+  assert.equal(s.enter(), false);
+  assert.equal(s.entered, true);
+  const c = createStore(memory());
+  c.collect('cp2', 1000);
+  assert.equal(c.entered, true);
+});
+
+test('checkpoints 4 and 6 add 10 minutes each to the clock', () => {
+  const s = createStore(memory());
+  const t0 = 1_000_000;
+  s.start('', t0);
+  assert.equal(s.limitMs(), HUNT_MS);
+  s.collect('cp1', t0 + 5 * 60000);
+  s.collect('cp4', t0 + 20 * 60000);
+  assert.equal(s.bonusMs(), 10 * 60000);
+  assert.equal(s.timeLeft(t0 + 20 * 60000), HUNT_MS + 10 * 60000 - 20 * 60000);
+  // past the plain 45 minutes but inside 55: still running
+  assert.equal(s.status(t0 + 50 * 60000), 'running');
+  s.collect('cp6', t0 + 50 * 60000);
+  assert.equal(s.limitMs(), HUNT_MS + 20 * 60000);
+  assert.equal(s.status(t0 + 64 * 60000), 'running');
+  assert.equal(s.status(t0 + 65 * 60000), 'timeout');
+  assert.equal(s.timeUsed(t0 + 70 * 60000), 65 * 60000);
+});
+
+test('a bonus checkpoint scanned after time is up adds nothing', () => {
+  const s = createStore(memory());
+  const t0 = 1_000_000;
+  s.start('', t0);
+  assert.equal(s.collect('cp4', t0 + HUNT_MS + 1000), 'timeout');
+  assert.equal(s.bonusMs(), 0);
+  assert.equal(s.status(t0 + HUNT_MS + 2000), 'timeout');
+});

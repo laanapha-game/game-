@@ -342,7 +342,7 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
   // ---- scanning ----
   async function startScan() {
     if (store.status() === 'timeout') return openSummary('หมดเวลาแล้ว');
-    open('scan');
+    open('scan', { entry: !store.entered });
     camStatus = 'starting';
     scanLock = false;
     try {
@@ -375,6 +375,19 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
 
   /** A checkpoint was scanned (camera, photo, typed code or the ?cp= link). */
   function collect(id) {
+    if (id === 'entry') {
+      // the entry QR at the event: unlocks the hunt
+      const first = store.enter();
+      if (modal) close();
+      if (store.status() === 'idle') {
+        audio.sfx('scene3_chime');
+        buzz([40, 60, 90]);
+        openInput('start', START_FIELD);
+        showToast(first ? 'ปลดล็อกแล้ว! เริ่มเล่นได้เลย' : 'เข้าร่วมเกมแล้ว', 2600);
+      } else showToast('เข้าร่วมเกมแล้ว', 2000);
+      return;
+    }
+    if (!store.entered && store.status() === 'idle') store.enter();
     const r = store.collect(id);
     if (modal) close();
     if (r === 'new') {
@@ -612,6 +625,13 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
     const label = { idle: 'เวลา', running: 'เหลือ', complete: 'ใช้ไป', timeout: 'หมด' }[st];
     thai(label, 70, 58, COL.white, 12, 'l');
     const ms = st === 'complete' ? store.timeUsed() : left;
+    if (st === 'running' && store.bonusMs()) {
+      // the time bonus earned so far: a green tag on the clock's top edge
+      const tag = `+${Math.round(store.bonusMs() / 60000)} MIN`;
+      const tw = tag.length * 6 + 3;
+      rect(172 - tw, 54, tw, 9, COL.green);
+      text(tag, 171 - tw + 2, 55, COL.black);
+    }
     bigText(K, fmtTime(ms), 172, 63, st === 'timeout' || blink ? COL.magenta : st === 'complete' ? COL.green : COL.yellow, 'r');
   }
 
@@ -812,7 +832,13 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
       drawPrize(now, t);
     }
     const st = store.status();
-    if (st === 'idle') {
+    if (st === 'idle' && !store.entered) {
+      bigButton(SCAN_BTN, 'สแกน QR หน้างาน', pressed === 'scan', t, qrIcon);
+      hit('scan', SCAN_BTN, () => {
+        audio.sfx('choice_press');
+        open('gate');
+      });
+    } else if (st === 'idle') {
       bigButton(SCAN_BTN, `เริ่มจับเวลา ${HUNT_MINUTES} นาที`, pressed === 'scan', t, clockIcon);
       hit('scan', SCAN_BTN, () => {
         audio.sfx('choice_press');
@@ -876,7 +902,7 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
     const steps = [
       ['เดินหาจุดเช็กพอยต์', 'ทั้งหมด 8 จุดในงาน'],
       ['สแกน QR ที่แต่ละจุด', 'สะสมสติกเกอร์ผีให้ครบ'],
-      [`เก็บให้ครบใน ${HUNT_MINUTES} นาที`, 'แลกของรางวัลลานนภา'],
+      [`เก็บให้ครบใน ${HUNT_MINUTES} นาที`, 'จุดที่ 4 และ 6 ได้เวลาเพิ่ม'],
     ];
     let y = 52;
     steps.forEach((s, i) => {
@@ -1030,6 +1056,22 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
     }
     box(12, 162, 156, 22, COL.black, COL.magenta);
     thaiS(`จุดที่ ${i + 1} · ${cp.name}`, 90, 162, COL.yellow, 13);
+    if (cp.bonusMinutes && kr > 0.3) {
+      // time bonus: a stamp that pops onto the sticker
+      if (!modal.bonusSound) {
+        modal.bonusSound = true;
+        audio.sfx('meter_full');
+      }
+      const pk = Math.min(1, (kr - 0.3) / 0.25);
+      const sc = pk < 1 ? 1.6 - pk * 0.6 : 1 + (Math.floor(t * 4) % 2) * 0.04;
+      const bw = Math.round(64 * sc);
+      const bh = Math.round(22 * sc);
+      const bx = 118 - Math.round(bw / 2);
+      const by = 128 - Math.round(bh / 2);
+      rect(bx - 2, by - 2, bw + 4, bh + 4, COL.black);
+      rect(bx, by, bw, bh, COL.green);
+      thai(`+${cp.bonusMinutes} นาที!`, bx + bw / 2, by + Math.round((bh - 21) / 2), COL.black, 13);
+    }
     // the scary story, typed out
     box(8, 189, 164, 82, COL.black, COL.dred);
     const lines = wrapText(cp.brief, 152, (str) => thaiWidth(str, 12));
@@ -1202,7 +1244,7 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
   function drawScan(now, t) {
     rect(0, 0, W, H, COL.black);
     bulbPanel(26, 5, 128, 26, t);
-    thai('สแกน QR', 90, 7, COL.yellow, 13);
+    thai(modal.entry ? 'สแกน QR หน้างาน' : 'สแกน QR', 90, 7, COL.yellow, 13);
     const v = VIEW;
     rect(v.x - 3, v.y - 3, v.w + 6, v.h + 6, COL.yellow);
     if (camStatus === 'live') {
@@ -1309,8 +1351,8 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
     bulbPanel(6, 24, 168, 274, t);
     thaiS('วิธีเล่น', 90, 33, COL.yellow, 13);
     const steps = [
-      [`มีเวลา ${HUNT_MINUTES} นาที`, 'นับถอยหลังตั้งแต่กดเริ่ม'],
-      ['เดินหา 8 จุดในงาน', 'กด สแกน QR ที่แต่ละจุด'],
+      ['สแกน QR หน้างาน', `ปลดล็อก แล้วมีเวลา ${HUNT_MINUTES} นาที`],
+      ['เดินหา 8 จุดในงาน', 'จุดที่ 4 และ 6 ได้เวลาเพิ่ม'],
       ['เก็บครบ 8 ดวง', 'ดูสรุป บันทึกรูป รับรางวัล'],
     ];
     let y = 58;
@@ -1374,7 +1416,38 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
     }
   }
 
-  const DRAW = { detail: drawDetail, reveal: drawReveal, reward: drawReward, input: drawInput, start: drawStart, transfer: drawTransfer, help: drawHelp };
+  /** Locked: scan the QR at the event's entrance to join. */
+  function drawGate(now, t) {
+    dim(0.9);
+    bulbPanel(6, 20, 168, 282, t);
+    text('TRICK OR TREAT', 90, 30, COL.yellow, 'c');
+    // a padlock over a ghost
+    const gy = 48 + Math.round(Math.sin(t * 2) * 2);
+    ctx.drawImage(ghostBig, 80, gy);
+    rect(82, 78, 16, 12, COL.yellow);
+    rect(83, 79, 14, 10, COL.olive);
+    rect(89, 82, 2, 4, COL.black);
+    rect(84, 71, 2, 7, COL.yellow);
+    rect(94, 71, 2, 7, COL.yellow);
+    rect(84, 70, 12, 2, COL.yellow);
+    thaiS('สแกน QR CODE หน้างาน', 90, 96, COL.yellow, 13);
+    thai('เพื่อเข้าร่วมเกม', 90, 114, COL.white, 13);
+    para('สแกนเสร็จ เกมจะปลดล็อกและเล่นได้ทันที', 18, 136, 144, COL.white, 12, 15, 'c');
+    box(14, 170, 152, 50, COL.black, COL.magenta);
+    thai(`มีเวลา ${HUNT_MINUTES} นาที`, 90, 169, COL.magenta, 12);
+    thai('จุดที่ 4 และ 6 ได้เวลาเพิ่ม', 90, 184, COL.green, 12);
+    thai('จุดละ +10 นาที', 90, 199, COL.green, 12);
+    text('SCAN THE QR AT THE ENTRANCE', 90, 226, COL.yellow, 'c');
+    const B = { x: 18, y: 240, w: 144, h: 20 };
+    bigButton(B, 'สแกน QR หน้างาน', pressed === 'gscan', t, qrIcon);
+    hit('gscan', B, () => {
+      audio.sfx('choice_press');
+      startScan();
+    });
+    closeButton({ x: 50, y: 274, w: 80, h: 16 }, 'ไว้ก่อน');
+  }
+
+  const DRAW = { gate: drawGate, detail: drawDetail, reveal: drawReveal, reward: drawReward, input: drawInput, start: drawStart, transfer: drawTransfer, help: drawHelp };
 
   // ---- scene 1 scene ----
   const scene = {
@@ -1389,7 +1462,7 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
       audio.mood('title');
       endSeen = ended(); // an old finished hunt does not pop the summary by itself
       if (data.scan) setTimeout(() => collect(data.scan), 450);
-      else if (store.status() === 'idle') setTimeout(() => openInput('start', START_FIELD), 300);
+      else if (store.status() === 'idle') setTimeout(() => (store.entered ? openInput('start', START_FIELD) : open('gate')), 300);
       if (data.toast) showToast(data.toast, 2400);
     },
     draw(now, t) {

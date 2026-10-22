@@ -190,6 +190,8 @@ const hub = createHub({
 G.registerScene('scene3', hub.scene);
 if (import.meta.env.DEV) window.__hub = { store, hub };
 
+let flow = 'game'; // 'hunt' when character select leads to the sticker hunt
+
 // ---------- the hunt opens at HUNT_OPENS_AT (12:00 Thai time on the 24th) ----------
 // Every way into the hunt goes through goHunt(): before the opening it shows the countdown,
 // which carries on to the same place once it reaches zero.
@@ -236,7 +238,12 @@ function goHunt(data) {
   if (cpParam && !scan) toast = 'QR นี้ไม่ใช่ของลานนภา';
   // Opening the site shows scene 1's home, except: a checkpoint QR or transfer link, #stickers,
   // or a hunt whose clock is running (so a reload mid-hunt goes straight back to it).
-  if (scan || saveParam || url.hash === '#stickers' || store.status() === 'running') goHunt({ scan, toast });
+  if (scan === 'entry' && !store.state.character && isOpen()) {
+    // the entry QR scanned with the phone camera on a fresh phone: unlock, then pick a character
+    store.enter();
+    flow = 'hunt';
+    G.goSelect();
+  } else if (scan || saveParam || url.hash === '#stickers' || store.status() === 'running') goHunt({ scan, toast });
   else if (staffParam) {
     // a toast on the home screen is scene 1's own; show the result on the hunt instead
     if (staffOk) goHunt({ toast: 'โหมดสตาฟ: เล่นก่อนเปิดได้' });
@@ -249,7 +256,6 @@ function goHunt(data) {
 // A hunt already under way skips character select: TRICK OR TREAT goes straight back to it.
 // (The TRICK OR TREAT button was the LAANAPHA Instagram button: tools/scene1-page.mjs.)
 const home = window.LannaphaHome;
-let flow = 'game';
 home.onStart = () => {
   flow = 'game';
   G.goSelect();

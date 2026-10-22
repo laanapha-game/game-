@@ -20,6 +20,7 @@ for (const [id, code] of Object.entries(CODES)) {
   if (!re.test(src)) throw new Error(`${CP_FILE}: no hash line for ${id}`);
   src = src.replace(re, `$1${hashCode(code)}$2`);
 }
+if (CODES._entry) src = src.replace(/export const ENTRY_HASH = '[^']*';/, `export const ENTRY_HASH = '${hashCode(CODES._entry)}';`);
 writeFileSync(CP_FILE, src);
 // the staff code (plays before the opening time): only its hash goes in the page
 if (CODES._staff) {
@@ -33,6 +34,21 @@ const OUT = 'docs/qr';
 mkdirSync(OUT, { recursive: true });
 
 const cards = [];
+if (CODES._entry) {
+  // the entry sign, first: scanning it at the event unlocks the hunt
+  const url = `${SITE_URL}/?cp=${encodeURIComponent(CODES._entry)}`;
+  const opts = { errorCorrectionLevel: 'M', margin: 2, width: 900, color: { dark: '#000000', light: '#FFFFFF' } };
+  await QRCode.toFile(`${OUT}/entry.png`, url, opts);
+  const svg = await QRCode.toString(url, { ...opts, type: 'svg' });
+  cards.push(`<section class="sign">
+  <div class="top"><span class="no">ทางเข้า</span><span class="name">TRICK OR TREAT</span></div>
+  <div class="qr">${svg}</div>
+  <p class="cta">สแกน QR CODE หน้างานเพื่อเข้าร่วมเกม</p>
+  <p class="code">รหัส: ${CODES._entry}</p>
+  <p class="url">${SITE_URL.replace('https://', '')}</p>
+</section>`);
+  console.log(`entry  ${url}`);
+}
 for (const [i, cp] of CHECKPOINTS.entries()) {
   const code = CODES[cp.id];
   const url = `${SITE_URL}/?cp=${encodeURIComponent(code)}`;

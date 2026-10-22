@@ -13,6 +13,12 @@ export const SITE_URL = 'https://laanapha.com';
 /** The hunt clock: counts down from the moment the player presses start (or scans first). */
 export const HUNT_MINUTES = 45;
 
+/** Extra time for clearing a checkpoint in time (checkpoint `bonusMinutes`). */
+export const BONUS_NOTE = 'ผ่านจุดที่ 4 และ 6 ได้เวลาเพิ่มจุดละ 10 นาที';
+
+/** The entry QR at the event's entrance unlocks the hunt (hash written by npm run qr). */
+export const ENTRY_HASH = '11arptxyxi6';
+
 /** When the hunt opens (Thai time, UTC+7). Before this, the hunt shows a countdown instead. */
 export const HUNT_OPENS_AT = '2026-10-24T12:00:00+07:00';
 /** Shown on the countdown. */
@@ -65,6 +71,7 @@ export const CHECKPOINTS = [
   {
     id: 'cp4',
     hash: '22iauuxpd79', // code in tools/qr-codes.json (npm run qr)
+    bonusMinutes: 10, // +10 min on the clock when collected in time
     name: 'ผีกระหัง',
     title: 'ปีกกระด้งกลางดึก',
     stall: 'A',
@@ -85,6 +92,7 @@ export const CHECKPOINTS = [
   {
     id: 'cp6',
     hash: 'uxq5izf88u', // code in tools/qr-codes.json (npm run qr)
+    bonusMinutes: 10, // +10 min on the clock when collected in time
     name: 'กุมารทอง',
     title: 'เด็กทองมุมห้อง',
     stall: 'B',

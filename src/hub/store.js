@@ -1,7 +1,7 @@
 // Sticker hub save data. Kept in this browser's localStorage, so it survives closing the
 // page, reloading and coming back later. A short transfer code moves it to another
 // browser (for example from Instagram's in-app browser to Safari).
-import { CHECKPOINTS, HUNT_MINUTES } from '../data/checkpoints.js';
+import { CHECKPOINTS, HUNT_MINUTES, ENTRY_HASH } from '../data/checkpoints.js';
 import { hashCode, normCode } from './codehash.js';
 
 export const HUNT_MS = HUNT_MINUTES * 60 * 1000;
@@ -12,7 +12,7 @@ export const STORAGE_KEY = 'laanapha.stickers.v1';
 export const CHARACTER_IDS = ['nuannapa', 'ramwong', 'pumpkin', 'vampire', 'slasher', 'onryo', 'mahidol', 'silpakorn'];
 
 export function emptyState() {
-  return { v: 1, character: null, name: '', unlocked: false, stamps: {}, claimedAt: null, startedAt: null, finishedAt: null, seenHelp: false };
+  return { v: 1, character: null, name: '', unlocked: false, stamps: {}, claimedAt: null, startedAt: null, finishedAt: null, seenHelp: false, entered: false };
 }
 
 function sanitize(s) {
@@ -25,6 +25,7 @@ function sanitize(s) {
   if (typeof s.claimedAt === 'number') out.claimedAt = s.claimedAt;
   if (typeof s.startedAt === 'number') out.startedAt = s.startedAt;
   out.seenHelp = !!s.seenHelp;
+  out.entered = !!s.entered || typeof s.startedAt === 'number';
   if (typeof s.finishedAt === 'number') out.finishedAt = s.finishedAt;
   if (typeof s.name === 'string') out.name = s.name.slice(0, 24);
   return out;
@@ -95,6 +96,7 @@ export function createStore(backend = storage()) {
       if (state.stamps[id]) return 'dup';
       if (this.status(now) === 'timeout') return 'timeout';
       state.stamps[id] = now;
+      state.entered = true; // a checkpoint QR also proves the player is at the event
       if (!state.startedAt) state.startedAt = now;
       if (this.complete() && !state.finishedAt) state.finishedAt = now;
       persist();
@@ -110,21 +112,40 @@ export function createStore(backend = storage()) {
       state.name = String(name || '').trim().slice(0, 24);
       persist();
     },
+    /** The entry QR at the event was scanned (or a checkpoint): the hunt is unlocked. */
+    get entered() {
+      return !!state.entered;
+    },
+    enter() {
+      const first = !state.entered;
+      state.entered = true;
+      persist();
+      return first;
+    },
+    /** Extra time earned so far (checkpoints with bonusMinutes, collected in time). */
+    bonusMs() {
+      return CHECKPOINTS.reduce((ms, cp) => ms + (cp.bonusMinutes && state.stamps[cp.id] ? cp.bonusMinutes * 60000 : 0), 0);
+    },
+    /** The whole clock: HUNT_MS plus the bonuses earned. */
+    limitMs() {
+      return HUNT_MS + this.bonusMs();
+    },
     /** 'idle' (clock not started) | 'running' | 'complete' (8/8 in time) | 'timeout' */
     status(now = Date.now()) {
       if (state.finishedAt) return 'complete';
       if (!state.startedAt) return 'idle';
-      return now - state.startedAt >= HUNT_MS ? 'timeout' : 'running';
+      return now - state.startedAt >= this.limitMs() ? 'timeout' : 'running';
     },
     /** ms left on the clock */
     timeLeft(now = Date.now()) {
       if (!state.startedAt) return HUNT_MS;
       const end = state.finishedAt || now;
-      return Math.max(0, HUNT_MS - (end - state.startedAt));
+      return Math.max(0, this.limitMs() - (end - state.startedAt));
     },
     /** ms the player used (until 8/8, or the whole clock on a timeout) */
     timeUsed(now = Date.now()) {
-      return HUNT_MS - this.timeLeft(now);
+      if (!state.startedAt) return 0;
+      return Math.min(this.limitMs(), (state.finishedAt || now) - state.startedAt);
     },
     markHelpSeen() {
       state.seenHelp = true;
@@ -146,6 +167,7 @@ export function createStore(backend = storage()) {
       if (d.claimed && !state.claimedAt) state.claimedAt = now;
       if (d.character && !state.character) state.character = { id: d.character, name: '' };
       state.unlocked = true;
+      state.entered = true;
       if (d.startedAt && (!state.startedAt || d.startedAt < state.startedAt)) state.startedAt = d.startedAt;
       if (d.finishedAt && !state.finishedAt) state.finishedAt = d.finishedAt;
       if (this.complete() && !state.finishedAt) state.finishedAt = now;
@@ -180,6 +202,7 @@ export function parseScan(text) {
   }
   if (!normCode(raw)) return null;
   const h = hashCode(raw);
+  if (h === ENTRY_HASH) return 'entry';
   return CHECKPOINTS.find((cp) => cp.hash === h)?.id || null;
 }
 

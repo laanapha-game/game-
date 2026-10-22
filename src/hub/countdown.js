@@ -99,8 +99,8 @@ export function createCountdown({ G, onOpen, onBack }) {
           thai(label, x + 19, 182, COL.white, 12);
         });
         text(HUNT_DAYS_EN, 90, 214, COL.yellow, 'c');
-        thai('ระหว่างนี้ เล่นเกมวิ่งหนีผีก่อนได้!', 90, 232, COL.white, 12);
-        thai('กด "เริ่มเกม" ที่หน้าแรก', 90, 248, COL.white, 12);
+        thai('สแกน QR CODE หน้างานเพื่อเข้าร่วมเกม', 90, 230, COL.green, 12);
+        thai('ระหว่างนี้ เล่นเกมวิ่งหนีผีก่อนได้!', 90, 250, COL.white, 12);
         bigButton(MAIN, 'กลับหน้าแรก', pressed === 'main', t);
         hit('main', MAIN, () => {
           audio.sfx('choice_press');
