@@ -902,7 +902,7 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
     const steps = [
       ['เดินหาจุดเช็กพอยต์', 'ทั้งหมด 8 จุดในงาน'],
       ['สแกน QR ที่แต่ละจุด', 'สะสมสติกเกอร์ผีให้ครบ'],
-      [`เก็บให้ครบใน ${HUNT_MINUTES} นาที`, 'จุดที่ 4 และ 6 ได้เวลาเพิ่ม'],
+      [`เก็บให้ครบใน ${HUNT_MINUTES} นาที`, 'แลกของรางวัลลานนภา'],
     ];
     let y = 52;
     steps.forEach((s, i) => {
@@ -1352,7 +1352,7 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
     thaiS('วิธีเล่น', 90, 33, COL.yellow, 13);
     const steps = [
       ['สแกน QR หน้างาน', `ปลดล็อก แล้วมีเวลา ${HUNT_MINUTES} นาที`],
-      ['เดินหา 8 จุดในงาน', 'จุดที่ 4 และ 6 ได้เวลาเพิ่ม'],
+      ['เดินหา 8 จุดในงาน', 'กด สแกน QR ที่แต่ละจุด'],
       ['เก็บครบ 8 ดวง', 'ดูสรุป บันทึกรูป รับรางวัล'],
     ];
     let y = 58;
@@ -1433,10 +1433,9 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
     thaiS('สแกน QR CODE หน้างาน', 90, 96, COL.yellow, 13);
     thai('เพื่อเข้าร่วมเกม', 90, 114, COL.white, 13);
     para('สแกนเสร็จ เกมจะปลดล็อกและเล่นได้ทันที', 18, 136, 144, COL.white, 12, 15, 'c');
-    box(14, 170, 152, 50, COL.black, COL.magenta);
-    thai(`มีเวลา ${HUNT_MINUTES} นาที`, 90, 169, COL.magenta, 12);
-    thai('จุดที่ 4 และ 6 ได้เวลาเพิ่ม', 90, 184, COL.green, 12);
-    thai('จุดละ +10 นาที', 90, 199, COL.green, 12);
+    box(14, 176, 152, 34, COL.black, COL.magenta);
+    thai(`มีเวลา ${HUNT_MINUTES} นาที`, 90, 175, COL.magenta, 12);
+    thai('เก็บสติกเกอร์ให้ครบ 8 จุด', 90, 190, COL.white, 12);
     text('SCAN THE QR AT THE ENTRANCE', 90, 226, COL.yellow, 'c');
     const B = { x: 18, y: 240, w: 144, h: 20 };
     bigButton(B, 'สแกน QR หน้างาน', pressed === 'gscan', t, qrIcon);

@@ -13,8 +13,8 @@ export const SITE_URL = 'https://laanapha.com';
 /** The hunt clock: counts down from the moment the player presses start (or scans first). */
 export const HUNT_MINUTES = 45;
 
-/** Extra time for clearing a checkpoint in time (checkpoint `bonusMinutes`). */
-export const BONUS_NOTE = 'ผ่านจุดที่ 4 และ 6 ได้เวลาเพิ่มจุดละ 10 นาที';
+// Extra time for clearing a checkpoint in time: `bonusMinutes` on a checkpoint (4 and 6).
+// Kept secret: no screen announces it beforehand; it shows only when it is earned.
 
 /** The entry QR at the event's entrance unlocks the hunt (hash written by npm run qr). */
 export const ENTRY_HASH = '11arptxyxi6';
