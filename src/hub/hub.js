@@ -10,6 +10,8 @@
 import { W, H, COL, kit, mkCanvas, sprite, ghostSprite, pumpkinSprite, moonSprite, houseImage, drawHouseWindows, silhouette, stickerize, thaiWidth } from './brand.js';
 import { CHECKPOINTS, REWARD, TOTAL, SITE_URL, HUNT_MINUTES } from '../data/checkpoints.js';
 import { parseScan } from './store.js';
+import { msUntilOpen } from './clock.js';
+import { HUNT_DAYS_TH } from '../data/checkpoints.js';
 import { startCamera, decodeFile } from './scanner.js';
 import { drawSticker, tintGold } from './stickers.js';
 import { drawCard, exportCard, fmtTime, bigText, THEMES } from './summary.js';
@@ -1439,26 +1441,48 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
   }
 
   /** Locked: scan the QR at the event's entrance to join. */
+  /** Locked: the QR at the event is the password. A countdown to the opening, then the scan. */
   function drawGate(now, t) {
     dim(0.9);
     bulbPanel(6, 20, 168, 282, t);
     text('TRICK OR TREAT', 90, 30, COL.yellow, 'c');
     // a padlock over a ghost
-    const gy = 48 + Math.round(Math.sin(t * 2) * 2);
+    const gy = 42 + Math.round(Math.sin(t * 2) * 2);
     ctx.drawImage(ghostBig, 80, gy);
-    rect(82, 78, 16, 12, COL.yellow);
-    rect(83, 79, 14, 10, COL.olive);
-    rect(89, 82, 2, 4, COL.black);
-    rect(84, 71, 2, 7, COL.yellow);
-    rect(94, 71, 2, 7, COL.yellow);
-    rect(84, 70, 12, 2, COL.yellow);
-    thaiS('สแกน QR CODE หน้างาน', 90, 96, COL.yellow, 13);
-    thai('เพื่อเข้าร่วมเกม', 90, 114, COL.white, 13);
-    para('สแกนเสร็จ เกมจะปลดล็อกและเล่นได้ทันที', 18, 136, 144, COL.white, 12, 15, 'c');
-    box(14, 176, 152, 34, COL.black, COL.magenta);
-    thai(`มีเวลา ${HUNT_MINUTES} นาที`, 90, 175, COL.magenta, 12);
-    thai('เก็บสติกเกอร์ให้ครบ 8 จุด', 90, 190, COL.white, 12);
-    text('SCAN THE QR AT THE ENTRANCE', 90, 226, COL.yellow, 'c');
+    rect(82, 72, 16, 12, COL.yellow);
+    rect(83, 73, 14, 10, COL.olive);
+    rect(89, 76, 2, 4, COL.black);
+    rect(84, 65, 2, 7, COL.yellow);
+    rect(94, 65, 2, 7, COL.yellow);
+    rect(84, 64, 12, 2, COL.yellow);
+    thaiS('สแกน QR CODE หน้างาน', 90, 88, COL.yellow, 13);
+    thai('เพื่อเข้าร่วมเกม', 90, 106, COL.white, 13);
+    thai('QR คือรหัสเข้าเกม', 90, 124, COL.green, 12);
+    // countdown to the opening
+    const left = msUntilOpen();
+    box(12, 146, 156, 74, COL.black, COL.magenta);
+    if (left > 0) {
+      thai('เกมเปิด ' + HUNT_DAYS_TH, 90, 146, COL.magenta, 12);
+      const sec = Math.ceil(left / 1000);
+      const parts = [
+        [Math.floor(sec / 86400), 'วัน'],
+        [Math.floor((sec % 86400) / 3600), 'ชม.'],
+        [Math.floor((sec % 3600) / 60), 'นาที'],
+        [sec % 60, 'วิ'],
+      ];
+      parts.forEach(([v, label], i) => {
+        const x = 20 + i * 36;
+        box(x, 164, 32, 38, COL.black, i === 3 && Math.floor(t * 2) % 2 ? COL.magenta : COL.yellow);
+        bigText(K, String(v).padStart(2, '0'), x + 16, 169, COL.yellow, 'c', 2);
+        thai(label, x + 16, 183, COL.white, 11);
+      });
+      thai('ตั้งแต่ 12:00 น.', 90, 203, COL.white, 11);
+    } else {
+      thaiS('เปิดแล้ว!', 90, 152, COL.yellow, 16);
+      thai(`มีเวลา ${HUNT_MINUTES} นาที`, 90, 176, COL.magenta, 12);
+      thai('เก็บสติกเกอร์ให้ครบ 8 จุด', 90, 192, COL.white, 12);
+    }
+    text('SCAN THE QR AT THE EVENT', 90, 227, COL.yellow, 'c');
     const B = { x: 18, y: 240, w: 144, h: 20 };
     bigButton(B, 'สแกน QR หน้างาน', pressed === 'gscan', t, qrIcon);
     hit('gscan', B, () => {

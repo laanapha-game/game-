@@ -6,7 +6,9 @@ import { hashCode, normCode } from './codehash.js';
 
 export const HUNT_MS = HUNT_MINUTES * 60 * 1000;
 
-export const STORAGE_KEY = 'laanapha.stickers.v1';
+// v2 (24 Oct): the hunt is locked until a QR is scanned. Old saves (tests, earlier versions)
+// are left behind, so every phone starts locked.
+export const STORAGE_KEY = 'laanapha.stickers.v2';
 
 /** Character ids in scene 1's order (for the transfer code). */
 export const CHARACTER_IDS = ['nuannapa', 'ramwong', 'pumpkin', 'vampire', 'slasher', 'onryo', 'mahidol', 'silpakorn'];
@@ -25,7 +27,7 @@ function sanitize(s) {
   if (typeof s.claimedAt === 'number') out.claimedAt = s.claimedAt;
   if (typeof s.startedAt === 'number') out.startedAt = s.startedAt;
   out.seenHelp = !!s.seenHelp;
-  out.entered = !!s.entered || typeof s.startedAt === 'number';
+  out.entered = !!s.entered;
   if (typeof s.finishedAt === 'number') out.finishedAt = s.finishedAt;
   if (typeof s.name === 'string') out.name = s.name.slice(0, 24);
   return out;
@@ -167,7 +169,7 @@ export function createStore(backend = storage()) {
       if (d.claimed && !state.claimedAt) state.claimedAt = now;
       if (d.character && !state.character) state.character = { id: d.character, name: '' };
       state.unlocked = true;
-      state.entered = true;
+      // a transfer code moves stickers, not the entry: the QR at the event is still needed
       if (d.startedAt && (!state.startedAt || d.startedAt < state.startedAt)) state.startedAt = d.startedAt;
       if (d.finishedAt && !state.finishedAt) state.finishedAt = d.finishedAt;
       if (this.complete() && !state.finishedAt) state.finishedAt = now;
