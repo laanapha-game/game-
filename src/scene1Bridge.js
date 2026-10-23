@@ -186,6 +186,11 @@ const hub = createHub({
     setTimeout(syncScene1Speaker, 450);
   },
   onBack: () => G.goHome(),
+  // the entry QR scanned on a phone with no character yet: pick one, then the hunt
+  onNeedCharacter: () => {
+    flow = 'hunt';
+    G.goSelect();
+  },
 });
 G.registerScene('scene3', hub.scene);
 if (import.meta.env.DEV) window.__hub = { store, hub };
@@ -264,6 +269,12 @@ home.onEventIg = () => {
   if (!isOpen()) {
     flow = 'game';
     G.go('countdown', { pending: null });
+    return;
+  }
+  if (!store.entered) {
+    // locked: only players who scanned the QR at the event get in
+    flow = 'game';
+    G.go('scene3', { gate: true });
     return;
   }
   if (store.status() !== 'idle') {

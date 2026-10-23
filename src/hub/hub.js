@@ -179,7 +179,7 @@ const bloodVignette = sprite(W, H, (x, y) => {
   return null;
 });
 
-export function createHub({ G, store, onEnter, onExit, onBack }) {
+export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }) {
   const ctx = G.ctx;
   const K = kit(ctx);
   const { rect, text, textS, thai, thaiS, box, bulbPanel, bigButton, smallButton, sparkle } = K;
@@ -379,6 +379,11 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
       // the entry QR at the event: unlocks the hunt
       const first = store.enter();
       if (modal) close();
+      if (!store.state.character && onNeedCharacter) {
+        audio.sfx('scene3_chime');
+        onNeedCharacter();
+        return;
+      }
       if (store.status() === 'idle') {
         audio.sfx('scene3_chime');
         buzz([40, 60, 90]);
@@ -1267,8 +1272,8 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
         starting: ['กำลังเปิดกล้อง...', 'กด "อนุญาต" ให้ใช้กล้องนะ'],
         denied: ['ไม่ได้รับอนุญาตใช้กล้อง', 'ลองถ่ายรูป QR หรือพิมพ์รหัส'],
         unsupported: ['เบราว์เซอร์นี้เปิดกล้องไม่ได้', 'ลองถ่ายรูป QR แทน'],
-        nocamera: ['ไม่เจอกล้องในเครื่องนี้', 'ลองพิมพ์รหัสใต้ QR'],
-        failed: ['เปิดกล้องไม่สำเร็จ', 'ลองถ่ายรูป QR หรือพิมพ์รหัส'],
+        nocamera: ['ไม่เจอกล้องในเครื่องนี้', modal.entry ? 'ลองถ่ายรูป QR แทน' : 'ลองพิมพ์รหัสใต้ QR'],
+        failed: ['เปิดกล้องไม่สำเร็จ', modal.entry ? 'ลองถ่ายรูป QR แทน' : 'ลองถ่ายรูป QR หรือพิมพ์รหัส'],
       }[camStatus] || ['', ''];
       thai(lines[0], 90, v.y + 58, COL.yellow, 12);
       thai(lines[1], 90, v.y + 76, COL.white, 12);
@@ -1276,8 +1281,25 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
     const bad = modal.badUntil && now < modal.badUntil;
     thai(bad ? 'QR นี้ไม่ใช่ของลานนภา' : 'เล็งกล้องไปที่ป้าย QR', 90, 182, bad ? COL.magenta : COL.white, 12);
     const left = store.timeLeft();
-    ctx.drawImage(clockIcon, 66, 203);
-    textS(fmtTime(left), 80, 205, left < 5 * 60000 ? COL.magenta : COL.yellow);
+    if (!modal.entry) {
+      ctx.drawImage(clockIcon, 66, 203);
+      textS(fmtTime(left), 80, 205, left < 5 * 60000 ? COL.magenta : COL.yellow);
+    }
+    if (modal.entry) {
+      // locked: only scanning the entry QR lets the player in (camera, or a photo of it)
+      const P = { x: 40, y: 222, w: 100, h: 18 };
+      smallButton(P, 'ถ่ายรูป QR', pressed === 'photo', { px: 12 });
+      hit('photo', P, () => {
+        click();
+        fileInput.click();
+      });
+      thai('ใช้ได้เฉพาะ QR หน้างาน', 90, 246, COL.dred, 12);
+      closeButton({ x: 40, y: 282, w: 100, h: 18 }, 'ยกเลิก', () => {
+        close();
+        open('gate');
+      });
+      return;
+    }
     const P = { x: 10, y: 222, w: 76, h: 18 };
     const T = { x: 94, y: 222, w: 76, h: 18 };
     smallButton(P, 'ถ่ายรูป QR', pressed === 'photo', { px: 12 });
@@ -1443,7 +1465,7 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
       audio.sfx('choice_press');
       startScan();
     });
-    closeButton({ x: 50, y: 274, w: 80, h: 16 }, 'ไว้ก่อน');
+    closeButton({ x: 40, y: 274, w: 100, h: 16 }, 'กลับหน้าแรก', () => onBack?.());
   }
 
   const DRAW = { gate: drawGate, detail: drawDetail, reveal: drawReveal, reward: drawReward, input: drawInput, start: drawStart, transfer: drawTransfer, help: drawHelp };
@@ -1455,13 +1477,14 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
       hits = [];
       onEnter?.();
       if (data.character?.id) store.unlock(data.character);
-      else if (!store.state.unlocked) store.unlock(G.selected?.());
+      else if (!store.state.unlocked && !data.gate) store.unlock(G.selected?.());
       if (!artReady) prepareArt();
       audio.ambient('night');
       audio.mood('title');
       endSeen = ended(); // an old finished hunt does not pop the summary by itself
+      if (!store.entered && !data.scan) open('gate'); // locked: nothing but the gate
       if (data.scan) setTimeout(() => collect(data.scan), 450);
-      else if (store.status() === 'idle') setTimeout(() => (store.entered ? openInput('start', START_FIELD) : open('gate')), 300);
+      else if (store.entered && store.status() === 'idle') setTimeout(() => openInput('start', START_FIELD), 300);
       if (data.toast) showToast(data.toast, 2400);
     },
     draw(now, t) {
@@ -1473,7 +1496,13 @@ export function createHub({ G, store, onEnter, onExit, onBack }) {
       if (scare) ctx.translate(Math.round((Math.random() - 0.5) * 6), Math.round((Math.random() - 0.5) * 6));
       if (modal?.type === 'scan') drawScan(now, t);
       else if (modal?.type === 'summary') drawSummary(now, t);
-      else {
+      else if (!store.entered) {
+        K.sky(t, 100);
+        rect(0, 100, W, H - 100, COL.black);
+        if (!modal || modal.type === 'detail') open('gate');
+        hits = [];
+        DRAW[modal.type]?.(now, t);
+      } else {
         drawBoard(now, t);
         if (!modal) drawFly(now);
         else {

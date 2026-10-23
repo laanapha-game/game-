@@ -81,7 +81,9 @@ colours and panels (registered as scene 1's `'scene3'`).
   link, `/#stickers`, or a hunt whose clock is running. The hunt's back button returns home.
 - Progress (stickers, name, clock) lives in the browser. "ย้ายเครื่อง" gives a code / link
   (`?save=LNP-…&n=name`) that moves it to another browser, e.g. from Instagram's in-app browser to Safari.
-- The hunt is locked until the player scans the entry QR at the event (`_entry` in `tools/qr-codes.json`,
+- The hunt is locked until the player scans the entry QR at the event (owner, 24 Oct: a player who has not
+  scanned sees only the gate, never the board; the gate's scanner takes the camera or a photo of the QR, no
+  typed code). Entry QR (`_entry` in `tools/qr-codes.json`,
   printed first in `docs/qr/print.html`); a checkpoint QR also unlocks it. Checkpoints with `bonusMinutes`
   (4 and 6: +10 minutes each) add time to the 45-minute clock when collected in time. Kept secret:
   no screen announces it; the "+10 นาที!" stamp shows only when it is earned.
