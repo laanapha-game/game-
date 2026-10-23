@@ -4,7 +4,7 @@
 //
 // Staff can play before the opening to test the QR signs: open the site once with
 // ?staff=<the staff code in tools/qr-codes.json>; that phone then skips the countdown.
-import { HUNT_OPENS_AT } from '../data/checkpoints.js';
+import { HUNT_OPENS_AT, TIME_LOCK } from '../data/checkpoints.js';
 import { hashCode } from './codehash.js';
 
 export const OPENS_MS = Date.parse(HUNT_OPENS_AT);
@@ -24,8 +24,8 @@ function staff() {
     return false;
   }
 }
-export function isOpen(t = now()) {
-  return t >= OPENS_MS || staff();
+export function isOpen(t = now(), timeLock = TIME_LOCK) {
+  return !timeLock || t >= OPENS_MS || staff();
 }
 
 /** ?staff=<code>: remember this phone as a staff phone. Returns true if the code was right. */

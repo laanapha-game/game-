@@ -19,7 +19,13 @@ export const HUNT_MINUTES = 45;
 /** The entry QR at the event's entrance unlocks the hunt (hash written by npm run qr). */
 export const ENTRY_HASH = '11arptxyxi6';
 
-/** When the hunt opens (Thai time, UTC+7). Before this, the hunt shows a countdown instead. */
+/**
+ * Time lock. Owner (23 Oct): off. The entry QR at the event is the only lock: scanning it
+ * (or a checkpoint QR) lets the player in straight away; anyone else who opens the hunt sees
+ * 'สแกน QR CODE หน้างานเพื่อเข้าร่วมเกม'. Set to true to bring back the countdown until HUNT_OPENS_AT.
+ */
+export const TIME_LOCK = false;
+/** When the hunt opens (Thai time, UTC+7), if TIME_LOCK. Before this, the hunt shows a countdown. */
 export const HUNT_OPENS_AT = '2026-10-24T12:00:00+07:00';
 /** Shown on the countdown. */
 export const HUNT_DAYS_TH = '24 - 25 ตุลาคม 2569';

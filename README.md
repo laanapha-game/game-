@@ -85,7 +85,8 @@ colours and panels (registered as scene 1's `'scene3'`).
   printed first in `docs/qr/print.html`); a checkpoint QR also unlocks it. Checkpoints with `bonusMinutes`
   (4 and 6: +10 minutes each) add time to the 45-minute clock when collected in time. Kept secret:
   no screen announces it; the "+10 นาที!" stamp shows only when it is earned.
-- The hunt opens at `HUNT_OPENS_AT` (12:00 Thai time, 24 Oct; `src/data/checkpoints.js`). Before that every way in
+- Time lock: `TIME_LOCK` in `src/data/checkpoints.js` is off (owner, 23 Oct): the entry QR is the only lock.
+  With it on, the hunt opens at `HUNT_OPENS_AT` (12:00 Thai time, 24 Oct; `src/data/checkpoints.js`). Before that every way in
   (TRICK OR TREAT, a checkpoint QR, the end of scene 2) shows a countdown (`src/hub/countdown.js`) that carries
   on once it reaches zero. The time is read from the server when possible (`src/hub/clock.js`). Staff can test
   early: open the site once with `?staff=<"_staff" in tools/qr-codes.json>` and that phone skips the countdown.

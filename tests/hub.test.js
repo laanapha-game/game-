@@ -150,8 +150,8 @@ test('encodeSave of an empty state decodes to nothing collected', () => {
 
 test('the hunt opens at 12:00 Thai time on 24 Oct 2026', () => {
   assert.equal(new Date(OPENS_MS).toISOString(), '2026-10-24T05:00:00.000Z');
-  assert.equal(isOpen(Date.UTC(2026, 9, 24, 4, 59, 59)), false);
-  assert.equal(isOpen(Date.UTC(2026, 9, 24, 5, 0, 0)), true);
+  assert.equal(isOpen(Date.UTC(2026, 9, 24, 4, 59, 59), true), false);
+  assert.equal(isOpen(Date.UTC(2026, 9, 24, 5, 0, 0), true), true);
   assert.equal(msUntilOpen(Date.UTC(2026, 9, 24, 4, 0, 0)), 3600000);
 });
 
@@ -199,4 +199,8 @@ test('a bonus checkpoint scanned after time is up adds nothing', () => {
   assert.equal(s.collect('cp4', t0 + HUNT_MS + 1000), 'timeout');
   assert.equal(s.bonusMs(), 0);
   assert.equal(s.status(t0 + HUNT_MS + 2000), 'timeout');
+});
+
+test('time lock off (owner, 23 Oct): the hunt is open any time; the entry QR is the lock', () => {
+  assert.equal(isOpen(Date.UTC(2026, 9, 23, 17, 0, 0)), true);
 });

@@ -238,7 +238,7 @@ function goHunt(data) {
   if (cpParam && !scan) toast = 'QR นี้ไม่ใช่ของลานนภา';
   // Opening the site shows scene 1's home, except: a checkpoint QR or transfer link, #stickers,
   // or a hunt whose clock is running (so a reload mid-hunt goes straight back to it).
-  if (scan === 'entry' && !store.state.character && isOpen()) {
+  if (scan === 'entry' && !store.state.character && isOpen()) {  // (isOpen: only if TIME_LOCK is on)
     // the entry QR scanned with the phone camera on a fresh phone: unlock, then pick a character
     store.enter();
     flow = 'hunt';
