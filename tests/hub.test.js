@@ -233,3 +233,18 @@ test('loot: same seed same stickers; different players get different collections
   assert.equal(lootFor(7, 2).item.slot, 'eyes');
   assert.match(playerTag(12345), /^#[0-9A-Z]{5}$/);
 });
+
+test('checkpoint 8 is the mystery box with 3 hints, shown one at a time and kept', () => {
+  const cp8 = CHECKPOINTS[7];
+  assert.equal(cp8.name, 'MYSTERY BOX');
+  assert.deepEqual(cp8.hints, ['มันอยู่ในกล่อง', 'มันอยู่ทางเข้า', 'คุณเดินผ่านมันมาแล้ว']);
+  const be = memory();
+  const s = createStore(be);
+  assert.equal(s.hints, 0);
+  assert.equal(s.hint(3), true);
+  assert.equal(s.hint(3), true);
+  assert.equal(createStore(be).hints, 2);
+  s.hint(3);
+  assert.equal(s.hint(3), false);
+  assert.equal(s.hints, 3);
+});

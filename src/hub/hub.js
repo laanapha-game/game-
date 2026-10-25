@@ -632,8 +632,8 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const h = find(toDesign(e));
     const was = pressed;
     pressed = null;
-    if (h && h.id === was && h.id !== 'hold') h.fn();
-    else if (was === 'hold' && modal?.type === 'reward') showToast('กดค้างไว้จนแถบเต็มนะ', 1500);
+    if (h && h.id === was && h.id !== 'hold' && h.id !== 'hint') h.fn();
+    else if ((was === 'hold' || was === 'hint') && modal) showToast('กดค้างไว้จนแถบเต็มนะ', 1500);
   });
   canvas.addEventListener('pointercancel', () => (pressed = null));
   window.addEventListener('resize', () => {
@@ -804,7 +804,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     }
     hit('slot' + i, r, () => {
       click();
-      open('detail', { id: cp.id });
+      open(cp.hints && !store.has(cp.id) ? 'mystery' : 'detail', { id: cp.id });
     }, 1);
   }
 
@@ -1096,7 +1096,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       const y = Math.round(p.y + p.vy * kr + 160 * kr * kr);
       if (y < H) rect(x, y, p.w, Math.floor(kr * 10 + p.x) % 2 ? 2 : 1, p.c);
     });
-    thaiS('ยินดีด้วย! คุณเจอมันแล้ว', 90, 12, COL.yellow, 14);
+    thaiS(cp.hints ? 'เจอกล่องปริศนาแล้ว!' : 'ยินดีด้วย! คุณเจอมันแล้ว', 90, 12, COL.yellow, 14);
     thai(`คุณมาถึง CHECKPOINT ${i + 1} แล้ว`, 90, 32, COL.white, 12);
     if (a) {
       const s = a.sticker;
@@ -1171,6 +1171,8 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
           t0: performance.now(),
           then: () => {
             if (complete) setTimeout(() => open('reward'), 500);
+            else if (nextCp()?.hints && CHECKPOINTS.indexOf(nextCp()) === CHECKPOINTS.findIndex((c) => c.id === id) + 1)
+              setTimeout(() => open('mystery', { id: nextCp().id }), 450); // owner, 25 Oct: after 7, the mystery box
             else say(nextCp() ? `ต่อไป: ${nextCp().name}` : 'ครบ 8 ดวงแล้ว!', 3500);
           },
         };
@@ -1342,6 +1344,85 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       openSummary();
     });
     text('LAANAPHA HALLOWEEN FEST', 90, 294, COL.dmagenta, 'c');
+  }
+
+  let mysteryBox = null;
+  // Checkpoint 8, the mystery box (owner, 25 Oct): hold for the next hint, or skip.
+  function drawMystery(now, t) {
+    const cp = CHECKPOINTS.find((c) => c.id === modal.id) || CHECKPOINTS.find((c) => c.hints);
+    const hints = cp.hints || [];
+    const n = Math.min(store.hints, hints.length);
+    dim(0.9);
+    bulbPanel(6, 8, 168, 304, t);
+    // the box on a beam of light, shaking now and then
+    const shake = Math.floor(t * 1.5) % 3 === 0 ? Math.round(Math.sin(t * 40) * 2) : 0;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(10, 46, 160, 76);
+    ctx.clip();
+    ctx.drawImage(rays[Math.floor(t * 6) % RAY_N], 10, 4);
+    ctx.restore();
+    mysteryBox ??= stickerize(drawSticker('mystery'), 2);
+    const mb = mysteryBox;
+    ctx.drawImage(mb, Math.round(90 - mb.width) + shake, 118 - mb.height * 2, mb.width * 2, mb.height * 2);
+    sparkle(44, 60, Math.floor(t * 4) % 2 === 0);
+    sparkle(136, 108, Math.floor(t * 4) % 2 === 1);
+    text(`CHECKPOINT ${CHECKPOINTS.indexOf(cp) + 1}`, 90, 18, COL.magenta, 'c');
+    thaiS('MYSTERY BOX', 90, 26, COL.yellow, 16);
+    para('จุดสุดท้ายคือกล่องปริศนา! หาให้เจอแล้วสแกน QR', 14, 124, 152, COL.white, 12, 14, 'c');
+    // the hints so far
+    hints.forEach((h, i) => {
+      const y = 160 + i * 23;
+      const open_ = i < n;
+      box(12, y, 156, 20, COL.black, open_ ? COL.yellow : COL.dred);
+      if (open_) {
+        const s = `${i + 1}. ${h}`;
+        thai(s, 17, y - 1, COL.yellow, thaiWidth(s, 12) > 146 ? 11 : 12, 'l');
+      } else {
+        thai(`คำใบ้ที่ ${i + 1}`, 17, y - 1, COL.dred, 12, 'l');
+        // a little padlock
+        rect(152, y + 9, 8, 6, COL.dred);
+        rect(154, y + 5, 1, 4, COL.dred);
+        rect(157, y + 5, 1, 4, COL.dred);
+        rect(154, y + 5, 4, 1, COL.dred);
+      }
+    });
+    const B = { x: 14, y: 232, w: 152, h: 26 };
+    if (n < hints.length) {
+      const held = pressed === 'hint' ? Math.min(1, (now - holdStart) / HOLD_MS) : 0;
+      rect(B.x - 1, B.y - 1, B.w + 2, B.h + 2, COL.yellow);
+      rect(B.x, B.y, B.w, B.h, COL.black);
+      rect(B.x + 1, B.y + 1, Math.round((B.w - 2) * held), B.h - 2, COL.magenta);
+      if (!held && Math.floor(t * 2) % 2) rect(B.x + 1, B.y + B.h - 3, B.w - 2, 2, COL.dmagenta);
+      thaiS(held ? 'กดค้างไว้...' : `กดค้างเพื่อรับคำใบ้ที่ ${n + 1}`, 90, B.y + 2, COL.yellow, 14);
+      if (held > 0 && Math.floor(held * 10) !== modal.tick) {
+        modal.tick = Math.floor(held * 10);
+        audio.sfx('type_blip', { voice: 'ghost' });
+        buzz(8);
+      }
+      if (held >= 1) {
+        pressed = null;
+        store.hint(hints.length);
+        audio.sfx('letter_chime');
+        buzz([30, 40, 60]);
+      }
+      hit('hint', B, () => {}, 4);
+    } else {
+      bigButton(B, 'ไปหากล่องปริศนาเลย!', pressed === 'go', t);
+      hit('go', B, () => {
+        audio.sfx('choice_press');
+        close();
+        say('ต่อไป: MYSTERY BOX', 3500);
+      });
+    }
+    const SK = { x: 30, y: 270, w: 120, h: 16 };
+    smallButton(SK, 'ข้าม · รู้คำตอบแล้ว', pressed === 'skip', { px: 12 });
+    hit('skip', SK, () => {
+      click();
+      close();
+      say('ต่อไป: MYSTERY BOX', 3500);
+    });
+    text('FIND IT, SCAN IT', 90, 296, COL.dmagenta, 'c');
   }
 
   function drawScan(now, t) {
@@ -1589,7 +1670,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     closeButton({ x: 40, y: 274, w: 100, h: 16 }, 'กลับหน้าแรก', () => onBack?.());
   }
 
-  const DRAW = { gate: drawGate, detail: drawDetail, reveal: drawReveal, reward: drawReward, blessing: drawBlessing, input: drawInput, start: drawStart, transfer: drawTransfer, help: drawHelp };
+  const DRAW = { gate: drawGate, detail: drawDetail, reveal: drawReveal, reward: drawReward, blessing: drawBlessing, mystery: drawMystery, input: drawInput, start: drawStart, transfer: drawTransfer, help: drawHelp };
 
   // ---- scene 1 scene ----
   const scene = {

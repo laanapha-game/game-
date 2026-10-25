@@ -401,7 +401,7 @@ function gift() {
   return g.toCanvas();
 }
 
-// LAAN FOOD: a bowl of noodles, chopsticks, a ghost made of steam.
+// (was cp8 LAAN FOOD) a bowl of noodles, chopsticks, a ghost made of steam.
 function food() {
   const g = grid(34, 32);
   for (let y = 15; y <= 29; y++)
@@ -423,10 +423,30 @@ function food() {
   return g.toCanvas();
 }
 
-const DRAW = { powder, doll, hide, shrine, nails, ticket, spider, door, cart, dig, coffin, gift, food };
+// MYSTERY BOX: a black box bound in chains, a glowing ? and light leaking from the lid.
+function mystery() {
+  const g = grid(32, 34);
+  for (let y = 12; y <= 33; y++) for (let x = 3; x <= 28; x++) g.put(x, y, y === 12 ? '#463A66' : '#2A2440');
+  for (let y = 6; y <= 11; y++) for (let x = 1; x <= 30; x++) g.put(x, y, y === 6 ? '#5A4A80' : '#3A2F58');
+  // chains
+  for (let k = 0; k <= 24; k++) {
+    g.put(4 + k, 13 + Math.round(k * 0.8), k % 2 ? C.steel : C.steelD);
+    g.put(27 - k, 13 + Math.round(k * 0.8), k % 2 ? C.steel : C.steelD);
+  }
+  g.outline();
+  // light leaking out of the lid
+  for (let x = 4; x <= 27; x += 3) g.put(x, 5, C.yellow), g.put(x + 1, 4, C.goldL);
+  // padlock with a ?
+  for (let y = 20; y <= 28; y++) for (let x = 11; x <= 20; x++) g.put(x, y, y === 20 ? C.goldL : C.gold);
+  [[13, 17], [13, 18], [13, 19], [18, 17], [18, 18], [18, 19], [14, 16], [15, 16], [16, 16], [17, 16]].forEach(([x, y]) => g.put(x, y, C.steel));
+  ['.##.', '#..#', '..#.', '.#..', '....', '.#..'].forEach((row, j) => [...row].forEach((ch, i) => ch === '#' && g.put(14 + i, 21 + j, C.black)));
+  return g.toCanvas();
+}
+
+const DRAW = { mystery, powder, doll, hide, shrine, nails, ticket, spider, door, cart, dig, coffin, gift, food };
 
 /** The second design of each checkpoint (the first is the art in checkpoints.js). */
-export const MISSION_ART = { cp1: 'ticket', cp2: 'spider', cp3: 'door', cp4: 'cart', cp5: 'dig', cp6: 'coffin', cp7: 'gift', cp8: 'food' };
+export const MISSION_ART = { cp1: 'ticket', cp2: 'spider', cp3: 'door', cp4: 'cart', cp5: 'dig', cp6: 'coffin', cp7: 'gift', cp8: 'mystery' };
 
 export function drawSticker(name) {
   const f = DRAW[name];

@@ -120,12 +120,15 @@ export const CHECKPOINTS = [
   {
     id: 'cp8',
     hash: '1dw5ooy1trl', // code in tools/qr-codes.json (npm run qr)
-    name: 'LAAN FOOD',
-    title: 'จบภารกิจ',
+    // Owner, 25 Oct: the last checkpoint is a mystery box. After checkpoint 7 the player gets
+    // the hint page: hold for the next hint, or skip once they know where it is.
+    name: 'MYSTERY BOX',
+    title: 'กล่องปริศนา',
     stall: null,
     art: { sheet: 'chaser_red', frames: 7, frame: 0, flip: true },
-    mission: 'เดินไปหน้าซอย แล้วสแกนเพื่อสรุปจบภารกิจ',
-    where: 'หน้าซอย',
+    mission: 'กล่องปริศนาซ่อนอยู่ที่ไหนสักแห่ง หาให้เจอ แล้วสแกน QR ในกล่องเพื่อจบภารกิจ',
+    where: '???',
+    hints: ['มันอยู่ในกล่อง', 'มันอยู่ทางเข้า', 'คุณเดินผ่านมันมาแล้ว'],
   },
 ];
 

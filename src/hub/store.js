@@ -16,7 +16,7 @@ export const STORAGE_KEY = 'laanapha.stickers.v2';
 export const CHARACTER_IDS = ['nuannapa', 'ramwong', 'pumpkin', 'vampire', 'slasher', 'onryo', 'mahidol', 'silpakorn'];
 
 export function emptyState() {
-  return { v: 1, character: null, name: '', unlocked: false, stamps: {}, claimedAt: null, startedAt: null, finishedAt: null, seenHelp: false, entered: false, seed: null };
+  return { v: 1, character: null, name: '', unlocked: false, stamps: {}, claimedAt: null, startedAt: null, finishedAt: null, seenHelp: false, entered: false, seed: null, hints: 0 };
 }
 
 function sanitize(s) {
@@ -31,6 +31,7 @@ function sanitize(s) {
   out.seenHelp = !!s.seenHelp;
   out.entered = !!s.entered;
   if (validSeed(s.seed)) out.seed = s.seed;
+  if (Number.isInteger(s.hints) && s.hints > 0) out.hints = Math.min(s.hints, 9);
   if (typeof s.finishedAt === 'number') out.finishedAt = s.finishedAt;
   if (typeof s.name === 'string') out.name = s.name.slice(0, 24);
   return out;
@@ -163,6 +164,16 @@ export function createStore(backend = storage(), opts = {}) {
     timeUsed(now = Date.now()) {
       if (!state.startedAt) return 0;
       return Math.max(0, Math.min(this.limitMs(), (state.finishedAt || now) - state.startedAt));
+    },
+    /** Mystery box hints shown so far; hint() shows one more (up to `max`). */
+    get hints() {
+      return state.hints || 0;
+    },
+    hint(max) {
+      if ((state.hints || 0) >= max) return false;
+      state.hints = (state.hints || 0) + 1;
+      persist();
+      return true;
     },
     markHelpSeen() {
       state.seenHelp = true;
