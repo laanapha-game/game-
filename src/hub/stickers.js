@@ -1,7 +1,7 @@
 // Pixel-art stickers drawn in code for the checkpoints that have no sprite sheet
 // (ผงพราย, คุณไสย, หนังควาย, ศาลเจ้าที่, ตะปู), in scene 1's style: hard pixels,
 // 1 px black outline, the fest palette plus a few material colours.
-import { COL, sprite, shape, mkCanvas } from './brand.js';
+import { COL, sprite, shape, mkCanvas, textSprite } from './brand.js';
 
 const C = {
   ...COL,
@@ -219,7 +219,214 @@ function nails() {
   return g.toCanvas();
 }
 
-const DRAW = { powder, doll, hide, shrine, nails };
+// ---------- the mission stickers (owner, 25 Oct: one more design per checkpoint) ----------
+const D = { wood: '#7A3B22', woodL: '#A4553A', woodD: '#4F2414', dirt: '#5A3418', dirtL: '#7E4D25', soda: '#E0262B', sodaL: '#FF6B6B', noodle: '#F6D36B', bowl: '#F4F4FA', bowlB: '#2E5BD8', ghostB: '#9EC3F0', exit: '#2DBE4A', candy: '#FF7AC8' };
+
+// START: an admission ticket, GO! on the main part, a star on the stub.
+function ticket() {
+  const g = grid(34, 24);
+  for (let y = 2; y < 22; y++)
+    for (let x = 0; x < 34; x++) {
+      if ((x - 0) ** 2 + (y - 12) ** 2 <= 9 || (x - 33) ** 2 + (y - 12) ** 2 <= 9) continue; // side notches
+      g.put(x, y, x >= 24 ? C.magenta : C.yellow);
+    }
+  for (let y = 3; y < 21; y += 2) g.put(23, y, C.black); // perforation
+  for (let x = 3; x < 21; x++) g.put(x, 4, C.orange), g.put(x, 19, C.orange);
+  g.outline();
+  const star = ['..#..', '..#..', '#####', '.###.', '.#.#.'];
+  star.forEach((row, j) => [...row].forEach((ch, i) => ch === '#' && g.put(26 + i, 10 + j, C.yellow)));
+  const c = g.toCanvas();
+  const t = textSprite('GO!', COL.black);
+  const x = c.getContext('2d');
+  x.drawImage(t, 4, 9);
+  x.drawImage(t, 3, 8); // bold
+  return c;
+}
+
+// FIND THE SPIDER: a spider on its web, red hourglass, little white eyes.
+function spider() {
+  const g = grid(32, 32);
+  const cx = 16, cy = 15;
+  for (let a = 0; a < 8; a++) {
+    const ang = (a / 8) * Math.PI * 2 + 0.2;
+    line(g.put, cx, cy, Math.round(cx + Math.cos(ang) * 15), Math.round(cy + Math.sin(ang) * 15), C.smoke);
+  }
+  for (const r of [5, 9, 13])
+    for (let k = 0; k < 64; k++) {
+      const ang = (k / 64) * Math.PI * 2;
+      g.put(Math.round(cx + Math.cos(ang) * r), Math.round(cy + Math.sin(ang) * r * 0.95), C.smoke);
+    }
+  // thread up to the top
+  for (let y = 0; y < cy - 3; y++) g.put(cx, y, C.white);
+  // legs
+  [[-1, -1], [-1, 0], [-1, 1], [-1, 2]].forEach(([sx, k]) => {
+    line(g.put, cx - 2, cy + k, cx - 7, cy + k * 3 - 3, C.black);
+    line(g.put, cx - 7, cy + k * 3 - 3, cx - 9, cy + k * 3 - 1, C.black);
+    line(g.put, cx + 2, cy + k, cx + 7, cy + k * 3 - 3, C.black);
+    line(g.put, cx + 7, cy + k * 3 - 3, cx + 9, cy + k * 3 - 1, C.black);
+  });
+  // body
+  for (let y = -4; y <= 5; y++) for (let x = -3; x <= 3; x++) if ((x / 3.4) ** 2 + ((y - 1) / 4.6) ** 2 <= 1) g.put(cx + x, cy + y, C.black);
+  for (let y = -6; y <= -3; y++) for (let x = -2; x <= 2; x++) if (x * x + (y + 4.5) ** 2 <= 4.5) g.put(cx + x, cy + y, C.black);
+  [[0, 0], [-1, 1], [0, 1], [1, 1], [0, 2], [-1, 3], [0, 3], [1, 3]].forEach(([x, y]) => g.put(cx + x, cy + y, C.blood));
+  g.put(cx - 1, cy - 5, C.white);
+  g.put(cx + 1, cy - 5, C.white);
+  return g.toCanvas();
+}
+
+// ESCAPE ROOM: a door left ajar, eyes in the dark gap, a green EXIT sign.
+function door() {
+  const g = grid(28, 40);
+  for (let y = 10; y < 40; y++) for (let x = 1; x < 27; x++) g.put(x, y, x < 3 || x > 24 || y < 12 ? D.woodD : C.black);
+  for (let y = 12; y < 40; y++)
+    for (let x = 3; x < 19; x++) g.put(x, y, x === 18 ? D.woodD : (x - 3) % 5 === 4 ? D.wood : D.woodL);
+  for (let x = 4; x < 18; x++) g.put(x, 24, D.wood), g.put(x, 32, D.wood);
+  g.put(16, 27, C.yellow);
+  g.put(16, 28, C.goldD);
+  for (let y = 0; y < 9; y++) for (let x = 0; x < 28; x++) g.put(x, y, D.exit);
+  g.outline();
+  // eyes in the gap
+  [[20, 21], [23, 21], [20, 22], [23, 22]].forEach(([x, y]) => g.put(x, y, C.yellow));
+  [[21, 30], [22, 31], [21, 32]].forEach(([x, y]) => g.put(x, y, C.dred));
+  const c = g.toCanvas();
+  c.getContext('2d').drawImage(textSprite('EXIT', COL.black), 3, 1);
+  c.getContext('2d').drawImage(textSprite('EXIT', COL.white), 2, 1);
+  return c;
+}
+
+// แข่งรถเข็น: a racing trolley with a chequered flag, speed lines behind.
+function cart() {
+  const g = grid(34, 30);
+  // basket: a trapezoid of wire
+  for (let y = 8; y <= 19; y++) {
+    const x0 = 9 + Math.round((y - 8) * 0.25);
+    const x1 = 30 - Math.round((y - 8) * 0.5);
+    for (let x = x0; x <= x1; x++) g.put(x, y, y === 8 || y === 19 || x === x0 || x === x1 || (x - x0) % 4 === 0 || (y - 8) % 4 === 0 ? C.steel : null);
+  }
+  for (let x = 12; x <= 27; x++) g.put(x, 22, C.steelD);
+  line(g.put, 9, 8, 4, 2, C.steelD); // handle
+  for (let x = 1; x <= 5; x++) g.put(x, 2, C.magenta), g.put(x, 3, C.magenta);
+  line(g.put, 12, 19, 12, 22, C.steelD);
+  line(g.put, 26, 19, 26, 22, C.steelD);
+  // wheels
+  for (const wx of [13, 26]) for (let y = -2; y <= 2; y++) for (let x = -2; x <= 2; x++) if (x * x + y * y <= 5) g.put(wx + x, 25 + y, x * x + y * y <= 1 ? C.steel : C.black);
+  // flag in the basket
+  line(g.put, 21, 9, 21, 0, C.white);
+  for (let y = 0; y < 5; y++) for (let x = 22; x < 31; x++) g.put(x, y, (Math.floor(x / 2) + Math.floor(y / 2)) % 2 ? C.black : C.white);
+  // a pumpkin riding along
+  for (let y = 11; y <= 17; y++) for (let x = 14; x <= 22; x++) if (((x - 18) / 4.4) ** 2 + ((y - 14) / 3.4) ** 2 <= 1) g.put(x, y, C.orange);
+  g.put(16, 13, C.yellow), g.put(20, 13, C.yellow);
+  for (let x = 16; x <= 20; x++) g.put(x, 16, C.yellow);
+  g.outline();
+  // speed lines
+  [[0, 12, 5], [0, 16, 4], [1, 20, 6]].forEach(([x, y, l]) => {
+    for (let k = 0; k < l; k++) g.put(x + k, y, C.white);
+  });
+  return g.toCanvas();
+}
+
+// PUMPKIN HAUNT: a pumpkin dug half out of the dirt, a shovel stuck beside it.
+function dig() {
+  const g = grid(34, 32);
+  // shovel
+  line(g.put, 6, 2, 6, 18, D.woodL);
+  line(g.put, 7, 2, 7, 18, D.wood);
+  for (let x = 4; x <= 9; x++) g.put(x, 1, D.woodD);
+  for (let y = 18; y <= 25; y++) for (let x = 3; x <= 10; x++) if (Math.abs(x - 6.5) <= 4 - Math.max(0, y - 22)) g.put(x, y, x < 6 ? C.white : C.steel);
+  // pumpkin
+  for (let y = 8; y <= 26; y++)
+    for (let x = 10; x <= 32; x++) {
+      const r = ((x - 21) / 11) ** 2 + ((y - 17) / 8.5) ** 2;
+      if (r <= 1) g.put(x, y, Math.abs(x - 21) % 6 === 3 ? '#B23A22' : C.orange);
+    }
+  for (let y = 4; y <= 8; y++) g.put(21, y, '#2E8B2E'), g.put(22, y, '#2E8B2E');
+  g.put(23, 5, '#55FF3A'), g.put(24, 4, '#55FF3A');
+  // face
+  [[16, 14], [17, 14], [16, 13], [25, 14], [26, 14], [26, 13]].forEach(([x, y]) => g.put(x, y, C.yellow));
+  for (let x = 16; x <= 26; x++) g.put(x, 20, C.yellow);
+  [17, 20, 23].forEach((x) => g.put(x, 19, C.yellow));
+  [18, 22, 25].forEach((x) => g.put(x, 21, C.yellow));
+  // dirt mound over the bottom
+  for (let y = 22; y < 32; y++)
+    for (let x = 0; x < 34; x++) {
+      const top = 23 + Math.round(Math.abs(x - 17) * 0.35 + Math.sin(x * 0.9) * 1.2);
+      if (y >= top) g.put(x, y, (x * 5 + y * 3) % 7 === 0 ? D.dirtL : D.dirt);
+    }
+  g.outline();
+  [[29, 21], [31, 19], [2, 20]].forEach(([x, y]) => g.put(x, y, D.dirtL));
+  return g.toCanvas();
+}
+
+// สวดมนต์หน้าศพ: a gold-trimmed coffin, a bottle of red soda with a straw, a spirit rising.
+function coffin() {
+  const g = grid(34, 36);
+  const inside = (x, y) => {
+    if (y < 6 || y > 35) return false;
+    const half = y < 14 ? 4 + (y - 6) * 0.75 : 10 - (y - 14) * 0.2;
+    return Math.abs(x - 12) <= half;
+  };
+  for (let y = 0; y < 36; y++)
+    for (let x = 0; x < 26; x++) if (inside(x, y)) g.put(x, y, !inside(x - 2, y) || !inside(x + 2, y) || !inside(x, y - 2) || !inside(x, y + 2) ? C.gold : D.wood);
+  for (let y = 12; y <= 26; y++) g.put(12, y, C.goldL);
+  for (let x = 8; x <= 16; x++) g.put(x, 16, C.goldL);
+  // red soda
+  for (let y = 18; y <= 35; y++)
+    for (let x = 24; x <= 32; x++) {
+      const half = y < 22 ? 1.5 + (y - 18) * 0.8 : 4;
+      if (Math.abs(x - 28) <= half) g.put(x, y, y > 22 && y < 28 ? C.white : x === 26 ? D.sodaL : D.soda);
+    }
+  line(g.put, 28, 18, 31, 9, C.magenta);
+  g.outline();
+  for (let x = 25; x <= 31; x++) if (x % 2) g.put(x, 25, D.soda);
+  // the spirit leaving
+  [[8, 3], [9, 2], [10, 1], [11, 2], [12, 1], [13, 0], [14, 1], [15, 2], [16, 3]].forEach(([x, y]) => g.put(x, y, C.smoke));
+  [[11, 4], [13, 4]].forEach(([x, y]) => g.put(x, y, C.black));
+  return g.toCanvas();
+}
+
+// WORKSHOP · Hidden Treat: a gift box with its lid popping, a ? and a wrapped candy.
+function gift() {
+  const g = grid(32, 34);
+  for (let y = 16; y <= 33; y++) for (let x = 4; x <= 27; x++) g.put(x, y, x >= 14 && x <= 17 ? C.yellow : y === 16 ? '#FF7AF5' : C.magenta);
+  for (let y = 10; y <= 14; y++) for (let x = 2; x <= 29; x++) g.put(x, y, x >= 14 && x <= 17 ? C.yellow : C.dmagenta);
+  // bow on the lid
+  [[10, 6], [11, 7], [12, 8], [13, 9], [11, 5], [12, 6], [18, 9], [19, 8], [20, 7], [21, 6], [20, 5], [19, 6], [15, 8], [16, 8]].forEach(([x, y]) => g.put(x, y, C.yellow));
+  g.outline();
+  // the ? peeking out between lid and box
+  const q = ['.###.', '#...#', '...#.', '..#..', '.....', '..#..'];
+  q.forEach((row, j) => [...row].forEach((ch, i) => ch === '#' && g.put(7 + i, 19 + j, C.white)));
+  // candy
+  for (let x = 21; x <= 28; x++) for (let y = 23; y <= 27; y++) if ((x - 24.5) ** 2 + (y - 25) ** 2 <= 5) g.put(x, y, (x + y) % 3 ? C.white : '#FF7AC8');
+  [[20, 23], [19, 22], [20, 27], [19, 28], [29, 23], [30, 22], [29, 27], [30, 28]].forEach(([x, y]) => g.put(x, y, '#FF7AC8'));
+  return g.toCanvas();
+}
+
+// LAAN FOOD: a bowl of noodles, chopsticks, a ghost made of steam.
+function food() {
+  const g = grid(34, 32);
+  for (let y = 15; y <= 29; y++)
+    for (let x = 1; x <= 32; x++) {
+      const r = ((x - 16.5) / 15.5) ** 2 + ((y - 15) / 14) ** 2;
+      if (y >= 15 && r <= 1) g.put(x, y, y === 18 || y === 19 ? ((x >> 1) % 2 ? D.bowlB : C.white) : C.white);
+    }
+  for (let x = 2; x <= 31; x++) g.put(x, 15, D.noodle), g.put(x, 14, x % 3 ? D.noodle : '#E0A93A');
+  for (let x = 5; x <= 28; x++) g.put(x, 13, x % 4 ? D.noodle : '#E0A93A');
+  [[9, 12], [10, 12], [22, 12], [23, 12], [24, 12]].forEach(([x, y]) => g.put(x, y, '#7A3B22')); // meatballs
+  g.put(16, 12, '#55FF3A'), g.put(17, 11, '#55FF3A');
+  g.outline();
+  line(g.put, 20, 13, 32, 1, D.wood);
+  line(g.put, 22, 13, 33, 3, D.woodL);
+  // steam ghost
+  [[6, 9], [5, 8], [6, 7], [7, 6], [6, 5], [11, 9], [12, 8], [11, 7], [12, 6], [11, 5]].forEach(([x, y]) => g.put(x, y, C.smoke));
+  for (let y = 0; y <= 4; y++) for (let x = 6; x <= 12; x++) if ((x - 9) ** 2 / 9 + (y - 2.5) ** 2 / 6 <= 1) g.put(x, y, C.smoke);
+  g.put(8, 2, C.black), g.put(10, 2, C.black);
+  return g.toCanvas();
+}
+
+const DRAW = { powder, doll, hide, shrine, nails, ticket, spider, door, cart, dig, coffin, gift, food };
+
+/** The second design of each checkpoint (the first is the art in checkpoints.js). */
+export const MISSION_ART = { cp1: 'ticket', cp2: 'spider', cp3: 'door', cp4: 'cart', cp5: 'dig', cp6: 'coffin', cp7: 'gift', cp8: 'food' };
 
 export function drawSticker(name) {
   const f = DRAW[name];
@@ -246,3 +453,34 @@ export function tintGold(src) {
   x.putImageData(id, 0, 0);
   return c;
 }
+
+
+// Colourways: recolour by brightness into a four-step ramp, keeping outlines and reds.
+const RAMPS = {
+  gold: [[0x4a, 0x34, 0x10], [0xad, 0x8e, 0x3c], [0xde, 0xb3, 0x50], [0xfd, 0xe7, 0x98]],
+  neon: [[0x4a, 0x0f, 0x4a], [0xa6, 0x1e, 0xa6], [0xf0, 0x2d, 0xf0], [0xff, 0xc4, 0xff]],
+  ghost: [[0x1e, 0x2a, 0x5a], [0x4f, 0x6f, 0xc8], [0x9e, 0xc3, 0xf0], [0xee, 0xf8, 0xff]],
+};
+export function recolor(src, id) {
+  if (id === 'gold') return tintGold(src);
+  const ramp = RAMPS[id];
+  if (!ramp) return src;
+  const c = mkCanvas(src.width, src.height);
+  const x = c.getContext('2d');
+  x.drawImage(src, 0, 0);
+  const img = x.getImageData(0, 0, c.width, c.height);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3]) continue;
+    const r = d[i], gg = d[i + 1], b = d[i + 2];
+    const lum = 0.3 * r + 0.59 * gg + 0.11 * b;
+    if (lum < 28) continue;
+    if (r > 180 && gg < 70 && b < 70) continue;
+    const k = lum > 200 ? 3 : lum > 140 ? 2 : lum > 70 ? 1 : 0;
+    [d[i], d[i + 1], d[i + 2]] = ramp[k];
+  }
+  x.putImageData(img, 0, 0);
+  return c;
+}
+/** The rim colour of a sticker in each colourway. */
+export const RIM = { classic: COL.white, neon: '#FFC4FF', ghost: '#CFE6FF', gold: '#FDE798' };

@@ -3,6 +3,7 @@
 // Drawn in 180 x 320 design pixels, the same card on screen and in the saved image
 // (exported at 6x = 1080 x 1920, a phone-story size).
 import { W, H, COL, kit, sprite, mkCanvas, pumpkinSprite, ghostSprite, moonSprite, textSprite } from './brand.js';
+import { drawDressed } from './dress.js';
 
 // ---------- one background per character ----------
 const mk = (w, h, rows, pal) => sprite(w, h, (x, y) => pal[rows[y][x]] || null);
@@ -147,9 +148,14 @@ export function drawCard(ctx, data, t, opts = {}) {
         ctx.fillStyle = COL.black;
       }
     }
-  const frame = t % 3.4 > 3.25 ? 'blink' : Math.floor(t * 2.2) % 2 ? 'idle1' : 'idle0';
-  const sp = data.getSprite(data.characterId, 'front', frame);
-  if (sp) ctx.drawImage(sp, cx - sp.width, feet - sp.height * 2, sp.width * 2, sp.height * 2);
+  const frame = t % 3.4 > 3.25 ? 'blink' : 'idle0';
+  // the player's bird wearing the items from their stickers (dress.js)
+  drawDressed(ctx, data.getSprite(data.characterId, 'front', frame), data.items || [], cx, feet, 2, t);
+  if (data.tag) {
+    const tw = data.tag.length * 6 + 3;
+    rect(10, 32, tw + 1, 10, COL.black);
+    text(data.tag, 12, 33, COL.yellow);
+  }
   // name + rank
   box(8, 116, 164, 38, COL.black, th.ink === COL.black ? COL.yellow : th.ink);
   const name = data.name || 'ผู้กล้าไร้นาม';
@@ -159,9 +165,13 @@ export function drawCard(ctx, data, t, opts = {}) {
   const s1 = { x: 8, y: 160, w: 80, h: 36 };
   const s2 = { x: 92, y: 160, w: 80, h: 36 };
   [s1, s2].forEach((s) => box(s.x, s.y, s.w, s.h, COL.black, COL.yellow));
-  thai('เวลาที่ใช้', s1.x + s1.w / 2, s1.y - 2, COL.white, 12);
+  thai('ใช้เวลาไป', s1.x + s1.w / 2, s1.y - 2, COL.white, 12);
   thai('สติกเกอร์', s2.x + s2.w / 2, s2.y - 2, COL.white, 12);
-  bigText(K, fmtTime(data.usedMs), s1.x + s1.w / 2, s1.y + 19, data.status === 'timeout' ? COL.magenta : COL.yellow);
+  // minutes used (owner, 25 Oct: how many minutes)
+  const mins = String(Math.max(data.usedMs > 0 ? 1 : 0, Math.round(data.usedMs / 60000)));
+  const mw = mins.length * 12;
+  bigText(K, mins, s1.x + s1.w / 2 - 12 + mw / 2, s1.y + 19, data.status === 'timeout' ? COL.magenta : COL.yellow, 'r');
+  thai('นาที', s1.x + s1.w / 2 - 8 + mw / 2, s1.y + 14, COL.white, 12, 'l');
   bigText(K, `${data.count}/8`, s2.x + s2.w / 2, s2.y + 19, data.count === 8 ? COL.green : COL.yellow);
   // sticker collection 4 x 2
   box(8, 200, 164, 88, COL.black, COL.yellow);
@@ -173,6 +183,11 @@ export function drawCard(ctx, data, t, opts = {}) {
     const s = st.got ? st.mini : st.locked;
     if (s) ctx.drawImage(s, x + Math.round((36 - s.width) / 2), y + Math.round((38 - s.height) / 2));
     if (!st.got) textS('?', x + 18, y + 16, COL.dred, 'c');
+    else if (st.tag) {
+      // a rare colourway: its first letter in the corner (N neon, G ghost / gold)
+      rect(x + 27, y + 29, 8, 8, COL.black);
+      text(st.tag === 'GOLD' ? '*' : st.tag[0], x + 29, y + 30, st.tag === 'GOLD' ? COL.yellow : st.tag === 'NEON' ? COL.magenta : '#9EC3F0');
+    }
     text(String(i + 1), x + 2, y + 2, st.got ? COL.black : COL.dred);
   });
   if (opts.footer) {

@@ -13,7 +13,9 @@ import { parseScan } from './store.js';
 import { msUntilOpen } from './clock.js';
 import { HUNT_DAYS_TH } from '../data/checkpoints.js';
 import { startCamera, decodeFile } from './scanner.js';
-import { drawSticker, tintGold } from './stickers.js';
+import { drawSticker, tintGold, recolor, RIM, MISSION_ART } from './stickers.js';
+import { lootFor, playerTag } from './loot.js';
+import { drawDressed, itemIcon } from './dress.js';
 import { drawCard, exportCard, fmtTime, bigText, THEMES } from './summary.js';
 import { wrapText, graphemes } from '../logic/textWrap.js';
 import { audio } from '../audio/engine.js';
@@ -36,7 +38,7 @@ const MOVE_BTN = { x: 5, y: 301, w: 82, h: 15 };
 const HELP_BTN = { x: 93, y: 301, w: 82, h: 15 };
 const VIEW = { x: 30, y: 58, w: 120, h: 120 }; // scanner viewfinder
 const START_FIELD = { x: 30, y: 196, w: 120, h: 20 };
-const HOLD_MS = 1500;
+const HOLD_MS = 1200; // the hold-to-see-the-result button
 const TYPE_CPS = 26; // typewriter speed of the scary story
 const SCARE_S = 0.55; // the jolt before the reveal
 
@@ -197,18 +199,29 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
   // ---- art per checkpoint (filled in when the images load) ----
   const art = {}; // id -> { big, bigLocked, sticker, locked, lockedDim, mini, miniLocked, stall }
   let artReady = false;
+  // Each player's own stickers: of each checkpoint's two designs (the first art in
+  // checkpoints.js and the mission sticker in stickers.js), in one of four colourways, picked
+  // by the player's seed (loot.js). Rebuilt when the seed changes (a transfer code).
+  const imgCache = {};
+  let artSeed = null;
+  let preparing = false;
   async function prepareArt() {
+    if (preparing) return;
+    preparing = true;
+    const seed = store.state.seed;
     const stalls = {};
-    for (const k of ['A', 'B', 'C']) stalls[k] = await loadImg(stallUrl('stall_' + k));
-    for (const cp of CHECKPOINTS) {
+    for (const k of ['A', 'B', 'C']) stalls[k] = imgCache['stall_' + k] ??= await loadImg(stallUrl('stall_' + k));
+    for (const [i, cp] of CHECKPOINTS.entries()) {
+      const loot = lootFor(seed, i);
       const a = cp.art;
       let big = null;
       let src = null; // high-detail source for scaled-down copies
-      if (a.draw) {
+      if (loot.design === 1) big = src = drawSticker(MISSION_ART[cp.id]);
+      else if (a.draw) {
         big = drawSticker(a.draw);
         src = big;
       } else if (a.sheet) {
-        const img = await loadImg(artUrl(a.sheet));
+        const img = (imgCache[a.sheet] ??= await loadImg(artUrl(a.sheet)));
         if (img) {
           big = sheetFrame(img, a.sheet, a.frames, a.frame, a.flip, true);
           src = sheetFrame(img, a.sheet, a.frames, a.frame, a.flip, false);
@@ -219,29 +232,48 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
         }
       }
       if (!big) big = src = trimmed(ghostBig);
-      big = fit(big, 70, 64);
+      big = recolor(fit(big, 70, 64), loot.color.id);
+      src = recolor(src, loot.color.id);
+      const rim = RIM[loot.color.id] || COL.white;
       const small = fit(src, 34, 34);
       const mini = fit(src, 26, 28);
       const locked = silhouette(small, COL.black);
       art[cp.id] = {
+        loot,
         big,
         bigLocked: silhouette(big, COL.black),
-        sticker: stickerize(small, 2),
+        sticker: stickerize(small, 2, COL.black, rim),
         locked,
         lockedDim: silhouette(small, COL.ddred),
         lockedRed: silhouette(big, '#8F0F0F'),
-        mini: stickerize(mini, 1),
+        mini: stickerize(mini, 1, COL.black, rim),
         miniLocked: silhouette(mini, COL.ddred),
         stall: cp.stall ? stalls[cp.stall] : null,
         stallLocked: cp.stall && stalls[cp.stall] ? silhouette(stalls[cp.stall], COL.black) : null,
       };
     }
+    artSeed = seed;
     artReady = true;
+    preparing = false;
+    story = null;
+  }
+  /** The items the bird has earned so far (one per collected checkpoint). */
+  const wornItems = () => CHECKPOINTS.flatMap((cp, i) => (store.has(cp.id) ? [lootFor(store.state.seed, i).item] : []));
+  const icons = {};
+  const icon = (id) => (icons[id] ??= trimmed(itemIcon(id)));
+  /** The player's bird with its items; feet at (cx, feet). */
+  function drawBird(cx, feet, s, t, frame) {
+    const f = frame || (t % 3.4 > 3.25 ? 'blink' : 'idle0');
+    drawDressed(ctx, G.getSprite(character(), 'front', f), wornItems(), cx, feet, s, t);
   }
 
   // ---- DOM helpers for the camera, typed text and the saved image (over scene 1's canvas) ----
   canvas.style.position = 'relative';
   canvas.style.zIndex = '2';
+  canvas.style.webkitTouchCallout = 'none'; // the hold button must not open the image menu
+  canvas.addEventListener('contextmenu', (e) => {
+    if (active) e.preventDefault();
+  });
   const video = document.createElement('video');
   video.setAttribute('playsinline', '');
   video.setAttribute('aria-label', 'กล้องสำหรับสแกน QR');
@@ -521,15 +553,18 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       status: store.status(now),
       usedMs: store.timeUsed(now),
       count: store.count(),
-      stickers: CHECKPOINTS.map((cp) => ({ got: store.has(cp.id), mini: art[cp.id]?.mini, locked: art[cp.id]?.miniLocked })),
+      stickers: CHECKPOINTS.map((cp) => ({ got: store.has(cp.id), mini: art[cp.id]?.mini, locked: art[cp.id]?.miniLocked, tag: art[cp.id]?.loot.color.tag })),
       date: `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear() + 543}`,
       getSprite: (id, view, frame) => G.getSprite(id, view, frame),
+      items: wornItems(),
+      tag: playerTag(store.state.seed),
+      rare: CHECKPOINTS.filter((cp) => store.has(cp.id) && art[cp.id]?.loot.color.tag).length,
     };
   }
   // The story image is made as soon as the summary opens, so the save tap can open the
   // share sheet straight away (iOS only allows it right after a tap).
   let story = null; // { key, blob, dataUrl }
-  const storyKey = () => JSON.stringify([store.state.stamps, store.state.name, store.state.finishedAt, store.status(), character()]);
+  const storyKey = () => JSON.stringify([store.state.seed, store.state.stamps, store.state.name, store.state.finishedAt, store.status(), character()]);
   async function prepareStory() {
     const key = storyKey();
     if (story?.key === key) return story;
@@ -597,7 +632,8 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const h = find(toDesign(e));
     const was = pressed;
     pressed = null;
-    if (h && h.id === was && h.id !== 'claim') h.fn();
+    if (h && h.id === was && h.id !== 'hold') h.fn();
+    else if (was === 'hold' && modal?.type === 'reward') showToast('กดค้างไว้จนแถบเต็มนะ', 1500);
   });
   canvas.addEventListener('pointercancel', () => (pressed = null));
   window.addEventListener('resize', () => {
@@ -658,7 +694,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const hp = (now - hop) / 450;
     const hy = hp >= 0 && hp < 1 ? -Math.round(Math.sin(hp * Math.PI) * 10) : 0;
     const blink = t % 3.4 > 3.25 ? 'blink' : Math.floor(t * 2.2) % 2 ? 'idle1' : 'idle0';
-    G.drawChar(character(), 'front', blink, cx, 91, 1, hy);
+    drawBird(cx, 91 + hy, 1, t, blink === 'idle1' ? 'idle0' : blink);
     hit('hero', { x: cx - 16, y: 54, w: 32, h: 40 }, () => {
       hop = performance.now();
       audio.sfx('ui_on');
@@ -1065,32 +1101,43 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     if (a) {
       const s = a.sticker;
       const bounce = kr < 0.25 ? Math.round((1 - kr / 0.25) * -14) : kr < 0.4 ? -Math.round(Math.sin(((kr - 0.25) / 0.15) * Math.PI) * 4) : Math.round(Math.sin(t * 3) * 1.5);
-      ctx.drawImage(s, Math.round(90 - s.width), Math.round(112 - s.height) + bounce, s.width * 2, s.height * 2);
-      [[40, 66], [140, 78], [46, 150], [134, 144]].forEach((p, j) => sparkle(p[0], p[1], (Math.floor(t * 5) + j) % 2 === 0));
+      const sx = 60;
+      ctx.drawImage(s, Math.round(sx - s.width), Math.round(110 - s.height) + bounce, s.width * 2, s.height * 2);
+      [[14, 66], [104, 60], [16, 150], [100, 148]].forEach((p, j) => sparkle(p[0], p[1], (Math.floor(t * 5) + j) % 2 === 0));
+      const loot = a.loot;
+      if (loot?.color.tag) {
+        // a rare colourway: a tag on the sticker
+        const tw = loot.color.tag.length * 6 + 5;
+        const tx = 8;
+        const ty = 56;
+        rect(tx - 1, ty - 1, tw + 2, 11, COL.black);
+        rect(tx, ty, tw, 9, loot.color.id === 'gold' ? COL.yellow : loot.color.id === 'neon' ? COL.magenta : '#9EC3F0');
+        text(loot.color.tag, tx + 3, ty + 1, COL.black);
+      }
+      if (loot && kr > 0.3) {
+        // the bird item this sticker gives
+        if (!modal.itemSound) {
+          modal.itemSound = true;
+          audio.sfx('meter_full');
+        }
+        const pk = Math.min(1, (kr - 0.3) / 0.25);
+        const dy = Math.round((1 - pk) * 20);
+        const P = { x: 112, y: 62 + dy, w: 62, h: 92 };
+        box(P.x, P.y, P.w, P.h, COL.black, Math.floor(t * 3) % 2 ? COL.yellow : COL.magenta);
+        thai('ของแต่งนก!', P.x + P.w / 2, P.y - 1, COL.yellow, 11);
+        const ic = icon(loot.item.id);
+        const k2 = ic.width <= 26 && ic.height <= 24 ? 2 : 1;
+        ctx.drawImage(ic, Math.round(P.x + P.w / 2 - (ic.width * k2) / 2), Math.round(P.y + 44 - (ic.height * k2) / 2), ic.width * k2, ic.height * k2);
+        para(loot.item.th, P.x + 2, P.y + 64, P.w - 4, COL.green, 11, 12, 'c');
+      }
     }
     box(12, 162, 156, 22, COL.black, COL.magenta);
     const head = `จุดที่ ${i + 1} · ${cp.name}`;
     thaiS(head, 90, thaiWidth(head, 13) > 150 ? 163 : 162, COL.yellow, thaiWidth(head, 13) > 150 ? 12 : 13);
-    if (cp.bonusMinutes && kr > 0.3) {
-      // time bonus: a stamp that pops onto the sticker
-      if (!modal.bonusSound) {
-        modal.bonusSound = true;
-        audio.sfx('meter_full');
-      }
-      const pk = Math.min(1, (kr - 0.3) / 0.25);
-      const sc = pk < 1 ? 1.6 - pk * 0.6 : 1 + (Math.floor(t * 4) % 2) * 0.04;
-      const bw = Math.round(64 * sc);
-      const bh = Math.round(22 * sc);
-      const bx = 118 - Math.round(bw / 2);
-      const by = 128 - Math.round(bh / 2);
-      rect(bx - 2, by - 2, bw + 4, bh + 4, COL.black);
-      rect(bx, by, bw, bh, COL.green);
-      thai(`+${cp.bonusMinutes} นาที!`, bx + bw / 2, by + Math.round((bh - 21) / 2), COL.black, 13);
-    }
     // the scary story, typed out
     box(8, 189, 164, 82, COL.black, COL.dred);
     const nx = nextCp();
-    const story = nx ? `ภารกิจต่อไป · จุดที่ ${CHECKPOINTS.indexOf(nx) + 1} ${nx.name}: ${nx.mission}` : 'ครบทุกจุดแล้ว! ไปดูสรุปผลและรับรางวัลกันเลย';
+    const story = nx ? `ภารกิจต่อไป · จุดที่ ${CHECKPOINTS.indexOf(nx) + 1} ${nx.name}: ${nx.mission}` : 'ครบทุกจุดแล้ว! นกของคุณแต่งตัวครบแล้ว ไปดูสรุปผลกันเลย';
     const lines = wrapText(story, 152, (str) => thaiWidth(str, 12));
     const total = lines.reduce((n, l) => n + graphemes(l).length, 0);
     const shown = modal.typed ? total : Math.floor(Math.max(0, kr - 0.35) * TYPE_CPS);
@@ -1147,25 +1194,14 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       click();
       close();
     }, 4);
+    // 3. The dashboard: save it as an image
     const done = store.status() === 'complete';
+    const S = { x: 8, y: 293, w: 164, h: 20 };
     if (done) {
-      // the mission-complete button pops up once all 8 are in
       const k = Math.min(1, (now - modal.t0) / 450);
-      const rise = Math.round((1 - k) ** 2 * 30);
-      const R = { x: 8, y: 295 + rise, w: 84, h: 16 };
-      bigButton(R, 'สำเร็จ!', pressed === 'prizebtn', t);
-      if (Math.floor(t * 4) % 2 === 0) {
-        sparkle(R.x + 2, R.y - 3, true);
-        sparkle(R.x + R.w - 3, R.y + R.h + 2, false);
-      }
-      if (k >= 1)
-        hit('prizebtn', R, () => {
-          audio.sfx('choice_press');
-          open('reward');
-        });
+      S.y += Math.round((1 - k) ** 2 * 30);
     }
-    const S = done ? { x: 100, y: 295, w: 72, h: 16 } : { x: 8, y: 295, w: 164, h: 16 };
-    smallButton(S, done ? 'บันทึกรูป' : 'บันทึกรูปลงสตอรี่', pressed === 'save', { px: 12 });
+    bigButton(S, done ? 'บันทึกรูป' : 'บันทึกรูปลงสตอรี่', pressed === 'save', t);
     hit('save', S, () => {
       audio.sfx('choice_press');
       saveImage();
@@ -1187,6 +1223,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       closeButton({ x: 50, y: 282, w: 80, h: 15 });
       return;
     }
+    // 1. Mission complete: hold the button to see the result (owner, 25 Oct)
     const k = (now - modal.t0) / 1000;
     if (!modal.cheered) {
       modal.cheered = true;
@@ -1195,48 +1232,116 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       setTimeout(() => audio.sfx('angel_appear'), 150);
     }
     bulbPanel(4, 4, 172, 312, t);
-    thaiS('ยินดีด้วย!', 90, 8, COL.yellow, 18);
-    thai('คุณทำภารกิจสำเร็จ', 90, 32, COL.white, 13);
-    thaiS('TRICK OR TREAT', 90, 48, COL.magenta, 13);
-    // the mascot (นวลนภา) celebrating on a beam of light
+    text('MISSION COMPLETE!', 90, 14, Math.floor(t * 4) % 2 ? COL.yellow : COL.white, 'c');
+    thaiS('ตอนนี้คุณ Complete Mission', 90, 24, COL.yellow, 13);
+    thaiS('ของลาน ณ ภา แล้ว', 90, 42, COL.yellow, 14);
+    // the player's bird, dressed in everything it earned, on a beam of light
     ctx.save();
     ctx.beginPath();
-    ctx.rect(10, 68, 160, 88);
+    ctx.rect(10, 64, 160, 116);
     ctx.clip();
-    ctx.drawImage(rays[Math.floor(t * 8) % RAY_N], 10, 30);
+    ctx.drawImage(rays[Math.floor(t * 8) % RAY_N], 10, 42);
     (modal.confetti || []).forEach((p) => {
       const kk = (k % 2.6) + 0.1;
       const x = Math.round(p.x + p.vx * kk * 0.6);
       const y = Math.round(p.y - 40 + p.vy * kk * 0.5 + 120 * kk * kk);
       rect(x, y, p.w, 2, p.c);
     });
-    const hop = Math.abs(Math.sin(t * 5)) * 8;
-    const frame = Math.floor(t * 3) % 4 === 3 ? 'blink' : 'idle0';
-    const m = G.getSprite('nuannapa', 'front', frame);
-    rect(64, 150, 52, 4, COL.black);
-    ctx.drawImage(m, 90 - m.width, 150 - m.height * 2 - Math.round(hop), m.width * 2, m.height * 2);
-    G.drawChar(character(), 'front', Math.floor(t * 2.2) % 2 ? 'idle1' : 'idle0', 140, 152 - (Math.sin(t * 5 + 1.5) > 0.3 ? 3 : 0), 1, 0);
-    sparkle(30, 84, Math.floor(t * 4) % 2 === 0);
-    sparkle(150, 78, Math.floor(t * 4) % 2 === 1);
+    rect(54, 172, 72, 4, COL.black);
+    drawBird(90, 172 - Math.round(Math.abs(Math.sin(t * 4)) * 4), 2, t);
+    sparkle(24, 84, Math.floor(t * 4) % 2 === 0);
+    sparkle(156, 78, Math.floor(t * 4) % 2 === 1);
     ctx.restore();
-    // who and how fast
-    box(12, 158, 156, 20, COL.black, COL.yellow);
-    thai(store.state.name || 'ผู้กล้าไร้นาม', 16, 157, COL.yellow, 12, 'l');
-    text(`${fmtTime(store.timeUsed())}  8/8`, 164, 165, COL.green, 'r');
-    CHECKPOINTS.forEach((c, i) => ctx.drawImage(pipOn, 46 + i * 11, 190));
-    const B = { x: 14, y: 226, w: 152, h: 18 };
-    bigButton(B, 'บันทึกรูป', pressed === 'story', t);
-    hit('story', B, () => {
-      audio.sfx('choice_press');
-      saveImage();
+    box(12, 184, 156, 20, COL.black, COL.yellow);
+    thai(store.state.name || 'ผู้กล้าไร้นาม', 16, 183, COL.yellow, 12, 'l');
+    text(`${fmtTime(store.timeUsed())}  8/8`, 164, 191, COL.green, 'r');
+    // the hold button: a bar fills while it is held
+    const B = { x: 14, y: 222, w: 152, h: 30 };
+    const held = pressed === 'hold' ? Math.min(1, (now - holdStart) / HOLD_MS) : 0;
+    rect(B.x - 1, B.y - 1, B.w + 2, B.h + 2, COL.yellow);
+    rect(B.x, B.y, B.w, B.h, COL.black);
+    rect(B.x + 1, B.y + 1, Math.round((B.w - 2) * held), B.h - 2, COL.magenta);
+    if (!held && Math.floor(t * 2) % 2) rect(B.x + 1, B.y + B.h - 3, B.w - 2, 2, COL.dmagenta);
+    thaiS(held ? 'กดค้างไว้...' : 'กดค้างเพื่อดูสรุปผล', 90, B.y + 4, COL.yellow, 14);
+    if (held > 0 && Math.floor(held * 10) !== modal.tick) {
+      modal.tick = Math.floor(held * 10);
+      audio.sfx('type_blip', { voice: 'ghost' });
+      buzz(8);
+    }
+    if (held >= 1) {
+      pressed = null;
+      audio.sfx('meter_full');
+      buzz([30, 40, 80]);
+      open('blessing');
+      return;
+    }
+    hit('hold', B, () => {}, 4);
+    thai('แตะค้างไว้จนแถบเต็ม', 90, 256, COL.white, 11);
+    closeButton({ x: 50, y: 290, w: 80, h: 14 });
+  }
+
+  // 2. A blessing for the player (owner, 25 Oct)
+  const BLESSING = ['เจ้าสำเร็จภารกิจ', 'ล่าท้าผีวันนี้แล้ว', 'ขอให้มีความสุขกับชีวิต', 'คิดสิ่งใด สมปรารถนา'];
+  function drawBlessing(now, t) {
+    const k = (now - modal.t0) / 1000;
+    if (!modal.sung) {
+      modal.sung = true;
+      audio.sfx('angel_appear');
+    }
+    rect(0, 0, W, H, '#14051C');
+    if (k < 0.3) {
+      ctx.globalAlpha = 1 - k / 0.3;
+      rect(0, 0, W, H, COL.white);
+      ctx.globalAlpha = 1;
+    }
+    // falling golden petals
+    for (let j = 0; j < 26; j++) {
+      const x = (j * 37 + Math.floor(Math.sin(t + j) * 6)) % W;
+      const y = Math.floor((j * 53 + t * (14 + (j % 5) * 4)) % (H + 10)) - 5;
+      rect(x, y, j % 3 ? 1 : 2, 1, j % 2 ? COL.yellow : '#DEB350');
+    }
+    bulbPanel(6, 6, 168, 306, t);
+    // the mascot (นวลนภา) blessing the player's bird
+    ctx.drawImage(rays[Math.floor(t * 6) % RAY_N], 10, 10);
+    rect(52, 13, 76, 13, COL.black);
+    text('BLESSING', 90, 16, COL.yellow, 'c');
+    const m = G.getSprite('nuannapa', 'front', Math.floor(t * 3) % 5 === 4 ? 'blink' : 'idle0');
+    const hy = Math.round(Math.sin(t * 2) * 2);
+    rect(28, 120, 40, 3, COL.black);
+    ctx.drawImage(m, 48 - m.width, 120 - m.height * 2 + hy, m.width * 2, m.height * 2);
+    rect(110, 120, 40, 3, COL.black);
+    drawBird(130, 120, 1.5, t);
+    sparkle(90, 60 + hy, Math.floor(t * 4) % 2 === 0);
+    sparkle(84, 86, Math.floor(t * 4) % 2 === 1);
+    sparkle(98, 100, Math.floor(t * 3) % 2 === 0);
+    // the blessing, line by line
+    box(14, 134, 152, 112, COL.black, '#DEB350');
+    rect(16, 136, 148, 1, COL.dmagenta);
+    rect(16, 243, 148, 1, COL.dmagenta);
+    const per = 0.7;
+    BLESSING.forEach((ln, j) => {
+      const a = Math.max(0, Math.min(1, (k - 0.4 - j * per) / 0.4));
+      if (modal.skip) ctx.globalAlpha = 1;
+      else ctx.globalAlpha = a;
+      if (modal.skip || a > 0) thaiS(ln, 90, 142 + j * 25, j % 2 ? COL.white : COL.yellow, ln.length > 18 ? 14 : 15);
+      ctx.globalAlpha = 1;
     });
-    const SM = { x: 40, y: 256, w: 100, h: 16 };
-    smallButton(SM, 'ดูสรุปผล', pressed === 'sum', { px: 12 });
-    hit('sum', SM, () => {
-      click();
+    const done = modal.skip || k > 0.4 + BLESSING.length * per;
+    if (!done) {
+      hit('skip', { x: 0, y: 0, w: W, h: H }, () => (modal.skip = true), 0);
+      return;
+    }
+    const B = { x: 18, y: 260, w: 144, h: 22 };
+    bigButton(B, 'ดูสรุปผล', pressed === 'tosum', t);
+    if (Math.floor(t * 4) % 2) {
+      sparkle(B.x + 3, B.y - 3, true);
+      sparkle(B.x + B.w - 4, B.y + B.h + 2, false);
+    }
+    hit('tosum', B, () => {
+      audio.sfx('choice_press');
       openSummary();
     });
-    closeButton({ x: 50, y: 293, w: 80, h: 13 });
+    text('LAANAPHA HALLOWEEN FEST', 90, 294, COL.dmagenta, 'c');
   }
 
   function drawScan(now, t) {
@@ -1484,7 +1589,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     closeButton({ x: 40, y: 274, w: 100, h: 16 }, 'กลับหน้าแรก', () => onBack?.());
   }
 
-  const DRAW = { gate: drawGate, detail: drawDetail, reveal: drawReveal, reward: drawReward, input: drawInput, start: drawStart, transfer: drawTransfer, help: drawHelp };
+  const DRAW = { gate: drawGate, detail: drawDetail, reveal: drawReveal, reward: drawReward, blessing: drawBlessing, input: drawInput, start: drawStart, transfer: drawTransfer, help: drawHelp };
 
   // ---- scene 1 scene ----
   const scene = {
@@ -1505,6 +1610,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     },
     draw(now, t) {
       hits = [];
+      if (artReady && artSeed !== store.state.seed) prepareArt();
       ctx.imageSmoothingEnabled = false;
       tickClock();
       const scare = modal?.type === 'reveal' && (now - modal.t0) / 1000 < SCARE_S;

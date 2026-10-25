@@ -3,6 +3,7 @@
 // browser (for example from Instagram's in-app browser to Safari).
 import { CHECKPOINTS, HUNT_MINUTES, ENTRY_HASH } from '../data/checkpoints.js';
 import { hashCode, normCode } from './codehash.js';
+import { newSeed, validSeed } from './loot.js';
 
 /** The time limit in ms, or Infinity when there is none (HUNT_MINUTES null). */
 export const HUNT_MS = HUNT_MINUTES ? HUNT_MINUTES * 60 * 1000 : Infinity;
@@ -15,7 +16,7 @@ export const STORAGE_KEY = 'laanapha.stickers.v2';
 export const CHARACTER_IDS = ['nuannapa', 'ramwong', 'pumpkin', 'vampire', 'slasher', 'onryo', 'mahidol', 'silpakorn'];
 
 export function emptyState() {
-  return { v: 1, character: null, name: '', unlocked: false, stamps: {}, claimedAt: null, startedAt: null, finishedAt: null, seenHelp: false, entered: false };
+  return { v: 1, character: null, name: '', unlocked: false, stamps: {}, claimedAt: null, startedAt: null, finishedAt: null, seenHelp: false, entered: false, seed: null };
 }
 
 function sanitize(s) {
@@ -29,6 +30,7 @@ function sanitize(s) {
   if (typeof s.startedAt === 'number') out.startedAt = s.startedAt;
   out.seenHelp = !!s.seenHelp;
   out.entered = !!s.entered;
+  if (validSeed(s.seed)) out.seed = s.seed;
   if (typeof s.finishedAt === 'number') out.finishedAt = s.finishedAt;
   if (typeof s.name === 'string') out.name = s.name.slice(0, 24);
   return out;
@@ -57,6 +59,12 @@ export function createStore(backend = storage(), opts = {}) {
   } catch {
     state = emptyState();
   }
+  // the player's own seed: picks their unique stickers and bird items (src/hub/loot.js)
+  let seedNew = false;
+  if (!state.seed) {
+    state.seed = opts.seed || newSeed();
+    seedNew = true;
+  }
   const listeners = new Set();
   const persist = () => {
     const json = JSON.stringify(state);
@@ -68,6 +76,7 @@ export function createStore(backend = storage(), opts = {}) {
     }
     listeners.forEach((fn) => fn(state));
   };
+  if (seedNew && backend) persist();
 
   return {
     get state() {
@@ -178,6 +187,7 @@ export function createStore(backend = storage(), opts = {}) {
       // a transfer code moves stickers, not the entry: the QR at the event is still needed
       if (d.startedAt && (!state.startedAt || d.startedAt < state.startedAt)) state.startedAt = d.startedAt;
       if (d.finishedAt && !state.finishedAt) state.finishedAt = d.finishedAt;
+      if (d.seed) state.seed = d.seed; // the moved collection keeps its own stickers
       if (this.complete() && !state.finishedAt) state.finishedAt = now;
       persist();
       return true;
@@ -186,7 +196,7 @@ export function createStore(backend = storage(), opts = {}) {
       return encodeSave(state);
     },
     reset() {
-      state = emptyState();
+      state = { ...emptyState(), seed: state.seed };
       persist();
     },
   };
@@ -217,7 +227,8 @@ export function parseScan(text) {
 // ---------- transfer code ----------
 // Packs the stickers (8 bits), claimed (1), character (4), when the clock started (minutes
 // since 2026-01-01, 20 bits, 0 = not started) and the seconds used when finished (12 bits,
-// 0 = not finished), then an 8-bit check, in base 36: "LNP-" + about 11 characters.
+// 0 = not finished), the player's seed (24 bits, 0 = none: codes made before 25 Oct), then
+// an 8-bit check, in base 36: "LNP-" + up to 15 characters.
 // The check only guards against typos.
 const EPOCH = Date.UTC(2026, 0, 1);
 function check(n) {
@@ -234,18 +245,18 @@ export function encodeSave(state) {
   const ci = CHARACTER_IDS.indexOf(state.character?.id);
   const startMin = state.startedAt ? Math.min(0xfffff, Math.max(1, Math.round((state.startedAt - EPOCH) / 60000))) : 0;
   const usedSec = state.finishedAt && state.startedAt ? Math.min(0xfff, Math.max(1, Math.round((state.finishedAt - state.startedAt) / 1000))) : 0;
-  let n = BigInt(mask) | (BigInt(state.claimedAt ? 1 : 0) << 8n) | (BigInt(ci < 0 ? 15 : ci) << 9n) | (BigInt(startMin) << 13n) | (BigInt(usedSec) << 33n);
+  let n = BigInt(mask) | (BigInt(state.claimedAt ? 1 : 0) << 8n) | (BigInt(ci < 0 ? 15 : ci) << 9n) | (BigInt(startMin) << 13n) | (BigInt(usedSec) << 33n) | (BigInt(validSeed(state.seed) ? state.seed : 0) << 45n);
   const v = (n << 8n) | check(n);
   return 'LNP-' + v.toString(36).toUpperCase();
 }
 
 export function decodeSave(code) {
-  const m = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').match(/^LNP([0-9A-Z]{2,12})$/);
+  const m = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').match(/^LNP([0-9A-Z]{2,16})$/);
   if (!m) return null;
   let v = 0n;
   for (const ch of m[1]) v = v * 36n + BigInt(parseInt(ch, 36));
   const n = v >> 8n;
-  if (n >= 1n << 45n || (v & 0xffn) !== check(n)) return null;
+  if (n >= 1n << 69n || (v & 0xffn) !== check(n)) return null;
   const num = (shift, bits) => Number((n >> BigInt(shift)) & ((1n << BigInt(bits)) - 1n));
   const startMin = num(13, 20);
   const usedSec = num(33, 12);
@@ -256,5 +267,6 @@ export function decodeSave(code) {
     character: CHARACTER_IDS[num(9, 4)] || null,
     startedAt,
     finishedAt: startedAt && usedSec ? startedAt + usedSec * 1000 : null,
+    seed: num(45, 24) || null,
   };
 }

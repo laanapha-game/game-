@@ -97,7 +97,7 @@ test('transfer code round-trips (stickers, character, clock) and merges into ano
   a.start('มิว', t0);
   ['cp1', 'cp4', 'cp8'].forEach((id, i) => a.collect(id, t0 + (i + 1) * 60000));
   const code = a.exportCode();
-  assert.match(code, /^LNP-[0-9A-Z]{4,12}$/);
+  assert.match(code, /^LNP-[0-9A-Z]{4,16}$/);
   const d = decodeSave(code);
   assert.equal(d.mask, 0b10001001);
   assert.equal(d.character, 'onryo');
@@ -154,7 +154,7 @@ test('the first scan starts the clock if start was never pressed', () => {
 
 test('encodeSave of an empty state decodes to nothing collected', () => {
   const d = decodeSave(encodeSave({ stamps: {}, claimedAt: null, character: null }));
-  assert.deepEqual(d, { mask: 0, claimed: false, character: null, startedAt: null, finishedAt: null });
+  assert.deepEqual(d, { mask: 0, claimed: false, character: null, startedAt: null, finishedAt: null, seed: null });
 });
 
 test('the hunt opens at 12:00 Thai time on 24 Oct 2026', () => {
@@ -195,4 +195,41 @@ test('no time limit at the event (owner, 25 Oct): the clock only measures', () =
 
 test('time lock off (owner, 23 Oct): the hunt is open any time; the entry QR is the lock', () => {
   assert.equal(isOpen(Date.UTC(2026, 9, 23, 17, 0, 0)), true);
+});
+
+import { lootFor, allLoot, ITEMS, COLORWAYS, playerTag } from '../src/hub/loot.js';
+
+test('every phone gets its own seed, kept in the save and in the transfer code', () => {
+  const be = memory();
+  const a = createStore(be);
+  assert.ok(a.state.seed > 0 && a.state.seed <= 0xffffff);
+  assert.equal(createStore(be).state.seed, a.state.seed); // survives a reload
+  const b = createStore(memory());
+  a.collect('cp1', 1000);
+  assert.equal(decodeSave(a.exportCode()).seed, a.state.seed);
+  b.importCode(a.exportCode(), 2000);
+  assert.equal(b.state.seed, a.state.seed); // the moved collection keeps its stickers
+});
+
+test('transfer codes made before the seed still work', () => {
+  const old = { stamps: { cp1: 1 }, claimedAt: null, character: { id: 'vampire' }, startedAt: null, finishedAt: null, seed: null };
+  const d = decodeSave(encodeSave(old));
+  assert.equal(d.mask, 1);
+  assert.equal(d.seed, null);
+});
+
+test('loot: same seed same stickers; different players get different collections', () => {
+  assert.deepEqual(allLoot(12345), allLoot(12345));
+  const seen = new Set();
+  for (let seed = 1; seed <= 2000; seed++) seen.add(JSON.stringify(allLoot(seed).map((l) => [l.design, l.color.id, l.item.id])));
+  assert.ok(seen.size >= 1995, `only ${seen.size} different collections in 2000 players`);
+  // every design, colourway and item turns up
+  const designs = new Set(), colors = new Set(), items = new Set();
+  for (let seed = 1; seed <= 400; seed++)
+    allLoot(seed).forEach((l) => (designs.add(l.design), colors.add(l.color.id), items.add(l.item.id)));
+  assert.equal(designs.size, 2);
+  assert.equal(colors.size, COLORWAYS.length);
+  assert.equal(items.size, Object.values(ITEMS).reduce((n, s) => n + s.items.length, 0));
+  assert.equal(lootFor(7, 2).item.slot, 'eyes');
+  assert.match(playerTag(12345), /^#[0-9A-Z]{5}$/);
 });
