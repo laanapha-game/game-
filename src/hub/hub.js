@@ -8,7 +8,7 @@
 // collection), the summary card (saved as an image), the mission-complete page, moving progress
 // to another browser, and how to play. Progress is saved by store.js.
 import { W, H, COL, kit, mkCanvas, sprite, ghostSprite, pumpkinSprite, moonSprite, houseImage, drawHouseWindows, silhouette, stickerize, thaiWidth } from './brand.js';
-import { CHECKPOINTS, TOTAL, SITE_URL, START_ID, IG_HANDLE, IG_URL } from '../data/checkpoints.js';
+import { CHECKPOINTS, TOTAL, SITE_URL, START_ID } from '../data/checkpoints.js';
 import { parseScan } from './store.js';
 import { msUntilOpen } from './clock.js';
 import { HUNT_DAYS_TH } from '../data/checkpoints.js';
@@ -148,15 +148,6 @@ const giftIcon = sprite(11, 11, (x, y) => {
   if (y >= 5 && y <= 10 && x >= 2 && x <= 8) return x === 5 ? COL.yellow : x === 2 || x === 8 || y === 10 ? COL.black : COL.white;
   return null;
 });
-const igIcon = sprite(13, 13, (x, y) => {
-  if ((x === 0 || x === 12) && (y === 0 || y === 12)) return null;
-  const ring = x === 0 || x === 12 || y === 0 || y === 12;
-  const r = Math.hypot(x - 6, y - 6.5);
-  if (x === 9 && y === 3) return COL.white;
-  if (ring || (r > 2 && r <= 3.3)) return COL.white;
-  const d = x + (12 - y);
-  return d < 8 ? COL.yellow : d < 16 ? COL.orange : COL.magenta;
-});
 const miniPumpkin = (lit) =>
   sprite(11, 10, (x, y) => {
     if (x === 5 && y === 0) return COL.green;
@@ -281,7 +272,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
   const viewerHint = document.createElement('p');
   viewerHint.style.margin = '0';
   viewerHint.style.fontSize = '18px';
-  viewerHint.innerHTML = 'กดค้างที่รูป แล้วเลือก <b>บันทึกรูปภาพ</b><br>จากนั้นเปิด IG Story แล้วแท็ก <b>@laanapha</b>';
+  viewerHint.innerHTML = 'กดค้างที่รูป แล้วเลือก <b>บันทึกรูปภาพ</b>';
   const viewerRow = document.createElement('div');
   Object.assign(viewerRow.style, { display: 'flex', gap: '12px' });
   const btnCss = { font: 'inherit', fontSize: '18px', padding: '8px 18px', border: `2px solid ${COL.yellow}`, background: '#000', color: COL.yellow, textDecoration: 'none', cursor: 'pointer' };
@@ -925,7 +916,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const steps = [
       ['ทำภารกิจทั้ง 8 จุด', 'เริ่มที่โต๊ะลงทะเบียน'],
       ['สแกน QR ที่แต่ละจุด', 'สะสมสติกเกอร์ผีให้ครบ'],
-      ['ครบ 8 ดวง', 'แชร์ลงสตอรี่ IG'],
+      ['ครบ 8 ดวง', 'ภารกิจสำเร็จ!'],
     ];
     let y = 52;
     steps.forEach((s, i) => {
@@ -1181,7 +1172,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     });
   }
 
-  /** The end: mission complete (no prize; owner, 25 Oct) and a nudge to mention us in an IG story. */
+  /** The end: mission complete (owner, 25 Oct: no prize, just congratulations). */
   function drawReward(now, t) {
     const done = store.complete();
     dim(0.88);
@@ -1232,30 +1223,14 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     box(12, 158, 156, 20, COL.black, COL.yellow);
     thai(store.state.name || 'ผู้กล้าไร้นาม', 16, 157, COL.yellow, 12, 'l');
     text(`${fmtTime(store.timeUsed())}  8/8`, 164, 165, COL.green, 'r');
-    // mention us in an IG story
-    const blink = Math.floor(t * 2) % 2;
-    box(12, 184, 156, 52, COL.black, blink ? COL.magenta : COL.yellow);
-    ctx.drawImage(igIcon, 18, 191);
-    thai('อย่าลืม Mention เรา', 36, 184, COL.white, 12, 'l');
-    thai('ในสตอรี่ IG', 36, 199, COL.white, 12, 'l');
-    textS('@' + IG_HANDLE.toUpperCase(), 90, 221, COL.yellow, 'c');
-    const B = { x: 14, y: 244, w: 152, h: 18 };
-    bigButton(B, 'บันทึกรูปลงสตอรี่', pressed === 'story', t);
+    CHECKPOINTS.forEach((c, i) => ctx.drawImage(pipOn, 46 + i * 11, 190));
+    const B = { x: 14, y: 226, w: 152, h: 18 };
+    bigButton(B, 'บันทึกรูป', pressed === 'story', t);
     hit('story', B, () => {
       audio.sfx('choice_press');
       saveImage();
     });
-    const I = { x: 14, y: 270, w: 72, h: 15 };
-    smallButton(I, 'เปิด IG', pressed === 'ig', { px: 12 });
-    hit('ig', I, () => {
-      click();
-      try {
-        window.open(IG_URL, '_blank', 'noopener');
-      } catch {
-        /* blocked: nothing */
-      }
-    });
-    const SM = { x: 94, y: 270, w: 72, h: 15 };
+    const SM = { x: 40, y: 256, w: 100, h: 16 };
     smallButton(SM, 'ดูสรุปผล', pressed === 'sum', { px: 12 });
     hit('sum', SM, () => {
       click();
@@ -1394,7 +1369,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const steps = [
       ['เริ่มที่โต๊ะลงทะเบียน', 'สแกน QR จุด START'],
       ['ทำภารกิจทีละจุด', 'สำเร็จแล้ว สแกน QR ที่จุดนั้น'],
-      ['เก็บครบ 8 ดวง', 'บันทึกรูป แชร์ลงสตอรี่ IG'],
+      ['เก็บครบ 8 ดวง', 'ดูสรุป บันทึกรูป'],
     ];
     let y = 58;
     steps.forEach((s, i) => {
