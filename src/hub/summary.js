@@ -201,7 +201,7 @@ export function exportCard(data, t = 0) {
   g.fillRect(0, 0, W, H);
   g.globalAlpha = 1;
   const k = kit(g);
-  k.textS('FOLLOW IG LAANAPHA', 90, 281, COL.yellow, 'c');
+  k.textS('MENTION @LAANAPHA', 90, 281, COL.yellow, 'c');
   const big = mkCanvas(W * 6, H * 6);
   const bx = big.getContext('2d');
   bx.imageSmoothingEnabled = false;

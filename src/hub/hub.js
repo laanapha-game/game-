@@ -5,10 +5,10 @@
 // Screens (all in the one canvas): start (name + start the clock), the board (8 sticker
 // slots on a winding road + the prize, the clock), checkpoint details, the scanner, the
 // reveal (scare, then "you found it", a short scary story, the sticker flies into the
-// collection), the summary card (saved as an image), the staff prize claim, moving progress
+// collection), the summary card (saved as an image), the mission-complete page, moving progress
 // to another browser, and how to play. Progress is saved by store.js.
 import { W, H, COL, kit, mkCanvas, sprite, ghostSprite, pumpkinSprite, moonSprite, houseImage, drawHouseWindows, silhouette, stickerize, thaiWidth } from './brand.js';
-import { CHECKPOINTS, REWARD, TOTAL, SITE_URL, START_ID } from '../data/checkpoints.js';
+import { CHECKPOINTS, TOTAL, SITE_URL, START_ID, IG_HANDLE, IG_URL } from '../data/checkpoints.js';
 import { parseScan } from './store.js';
 import { msUntilOpen } from './clock.js';
 import { HUNT_DAYS_TH } from '../data/checkpoints.js';
@@ -147,6 +147,15 @@ const giftIcon = sprite(11, 11, (x, y) => {
   if (y >= 3 && y <= 4 && x >= 1 && x <= 9) return x === 5 ? COL.yellow : COL.black;
   if (y >= 5 && y <= 10 && x >= 2 && x <= 8) return x === 5 ? COL.yellow : x === 2 || x === 8 || y === 10 ? COL.black : COL.white;
   return null;
+});
+const igIcon = sprite(13, 13, (x, y) => {
+  if ((x === 0 || x === 12) && (y === 0 || y === 12)) return null;
+  const ring = x === 0 || x === 12 || y === 0 || y === 12;
+  const r = Math.hypot(x - 6, y - 6.5);
+  if (x === 9 && y === 3) return COL.white;
+  if (ring || (r > 2 && r <= 3.3)) return COL.white;
+  const d = x + (12 - y);
+  return d < 8 ? COL.yellow : d < 16 ? COL.orange : COL.magenta;
 });
 const miniPumpkin = (lit) =>
   sprite(11, 10, (x, y) => {
@@ -611,7 +620,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const n = store.count();
     const st = store.status();
     if (store.state.claimedAt) return 'ขอบคุณที่มาลานนภานะ!';
-    if (st === 'complete') return 'ครบ 8 ดวงแล้ว! เก่งมาก';
+    if (st === 'complete') return 'ภารกิจสำเร็จ!';
     if (st === 'timeout') return 'หมดเวลาแล้ว...';
     if (st === 'idle') return 'สแกน QR ที่โต๊ะลงทะเบียน';
     const nx = nextCp();
@@ -787,7 +796,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     ctx.drawImage(pk, x + 16, y + 11 + bob);
     ctx.fillStyle = done ? COL.yellow : COL.dred;
     for (let k = 0; k <= 12; k++) ctx.fillRect(x + 18 + k, y + 11 + bob - Math.round(Math.sin((k / 12) * Math.PI) * 6), 1, 1);
-    thai(ended() ? 'สรุปผล' : 'รางวัล', x + TILE / 2, y + 26, done || st === 'timeout' ? COL.yellow : COL.dred, 12);
+    thai(ended() ? 'สรุปผล' : 'จบภารกิจ', x + TILE / 2, y + 26, done || st === 'timeout' ? COL.yellow : COL.dred, 12);
     hit('prize', r, () => {
       click();
       if (ended()) openSummary();
@@ -865,7 +874,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
         startScan();
       });
     } else if (st === 'complete') {
-      bigButton(SCAN_BTN, 'รับรางวัล!', pressed === 'scan', t, giftIcon);
+      bigButton(SCAN_BTN, 'ภารกิจสำเร็จ!', pressed === 'scan', t);
       hit('scan', SCAN_BTN, () => {
         audio.sfx('choice_press');
         open('reward');
@@ -916,7 +925,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const steps = [
       ['ทำภารกิจทั้ง 8 จุด', 'เริ่มที่โต๊ะลงทะเบียน'],
       ['สแกน QR ที่แต่ละจุด', 'สะสมสติกเกอร์ผีให้ครบ'],
-      ['ครบ 8 ดวง', 'แลกของรางวัลลานนภา'],
+      ['ครบ 8 ดวง', 'แชร์ลงสตอรี่ IG'],
     ];
     let y = 52;
     steps.forEach((s, i) => {
@@ -1123,7 +1132,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
           id,
           t0: performance.now(),
           then: () => {
-            if (complete) setTimeout(() => openSummary('ครบ 8 ดวงแล้ว!'), 500);
+            if (complete) setTimeout(() => open('reward'), 500);
             else say(nextCp() ? `ต่อไป: ${nextCp().name}` : 'ครบ 8 ดวงแล้ว!', 3500);
           },
         };
@@ -1149,11 +1158,11 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     }, 4);
     const done = store.status() === 'complete';
     if (done) {
-      // the prize button pops up once all 8 are in
+      // the mission-complete button pops up once all 8 are in
       const k = Math.min(1, (now - modal.t0) / 450);
       const rise = Math.round((1 - k) ** 2 * 30);
       const R = { x: 8, y: 295 + rise, w: 84, h: 16 };
-      bigButton(R, 'รับรางวัล', pressed === 'prizebtn', t, giftIcon);
+      bigButton(R, 'สำเร็จ!', pressed === 'prizebtn', t);
       if (Math.floor(t * 4) % 2 === 0) {
         sparkle(R.x + 2, R.y - 3, true);
         sparkle(R.x + R.w - 3, R.y + R.h + 2, false);
@@ -1172,17 +1181,18 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     });
   }
 
+  /** The end: mission complete (no prize; owner, 25 Oct) and a nudge to mention us in an IG story. */
   function drawReward(now, t) {
     const done = store.complete();
-    const claimed = store.state.claimedAt;
     dim(0.88);
     if (!done) {
       bulbPanel(6, 14, 168, 292, t);
-      thaiS('ของรางวัลรออยู่!', 90, 24, COL.yellow, 13);
+      thaiS('ภารกิจยังไม่ครบ', 90, 24, COL.yellow, 13);
       ctx.drawImage(pumpkinDark, 82, 58);
-      thai(`เก็บแล้ว ${store.count()} จาก ${TOTAL} ดวง`, 90, 82, COL.white, 12);
+      thai(`ผ่านแล้ว ${store.count()} จาก ${TOTAL} จุด`, 90, 82, COL.white, 12);
       CHECKPOINTS.forEach((c, i) => ctx.drawImage(store.has(c.id) ? pipOn : pipOff, 30 + i * 15, 104));
-      para(`เก็บครบ ${TOTAL} ดวง ปุ่มรับรางวัลจะโผล่ขึ้นมา`, 18, 126, 144, COL.white, 12, 15, 'c');
+      const nx = nextCp();
+      if (nx) para(`ต่อไป: จุดที่ ${CHECKPOINTS.indexOf(nx) + 1} ${nx.name}`, 18, 126, 144, COL.white, 12, 15, 'c');
       closeButton({ x: 50, y: 282, w: 80, h: 15 });
       return;
     }
@@ -1195,14 +1205,14 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     }
     bulbPanel(4, 4, 172, 312, t);
     thaiS('ยินดีด้วย!', 90, 8, COL.yellow, 18);
-    thai('คุณสำเร็จภารกิจ', 90, 32, COL.white, 13);
-    thaiS('TRICK OR TREAT แล้ว', 90, 48, COL.magenta, 13);
+    thai('คุณทำภารกิจสำเร็จ', 90, 32, COL.white, 13);
+    thaiS('TRICK OR TREAT', 90, 48, COL.magenta, 13);
     // the mascot (นวลนภา) celebrating on a beam of light
     ctx.save();
     ctx.beginPath();
-    ctx.rect(10, 68, 160, 92);
+    ctx.rect(10, 68, 160, 88);
     ctx.clip();
-    ctx.drawImage(rays[Math.floor(t * 8) % RAY_N], 10, 34);
+    ctx.drawImage(rays[Math.floor(t * 8) % RAY_N], 10, 30);
     (modal.confetti || []).forEach((p) => {
       const kk = (k % 2.6) + 0.1;
       const x = Math.round(p.x + p.vx * kk * 0.6);
@@ -1212,51 +1222,46 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const hop = Math.abs(Math.sin(t * 5)) * 8;
     const frame = Math.floor(t * 3) % 4 === 3 ? 'blink' : 'idle0';
     const m = G.getSprite('nuannapa', 'front', frame);
-    rect(64, 154, 52, 4, COL.black);
-    ctx.drawImage(m, 90 - m.width, 154 - m.height * 2 - Math.round(hop), m.width * 2, m.height * 2);
-    // the player's own character cheering next to the mascot
-    G.drawChar(character(), 'front', Math.floor(t * 2.2) % 2 ? 'idle1' : 'idle0', 140, 156 - (Math.sin(t * 5 + 1.5) > 0.3 ? 3 : 0), 1, 0);
+    rect(64, 150, 52, 4, COL.black);
+    ctx.drawImage(m, 90 - m.width, 150 - m.height * 2 - Math.round(hop), m.width * 2, m.height * 2);
+    G.drawChar(character(), 'front', Math.floor(t * 2.2) % 2 ? 'idle1' : 'idle0', 140, 152 - (Math.sin(t * 5 + 1.5) > 0.3 ? 3 : 0), 1, 0);
     sparkle(30, 84, Math.floor(t * 4) % 2 === 0);
     sparkle(150, 78, Math.floor(t * 4) % 2 === 1);
     ctx.restore();
     // who and how fast
-    box(12, 162, 156, 20, COL.black, COL.yellow);
-    const nm = store.state.name || 'ผู้กล้าไร้นาม';
-    thai(nm, 16, 161, COL.yellow, 12, 'l');
-    text(`${fmtTime(store.timeUsed())}  8/8`, 164, 169, COL.green, 'r');
-    thai('โชว์หน้านี้ให้กับพนักงาน', 90, 184, COL.white, 12);
-    thai('ภายในงาน เพื่อรับรางวัล', 90, 199, COL.yellow, 12);
-    // live clock: a screenshot will not tick
-    const d = new Date();
-    const pad = (v) => String(v).padStart(2, '0');
-    box(12, 220, 156, 16, COL.black, Math.floor(t * 2) % 2 ? COL.magenta : COL.yellow);
-    textS(`${pad(d.getDate())}/${pad(d.getMonth() + 1)}  ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`, 90, 225, COL.white, 'c');
-    if (claimed) {
-      const c = new Date(claimed);
-      rect(14, 240, 152, 36, COL.magenta);
-      rect(16, 242, 148, 32, COL.black);
-      rect(18, 244, 144, 28, COL.magenta);
-      thai('รับรางวัลแล้ว', 90, 241, COL.black, 16);
-      text(`${pad(c.getDate())}/${pad(c.getMonth() + 1)} ${pad(c.getHours())}:${pad(c.getMinutes())}`, 90, 262, COL.black, 'c');
-    } else {
-      const HB = { x: 16, y: 244, w: 148, h: 22 };
-      const holding = pressed === 'claim';
-      const kh = holding ? Math.min(1, (now - holdStart) / HOLD_MS) : 0;
-      rect(HB.x - 2, HB.y - 2, HB.w + 4, HB.h + 4, COL.yellow);
-      rect(HB.x, HB.y, HB.w, HB.h, COL.black);
-      rect(HB.x, HB.y, Math.round(HB.w * kh), HB.h, COL.green);
-      thai(holding ? 'กดค้างไว้...' : 'พนักงาน: กดค้างเพื่อยืนยัน', 90, HB.y, holding ? COL.black : COL.yellow, 12);
-      hit('claim', HB, () => {});
-      if (holding && kh >= 1) {
-        pressed = null;
-        if (store.claim()) {
-          audio.sfx('meter_full');
-          setTimeout(() => audio.sfx('scene3_chime'), 200);
-          buzz([60, 40, 120]);
-        }
+    box(12, 158, 156, 20, COL.black, COL.yellow);
+    thai(store.state.name || 'ผู้กล้าไร้นาม', 16, 157, COL.yellow, 12, 'l');
+    text(`${fmtTime(store.timeUsed())}  8/8`, 164, 165, COL.green, 'r');
+    // mention us in an IG story
+    const blink = Math.floor(t * 2) % 2;
+    box(12, 184, 156, 52, COL.black, blink ? COL.magenta : COL.yellow);
+    ctx.drawImage(igIcon, 18, 191);
+    thai('อย่าลืม Mention เรา', 36, 184, COL.white, 12, 'l');
+    thai('ในสตอรี่ IG', 36, 199, COL.white, 12, 'l');
+    textS('@' + IG_HANDLE.toUpperCase(), 90, 221, COL.yellow, 'c');
+    const B = { x: 14, y: 244, w: 152, h: 18 };
+    bigButton(B, 'บันทึกรูปลงสตอรี่', pressed === 'story', t);
+    hit('story', B, () => {
+      audio.sfx('choice_press');
+      saveImage();
+    });
+    const I = { x: 14, y: 270, w: 72, h: 15 };
+    smallButton(I, 'เปิด IG', pressed === 'ig', { px: 12 });
+    hit('ig', I, () => {
+      click();
+      try {
+        window.open(IG_URL, '_blank', 'noopener');
+      } catch {
+        /* blocked: nothing */
       }
-    }
-    closeButton({ x: 50, y: 288, w: 80, h: 16 });
+    });
+    const SM = { x: 94, y: 270, w: 72, h: 15 };
+    smallButton(SM, 'ดูสรุปผล', pressed === 'sum', { px: 12 });
+    hit('sum', SM, () => {
+      click();
+      openSummary();
+    });
+    closeButton({ x: 50, y: 293, w: 80, h: 13 });
   }
 
   function drawScan(now, t) {
@@ -1389,7 +1394,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const steps = [
       ['เริ่มที่โต๊ะลงทะเบียน', 'สแกน QR จุด START'],
       ['ทำภารกิจทีละจุด', 'สำเร็จแล้ว สแกน QR ที่จุดนั้น'],
-      ['เก็บครบ 8 ดวง', 'ดูสรุป บันทึกรูป รับรางวัล'],
+      ['เก็บครบ 8 ดวง', 'บันทึกรูป แชร์ลงสตอรี่ IG'],
     ];
     let y = 58;
     steps.forEach((s, i) => {

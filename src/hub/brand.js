@@ -44,6 +44,8 @@ export function shape(w, h, inside) {
 // ---------- 5x7 pixel font ----------
 const GLYPH = {};
 for (const k in FONT_SRC) GLYPH[k] = FONT_SRC[k].split('/');
+// '@' is not in scene 1's font
+if (!GLYPH['@']) GLYPH['@'] = '.###./#...#/#.###/#.#.#/#.###/#..../.####'.split('/');
 const tCache = new Map();
 export function textSprite(s, color) {
   s = String(s).toUpperCase();

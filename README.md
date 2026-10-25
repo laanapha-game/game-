@@ -63,7 +63,7 @@ page is closed). Each scan plays a scare, then "ยินดีด้วย! ค
 story and flies the sticker into the collection. At 8/8 or time up the summary card shows the
 player's name, time, rank and stickers on their character's own background, and saves as a
 1080 x 1920 image (share sheet, or a long-press viewer in in-app browsers). A staff member
-confirms the prize by holding a button. Drawn into scene 1's canvas with scene 1's own font,
+ends with a mission-complete page asking players to mention @laanapha in their IG story (no prize, owner 25 Oct). Drawn into scene 1's canvas with scene 1's own font,
 colours and panels (registered as scene 1's `'scene3'`).
 
 | Path | What |

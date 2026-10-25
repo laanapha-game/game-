@@ -37,12 +37,9 @@ export const HUNT_OPENS_AT = '2026-10-24T12:00:00+07:00';
 export const HUNT_DAYS_TH = '24 - 25 ตุลาคม 2569';
 export const HUNT_DAYS_EN = 'GAME WILL START ON 24-25 OCT';
 
-/** Where the prize is collected when all 8 are found. TODO(owner): real prize and place. */
-export const REWARD = {
-  title: 'ของรางวัลลานนภา',
-  where: 'หน้าบ้านลานนภา',
-  howTo: 'ให้สตาฟกดค้างปุ่มด้านล่าง',
-};
+/** The end of the hunt (owner, 25 Oct: no prize): ask players to mention the event in their IG story. */
+export const IG_HANDLE = 'laanapha';
+export const IG_URL = 'https://www.instagram.com/laanapha/';
 
 // art: the sticker.
 //   { draw: '<name>' }            pixel art drawn in code (src/hub/stickers.js)
