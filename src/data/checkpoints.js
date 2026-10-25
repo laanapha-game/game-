@@ -10,11 +10,17 @@
 
 export const SITE_URL = 'https://laanapha.com';
 
-/** The hunt clock: counts down from the moment the player presses start (or scans first). */
-export const HUNT_MINUTES = 45;
+/**
+ * The hunt clock in minutes, or null for no time limit (owner, 25 Oct: no limit; the clock
+ * only measures how long the player took, shown on the summary).
+ */
+export const HUNT_MINUTES = null;
 
-// Extra time for clearing a checkpoint in time: `bonusMinutes` on a checkpoint (4 and 6).
-// Kept secret: no screen announces it beforehand; it shows only when it is earned.
+/** Scanning this checkpoint (the registration table) unlocks the hunt and starts it. */
+export const START_ID = 'cp1';
+
+// Extra time: `bonusMinutes` on a checkpoint adds to the clock when collected in time (only
+// meaningful with a time limit; none now).
 
 /** The entry QR at the event's entrance unlocks the hunt (hash written by npm run qr). */
 export const ENTRY_HASH = '11arptxyxi6';
@@ -42,89 +48,89 @@ export const REWARD = {
 //   { draw: '<name>' }            pixel art drawn in code (src/hub/stickers.js)
 //   { sheet, frames, frame, flip, tint }   a frame of a sprite strip in src/assets/art
 // stall: stall art behind it in the detail view, A (yellow), B (magenta), C (black/yellow), or null.
-// where: TODO(owner) where each checkpoint stands at the event.
+// mission: what to do at this checkpoint (shown before it is found, and as the next mission
+//   after the previous one); where: where it is at the event. Owner, 25 Oct.
+// The art (sticker) of each checkpoint is unchanged from the first version.
 export const CHECKPOINTS = [
   {
     id: 'cp1',
     hash: '1culz9q7u18', // code in tools/qr-codes.json (npm run qr)
-    name: 'ผงพราย',
-    title: 'ขวดผงต้องห้าม',
+    name: 'START',
+    title: 'โต๊ะลงทะเบียน',
     stall: 'A',
     art: { draw: 'powder' },
-    brief: 'ผงบดจากคางของผีตายทั้งกลม โรยใส่ใคร คนนั้นจะหลงจนถอนตัวไม่ขึ้น... ระวังอย่าให้ปลิวโดนตัว',
-    where: 'จุดที่ 1 ปากซอยทางเข้า',
+    mission: 'สแกนที่โต๊ะลงทะเบียนเพื่อเริ่มภารกิจ แล้วหาจุดถัดไปให้เจอภายใน 10 นาที',
+    where: 'หน้าโต๊ะ Regist',
   },
   {
     id: 'cp2',
     hash: '58b0cv9uif', // code in tools/qr-codes.json (npm run qr)
-    name: 'คุณไสย',
-    title: 'ตุ๊กตาฟางปักเข็ม',
+    name: 'FIND THE SPIDER',
+    title: 'หาแมงมุม',
     stall: 'B',
     art: { draw: 'doll' },
-    brief: 'เข็มเล่มใหม่ถูกปักลงบนตุ๊กตาฟาง ที่ไหนสักแห่ง ใครบางคนกำลังเจ็บตรงจุดเดียวกัน',
-    where: 'จุดที่ 2',
+    mission: 'เดินผ่านหลังจอ แล้วหาแมงมุมให้เจอ',
+    where: 'หลังจอหนัง',
   },
   {
     id: 'cp3',
     hash: '1zo8ssqysb7', // code in tools/qr-codes.json (npm run qr)
-    name: 'หนังควาย',
-    title: 'หนังควายเข้าท้อง',
+    name: 'ESCAPE ROOM',
+    title: 'ห้องผี',
     stall: 'C',
     art: { draw: 'hide' },
-    brief: 'หนังควายแห้งชิ้นเท่าเล็บ ถูกเสกให้ไปพองอยู่ในท้อง หมอที่ไหนก็หาสาเหตุไม่เจอ',
-    where: 'จุดที่ 3',
+    mission: 'เปิดประตูเข้าไป เจอผีแปะ QR อยู่ หาให้เจอ แล้วหนีออกมา',
+    where: 'ห้อง Escape Room',
   },
   {
     id: 'cp4',
     hash: '22iauuxpd79', // code in tools/qr-codes.json (npm run qr)
-    bonusMinutes: 10, // +10 min on the clock when collected in time
-    name: 'ผีกระหัง',
-    title: 'ปีกกระด้งกลางดึก',
+    name: 'แข่งรถเข็น',
+    title: 'เข็นให้ไว',
     stall: 'A',
     art: { sheet: 'krahang', frames: 8, frame: 0, flip: true },
-    brief: 'ได้ยินเสียงกระด้งกระพือเหนือหลังคาไหม? นั่นกระหังออกหากิน อย่าเผลอเงยหน้ามอง',
-    where: 'จุดที่ 4',
+    mission: 'กติกา: เข็นรถแข่งกัน! เข้าเส้นชัยแล้วสแกน QR',
+    where: 'สนามแข่งรถเข็น',
   },
   {
     id: 'cp5',
     hash: '2dpcw06sria', // code in tools/qr-codes.json (npm run qr)
-    name: 'ศาลเจ้าที่',
-    title: 'ศาลหน้าบ้าน',
+    name: 'PUMPKIN HAUNT',
+    title: 'ขุดหาฟักทอง',
     stall: null,
     art: { draw: 'shrine' },
-    brief: 'จะเข้าบ้านใครต้องบอกเจ้าที่ก่อน คนที่ลบหลู่ คืนนั้นจะมีใครมายืนอยู่ปลายเตียง',
-    where: 'จุดที่ 5',
+    mission: 'ขุดดินหาฟักทองให้เจอ 5 นาทีสุดท้ายจะเปิดไฟให้',
+    where: 'ลานฟักทอง',
   },
   {
     id: 'cp6',
     hash: 'uxq5izf88u', // code in tools/qr-codes.json (npm run qr)
-    bonusMinutes: 10, // +10 min on the clock when collected in time
-    name: 'กุมารทอง',
-    title: 'เด็กทองมุมห้อง',
+    name: 'สวดมนต์ "หน้า" ศพ',
+    title: 'ปลดปล่อยผี',
     stall: 'B',
     art: { sheet: 'stall_ghost_5', frames: 2, frame: 0, tint: 'gold' },
-    brief: 'เสียงเด็กหัวเราะคิกคักอยู่มุมห้อง ทั้งที่บ้านนี้ไม่มีเด็ก... อย่าลืมวางน้ำแดงไว้ให้เขา',
-    where: 'จุดที่ 6',
+    mission: 'เปิดน้ำแดง แล้วท่องคาถาพร้อมกัน "มะยัง มะเย มะโยง มะเย้" ท่องถูกวิธี ผีจะถูกปลดปล่อย',
+    where: 'หน้าศพ',
   },
   {
     id: 'cp7',
     hash: '1avxr68c24j', // code in tools/qr-codes.json (npm run qr)
-    name: 'ตะปู',
-    title: 'ตะปูตอกโลง',
+    name: 'WORKSHOP',
+    title: 'Hidden Treat',
     stall: 'C',
     art: { draw: 'nails' },
-    brief: 'ตะปูที่ถูกถอนออกจากฝาโลง ใครเก็บไว้ เจ้าของโลงจะตามมาทวงคืนทุกคืน',
-    where: 'จุดที่ 7',
+    mission: 'ตามหาตัวตนที่ซ่อนอยู่! เลือกภารกิจจากร้านค้าหรือเวิร์กชอป ทำให้สำเร็จ แล้วรับ Hidden Treat พร้อม QR ลับ',
+    where: 'ร้านค้า & เวิร์กชอปในงาน',
   },
   {
     id: 'cp8',
     hash: '1dw5ooy1trl', // code in tools/qr-codes.json (npm run qr)
-    name: 'ผีปอบ',
-    title: 'ปอบหิวตอนตีสาม',
+    name: 'LAAN FOOD',
+    title: 'จบภารกิจ',
     stall: null,
     art: { sheet: 'chaser_red', frames: 7, frame: 0, flip: true },
-    brief: 'ปอบชอบตับไตไส้พุงสดๆ ถ้าเห็นยายข้างบ้านยิ้มให้ตอนตีสาม... วิ่ง อย่าหันหลังกลับ',
-    where: 'จุดที่ 8 ปลายทางหน้าบ้าน',
+    mission: 'เดินไปหน้าซอย แล้วสแกนเพื่อสรุปจบภารกิจ',
+    where: 'หน้าซอย',
   },
 ];
 

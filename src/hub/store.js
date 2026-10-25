@@ -4,7 +4,8 @@
 import { CHECKPOINTS, HUNT_MINUTES, ENTRY_HASH } from '../data/checkpoints.js';
 import { hashCode, normCode } from './codehash.js';
 
-export const HUNT_MS = HUNT_MINUTES * 60 * 1000;
+/** The time limit in ms, or Infinity when there is none (HUNT_MINUTES null). */
+export const HUNT_MS = HUNT_MINUTES ? HUNT_MINUTES * 60 * 1000 : Infinity;
 
 // v2 (24 Oct): the hunt is locked until a QR is scanned. Old saves (tests, earlier versions)
 // are left behind, so every phone starts locked.
@@ -45,7 +46,9 @@ function storage() {
   }
 }
 
-export function createStore(backend = storage()) {
+/** opts.huntMs: the time limit (tests); defaults to HUNT_MS. */
+export function createStore(backend = storage(), opts = {}) {
+  const huntMs = opts.huntMs ?? HUNT_MS;
   let mem = null; // when storage is blocked (private mode), progress lives for this visit only
   let state = emptyState();
   try {
@@ -128,9 +131,12 @@ export function createStore(backend = storage()) {
     bonusMs() {
       return CHECKPOINTS.reduce((ms, cp) => ms + (cp.bonusMinutes && state.stamps[cp.id] ? cp.bonusMinutes * 60000 : 0), 0);
     },
-    /** The whole clock: HUNT_MS plus the bonuses earned. */
+    /** The whole clock: the limit plus the bonuses earned (Infinity: no limit). */
+    get timed() {
+      return Number.isFinite(huntMs);
+    },
     limitMs() {
-      return HUNT_MS + this.bonusMs();
+      return huntMs + this.bonusMs();
     },
     /** 'idle' (clock not started) | 'running' | 'complete' (8/8 in time) | 'timeout' */
     status(now = Date.now()) {
@@ -140,14 +146,14 @@ export function createStore(backend = storage()) {
     },
     /** ms left on the clock */
     timeLeft(now = Date.now()) {
-      if (!state.startedAt) return HUNT_MS;
+      if (!state.startedAt) return huntMs;
       const end = state.finishedAt || now;
       return Math.max(0, this.limitMs() - (end - state.startedAt));
     },
     /** ms the player used (until 8/8, or the whole clock on a timeout) */
     timeUsed(now = Date.now()) {
       if (!state.startedAt) return 0;
-      return Math.min(this.limitMs(), (state.finishedAt || now) - state.startedAt);
+      return Math.max(0, Math.min(this.limitMs(), (state.finishedAt || now) - state.startedAt));
     },
     markHelpSeen() {
       state.seenHelp = true;

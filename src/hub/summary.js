@@ -3,7 +3,6 @@
 // Drawn in 180 x 320 design pixels, the same card on screen and in the saved image
 // (exported at 6x = 1080 x 1920, a phone-story size).
 import { W, H, COL, kit, sprite, mkCanvas, pumpkinSprite, ghostSprite, moonSprite, textSprite } from './brand.js';
-import { HUNT_MINUTES } from '../data/checkpoints.js';
 
 // ---------- one background per character ----------
 const mk = (w, h, rows, pal) => sprite(w, h, (x, y) => pal[rows[y][x]] || null);
@@ -181,7 +180,7 @@ export function drawCard(ctx, data, t, opts = {}) {
     rect(8, 292, 164, 1, COL.magenta);
     text(data.date, 14, 296, COL.white);
     text('LAANAPHA.COM', 166, 296, COL.yellow, 'r');
-    text(`${HUNT_MINUTES} MIN STICKER HUNT`, 90, 305, COL.magenta, 'c');
+    text('TRICK OR TREAT HUNT', 90, 305, COL.magenta, 'c');
   }
 }
 

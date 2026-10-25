@@ -8,7 +8,7 @@
 // collection), the summary card (saved as an image), the staff prize claim, moving progress
 // to another browser, and how to play. Progress is saved by store.js.
 import { W, H, COL, kit, mkCanvas, sprite, ghostSprite, pumpkinSprite, moonSprite, houseImage, drawHouseWindows, silhouette, stickerize, thaiWidth } from './brand.js';
-import { CHECKPOINTS, REWARD, TOTAL, SITE_URL, HUNT_MINUTES } from '../data/checkpoints.js';
+import { CHECKPOINTS, REWARD, TOTAL, SITE_URL, START_ID } from '../data/checkpoints.js';
 import { parseScan } from './store.js';
 import { msUntilOpen } from './clock.js';
 import { HUNT_DAYS_TH } from '../data/checkpoints.js';
@@ -377,7 +377,9 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
 
   /** A checkpoint was scanned (camera, photo, typed code or the ?cp= link). */
   function collect(id) {
-    if (id === 'entry') {
+    if (id === 'entry' || (id === START_ID && store.status() === 'idle' && !store.has(START_ID))) {
+      // the entry QR, or START at the registration table: unlock, then name + start
+      // (starting collects START, so its sticker comes with the first mission)
       // the entry QR at the event: unlocks the hunt
       const first = store.enter();
       if (modal) close();
@@ -481,8 +483,12 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     store.markHelpSeen();
     close();
     audio.sfx('meter_full');
-    say(`เริ่ม! มีเวลา ${HUNT_MINUTES} นาที`, 4000);
+    // the START checkpoint is the registration table: starting collects it
+    if (!store.has(START_ID)) setTimeout(() => collect(START_ID), 250);
+    else say('เริ่มภารกิจ!', 4000);
   }
+  /** The next checkpoint to do (walking order), or null when all are collected. */
+  const nextCp = () => CHECKPOINTS.find((cp) => !store.has(cp.id)) || null;
 
   async function shareProgress() {
     const code = store.exportCode();
@@ -607,9 +613,9 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     if (store.state.claimedAt) return 'ขอบคุณที่มาลานนภานะ!';
     if (st === 'complete') return 'ครบ 8 ดวงแล้ว! เก่งมาก';
     if (st === 'timeout') return 'หมดเวลาแล้ว...';
-    if (st === 'idle') return 'พร้อมล่าผีหรือยัง?';
-    if (n === 0) return 'เดินไปหาจุดแรกเลย!';
-    return n >= 5 ? `ใกล้แล้ว! อีก ${TOTAL - n} ดวง` : `เก่งมาก! อีก ${TOTAL - n} ดวง`;
+    if (st === 'idle') return 'สแกน QR ที่โต๊ะลงทะเบียน';
+    const nx = nextCp();
+    return nx ? `ต่อไป: ${nx.name}` : 'ครบ 8 ดวงแล้ว!';
   }
 
   function drawHeader(t) {
@@ -629,9 +635,10 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const edge = st === 'timeout' ? COL.magenta : low ? (blink ? COL.magenta : COL.yellow) : st === 'complete' ? COL.green : COL.yellow;
     box(52, 59, 125, 21, COL.black, edge);
     ctx.drawImage(clockIcon, 56, 64);
-    const label = { idle: 'เวลา', running: 'เหลือ', complete: 'ใช้ไป', timeout: 'หมด' }[st];
+    const label = !store.timed ? (st === 'complete' ? 'ใช้ไป' : 'เวลา') : { idle: 'เวลา', running: 'เหลือ', complete: 'ใช้ไป', timeout: 'หมด' }[st];
     thai(label, 70, 58, COL.white, 12, 'l');
-    const ms = st === 'complete' ? store.timeUsed() : left;
+    let ms = st === 'complete' ? store.timeUsed() : left;
+    if (!store.timed) ms = store.timeUsed(); // no limit: how long the player has taken
     if (st === 'running' && store.bonusMs()) {
       // the time bonus earned so far: a green tag on the clock's top edge
       const tag = `+${Math.round(store.bonusMs() / 60000)} MIN`;
@@ -846,7 +853,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
         open('gate');
       });
     } else if (st === 'idle') {
-      bigButton(SCAN_BTN, `เริ่มจับเวลา ${HUNT_MINUTES} นาที`, pressed === 'scan', t, clockIcon);
+      bigButton(SCAN_BTN, 'เริ่มภารกิจ', pressed === 'scan', t, clockIcon);
       hit('scan', SCAN_BTN, () => {
         audio.sfx('choice_press');
         openInput('start', START_FIELD);
@@ -907,9 +914,9 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     bulbPanel(6, 20, 168, 282, t);
     thaiS('ยินดีต้อนรับสู่ลานนภา!', 90, 28, COL.yellow, 13);
     const steps = [
-      ['เดินหาจุดเช็กพอยต์', 'ทั้งหมด 8 จุดในงาน'],
+      ['ทำภารกิจทั้ง 8 จุด', 'เริ่มที่โต๊ะลงทะเบียน'],
       ['สแกน QR ที่แต่ละจุด', 'สะสมสติกเกอร์ผีให้ครบ'],
-      [`เก็บให้ครบใน ${HUNT_MINUTES} นาที`, 'แลกของรางวัลลานนภา'],
+      ['ครบ 8 ดวง', 'แลกของรางวัลลานนภา'],
     ];
     let y = 52;
     steps.forEach((s, i) => {
@@ -925,12 +932,12 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     rect(f.x, f.y, f.w, f.h, COL.black);
     place(input, f);
     const B = { x: 20, y: 232, w: 140, h: 20 };
-    bigButton(B, 'เริ่มจับเวลา!', pressed === 'go', t, clockIcon);
+    bigButton(B, 'เริ่มภารกิจ!', pressed === 'go', t, clockIcon);
     hit('go', B, () => {
       audio.sfx('choice_press');
       startHunt();
     });
-    thai(`นาฬิกาเริ่มนับ ${HUNT_MINUTES}:00 ทันทีที่กด`, 90, 256, COL.magenta, 12);
+    thai('ไม่จำกัดเวลา', 90, 256, COL.magenta, 12);
     closeButton({ x: 50, y: 282, w: 80, h: 13 }, 'ไว้ก่อน');
   }
 
@@ -972,8 +979,8 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     rect(14, 23, 36, 12, got ? COL.magenta : COL.dred);
     text(`CP ${i + 1}`, 32, 26, COL.black, 'c');
     thai(got ? 'เก็บแล้ว' : 'ยังไม่เจอ', 166, 19, got ? COL.green : COL.magenta, 12, 'r');
-    thaiS(got ? cp.name : '? ? ?', 90, 36, COL.yellow, 13);
-    thai(got ? cp.title : `จุดที่ ${i + 1}`, 90, 52, COL.white, 12);
+    thaiS(cp.name, 90, 36, COL.yellow, thaiWidth(cp.name, 13) > 150 ? 12 : 13);
+    thai(cp.title, 90, 52, COL.white, 12);
     diorama(cp, 14, 72, 152, 76, got, t);
     let y = 153;
     if (got) {
@@ -981,17 +988,17 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       const pad = (v) => String(v).padStart(2, '0');
       box(14, y, 152, 18, COL.black, COL.green);
       ctx.drawImage(checkIcon, 20, y + 5);
-      thai(`เก็บเมื่อ ${d.getDate()}/${d.getMonth() + 1} · ${pad(d.getHours())}:${pad(d.getMinutes())} น.`, 94, y - 2, COL.green, 12);
-      y += 24;
-      y += para(cp.brief, 16, y, 148, COL.white, 12, 14) + 4;
+      thai(`ผ่านเมื่อ ${d.getDate()}/${d.getMonth() + 1} · ${pad(d.getHours())}:${pad(d.getMinutes())} น.`, 94, y - 2, COL.green, 12);
     } else {
       box(14, y, 152, 18, COL.black, COL.magenta);
-      thai('หาจุดนี้ให้เจอ แล้วสแกน QR', 90, y - 2, COL.magenta, 12);
-      y += 24;
-      y += para('สแกนแล้วจะรู้ว่ามีอะไรซ่อนอยู่... ถ้ากล้าพอ', 16, y, 148, COL.white, 12, 14) + 4;
+      thai('ทำภารกิจแล้วสแกน QR', 90, y - 2, COL.magenta, 12);
     }
-    ctx.drawImage(pinIcon, 16, y + 4);
-    para(cp.where, 26, y, 138, COL.yellow, 12, 14);
+    y += 24;
+    y += para(cp.mission, 16, y, 148, COL.white, 12, 14) + 4;
+    if (y < 248) {
+      ctx.drawImage(pinIcon, 16, y + 4);
+      para(cp.where, 26, y, 138, COL.yellow, 12, 14);
+    }
     if (got || store.status() !== 'running') closeButton({ x: 50, y: 282, w: 80, h: 15 });
     else {
       const B = { x: 18, y: 260, w: 144, h: 16 };
@@ -1062,7 +1069,8 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       [[40, 66], [140, 78], [46, 150], [134, 144]].forEach((p, j) => sparkle(p[0], p[1], (Math.floor(t * 5) + j) % 2 === 0));
     }
     box(12, 162, 156, 22, COL.black, COL.magenta);
-    thaiS(`จุดที่ ${i + 1} · ${cp.name}`, 90, 162, COL.yellow, 13);
+    const head = `จุดที่ ${i + 1} · ${cp.name}`;
+    thaiS(head, 90, thaiWidth(head, 13) > 150 ? 163 : 162, COL.yellow, thaiWidth(head, 13) > 150 ? 12 : 13);
     if (cp.bonusMinutes && kr > 0.3) {
       // time bonus: a stamp that pops onto the sticker
       if (!modal.bonusSound) {
@@ -1081,14 +1089,17 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     }
     // the scary story, typed out
     box(8, 189, 164, 82, COL.black, COL.dred);
-    const lines = wrapText(cp.brief, 152, (str) => thaiWidth(str, 12));
+    const nx = nextCp();
+    const story = nx ? `ภารกิจต่อไป · จุดที่ ${CHECKPOINTS.indexOf(nx) + 1} ${nx.name}: ${nx.mission}` : 'ครบทุกจุดแล้ว! ไปดูสรุปผลและรับรางวัลกันเลย';
+    const lines = wrapText(story, 152, (str) => thaiWidth(str, 12));
     const total = lines.reduce((n, l) => n + graphemes(l).length, 0);
     const shown = modal.typed ? total : Math.floor(Math.max(0, kr - 0.35) * TYPE_CPS);
     let left = shown;
-    lines.slice(0, 5).forEach((ln, j) => {
+    const lh = lines.length > 5 ? 13 : 15;
+    lines.slice(0, 6).forEach((ln, j) => {
       if (left <= 0) return;
       const g = graphemes(ln);
-      thai(g.slice(0, left).join(''), 14, 190 + j * 15, COL.white, 12, 'l');
+      thai(g.slice(0, left).join(''), 14, 190 + j * lh, j === 0 && nx ? COL.yellow : COL.white, 12, 'l');
       left -= g.length;
     });
     const doneTyping = shown >= total;
@@ -1113,7 +1124,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
           t0: performance.now(),
           then: () => {
             if (complete) setTimeout(() => openSummary('ครบ 8 ดวงแล้ว!'), 500);
-            else say(`เก็บแล้ว! อีก ${TOTAL - store.count()} ดวง`, 3500);
+            else say(nextCp() ? `ต่อไป: ${nextCp().name}` : 'ครบ 8 ดวงแล้ว!', 3500);
           },
         };
       });
@@ -1171,7 +1182,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       ctx.drawImage(pumpkinDark, 82, 58);
       thai(`เก็บแล้ว ${store.count()} จาก ${TOTAL} ดวง`, 90, 82, COL.white, 12);
       CHECKPOINTS.forEach((c, i) => ctx.drawImage(store.has(c.id) ? pipOn : pipOff, 30 + i * 15, 104));
-      para(`เก็บครบ ${TOTAL} ดวงภายใน ${HUNT_MINUTES} นาที ปุ่มรับรางวัลจะโผล่ขึ้นมา`, 18, 126, 144, COL.white, 12, 15, 'c');
+      para(`เก็บครบ ${TOTAL} ดวง ปุ่มรับรางวัลจะโผล่ขึ้นมา`, 18, 126, 144, COL.white, 12, 15, 'c');
       closeButton({ x: 50, y: 282, w: 80, h: 15 });
       return;
     }
@@ -1285,7 +1296,8 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     const left = store.timeLeft();
     if (!modal.entry) {
       ctx.drawImage(clockIcon, 66, 203);
-      textS(fmtTime(left), 80, 205, left < 5 * 60000 ? COL.magenta : COL.yellow);
+      if (store.timed) textS(fmtTime(left), 80, 205, left < 5 * 60000 ? COL.magenta : COL.yellow);
+      else textS(fmtTime(store.timeUsed()), 80, 205, COL.yellow);
     }
     if (modal.entry) {
       // locked: only scanning the entry QR lets the player in (camera, or a photo of it)
@@ -1375,8 +1387,8 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     bulbPanel(6, 24, 168, 274, t);
     thaiS('วิธีเล่น', 90, 33, COL.yellow, 13);
     const steps = [
-      ['สแกน QR หน้างาน', `ปลดล็อก แล้วมีเวลา ${HUNT_MINUTES} นาที`],
-      ['เดินหา 8 จุดในงาน', 'กด สแกน QR ที่แต่ละจุด'],
+      ['เริ่มที่โต๊ะลงทะเบียน', 'สแกน QR จุด START'],
+      ['ทำภารกิจทีละจุด', 'สำเร็จแล้ว สแกน QR ที่จุดนั้น'],
       ['เก็บครบ 8 ดวง', 'ดูสรุป บันทึกรูป รับรางวัล'],
     ];
     let y = 58;
@@ -1456,7 +1468,7 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     rect(94, 65, 2, 7, COL.yellow);
     rect(84, 64, 12, 2, COL.yellow);
     thaiS('สแกน QR CODE หน้างาน', 90, 88, COL.yellow, 13);
-    thai('เพื่อเข้าร่วมเกม', 90, 106, COL.white, 13);
+    thai('ที่โต๊ะลงทะเบียน (START)', 90, 106, COL.white, 13);
     thai('QR คือรหัสเข้าเกม', 90, 124, COL.green, 12);
     // countdown to the opening
     const left = msUntilOpen();
@@ -1479,8 +1491,8 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       thai('ตั้งแต่ 12:00 น.', 90, 203, COL.white, 11);
     } else {
       thaiS('เปิดแล้ว!', 90, 152, COL.yellow, 16);
-      thai(`มีเวลา ${HUNT_MINUTES} นาที`, 90, 176, COL.magenta, 12);
-      thai('เก็บสติกเกอร์ให้ครบ 8 จุด', 90, 192, COL.white, 12);
+      thai('ภารกิจ 8 จุด ไม่จำกัดเวลา', 90, 176, COL.magenta, 12);
+      thai('เก็บสติกเกอร์ให้ครบ 8 ดวง', 90, 192, COL.white, 12);
     }
     text('SCAN THE QR AT THE EVENT', 90, 227, COL.yellow, 'c');
     const B = { x: 18, y: 240, w: 144, h: 20 };

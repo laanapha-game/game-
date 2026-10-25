@@ -1,7 +1,10 @@
 // Sticker hub save data and QR parsing (src/hub/store.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createStore, parseScan, encodeSave, decodeSave, STORAGE_KEY, HUNT_MS } from '../src/hub/store.js';
+import { createStore as makeStore, parseScan, encodeSave, decodeSave, STORAGE_KEY, HUNT_MS as CONFIG_HUNT_MS } from '../src/hub/store.js';
+// most tests use a 45-minute clock (the store supports one; the event runs without: HUNT_MINUTES null)
+const HUNT_MS = 45 * 60000;
+const createStore = (be) => makeStore(be, { huntMs: HUNT_MS });
 import { CHECKPOINTS, TOTAL } from '../src/data/checkpoints.js';
 import { hashCode } from '../src/hub/codehash.js';
 import { readFileSync } from 'node:fs';
@@ -24,6 +27,12 @@ test('the page source holds no plain checkpoint code', () => {
   const codes = JSON.parse(readFileSync('tools/qr-codes.json', 'utf8'));
   const src = readFileSync('src/data/checkpoints.js', 'utf8') + readFileSync('src/hub/store.js', 'utf8');
   for (const [id, code] of Object.entries(codes)) if (!id.startsWith('_') && code.length > 3) assert.ok(!src.includes(code), `${code} is in the source`);
+});
+
+test('the printed QR codes still map to checkpoints 1-8 in order', () => {
+  const codes = JSON.parse(readFileSync('tools/qr-codes.json', 'utf8'));
+  CHECKPOINTS.forEach((cp, i) => assert.equal(parseScan(codes[`cp${i + 1}`]), cp.id));
+  assert.equal(CHECKPOINTS[0].name, 'START');
 });
 
 test('parseScan reads the checkpoint URL or the typed code, any case and punctuation', () => {
@@ -174,31 +183,14 @@ test('the entry QR unlocks the hunt; a checkpoint QR does too', () => {
   assert.equal(c.entered, true);
 });
 
-test('checkpoints 4 and 6 add 10 minutes each to the clock', () => {
-  const s = createStore(memory());
-  const t0 = 1_000_000;
-  s.start('', t0);
-  assert.equal(s.limitMs(), HUNT_MS);
-  s.collect('cp1', t0 + 5 * 60000);
-  s.collect('cp4', t0 + 20 * 60000);
-  assert.equal(s.bonusMs(), 10 * 60000);
-  assert.equal(s.timeLeft(t0 + 20 * 60000), HUNT_MS + 10 * 60000 - 20 * 60000);
-  // past the plain 45 minutes but inside 55: still running
-  assert.equal(s.status(t0 + 50 * 60000), 'running');
-  s.collect('cp6', t0 + 50 * 60000);
-  assert.equal(s.limitMs(), HUNT_MS + 20 * 60000);
-  assert.equal(s.status(t0 + 64 * 60000), 'running');
-  assert.equal(s.status(t0 + 65 * 60000), 'timeout');
-  assert.equal(s.timeUsed(t0 + 70 * 60000), 65 * 60000);
-});
-
-test('a bonus checkpoint scanned after time is up adds nothing', () => {
-  const s = createStore(memory());
-  const t0 = 1_000_000;
-  s.start('', t0);
-  assert.equal(s.collect('cp4', t0 + HUNT_MS + 1000), 'timeout');
-  assert.equal(s.bonusMs(), 0);
-  assert.equal(s.status(t0 + HUNT_MS + 2000), 'timeout');
+test('no time limit at the event (owner, 25 Oct): the clock only measures', () => {
+  assert.equal(CONFIG_HUNT_MS, Infinity);
+  const s = makeStore(memory());
+  assert.equal(s.timed, false);
+  s.start('', 1000);
+  assert.equal(s.status(1000 + 5 * 3600000), 'running');
+  assert.equal(s.collect('cp2', 1000 + 5 * 3600000), 'new');
+  assert.equal(s.timeUsed(1000 + 2 * 3600000), 2 * 3600000);
 });
 
 test('time lock off (owner, 23 Oct): the hunt is open any time; the entry QR is the lock', () => {

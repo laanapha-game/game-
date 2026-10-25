@@ -50,6 +50,12 @@ npm run build
 
 ## Scene 3: sticker hunt (ล่าสติกเกอร์ผี)
 
+> Owner, 25 Oct: the hunt is now 8 missions in walking order (START at the registration table,
+> FIND THE SPIDER, ESCAPE ROOM, แข่งรถเข็น, PUMPKIN HAUNT, สวดมนต์ "หน้า" ศพ, WORKSHOP, LAAN FOOD),
+> no time limit (`HUNT_MINUTES = null`; the clock only measures), same QR codes in the same order.
+> Scanning START unlocks the hunt; starting collects it; each reveal types out the next mission.
+> The notes below describe the earlier version where they differ.
+
 After scene 2 the player lands on the sticker hunt: 8 checkpoints at the event (ผงพราย, คุณไสย,
 หนังควาย, ผีกระหัง, ศาลเจ้าที่, กุมารทอง, ตะปู, ผีปอบ), each with a printed QR, and 45 minutes to
 find them all (the clock starts on "เริ่มจับเวลา" or the first scan and keeps running while the
