@@ -64,7 +64,8 @@ export const CHECKPOINTS = [
     title: 'หาแมงมุม',
     stall: 'B',
     art: { draw: 'doll' },
-    mission: 'เดินผ่านหลังจอ แล้วหาแมงมุมให้เจอ',
+    mission: 'จงนำไฟฉาย หาแมงมุมให้ครบ 3 ตัว ภายใน 5 นาที แล้วรับ QR Code กับสตาฟ',
+    timer: 5, // owner, 25 Oct: a 5-minute timer the player starts at the spot (it only counts)
     where: 'หลังจอหนัง',
   },
   {
@@ -114,7 +115,7 @@ export const CHECKPOINTS = [
     title: 'Hidden Treat',
     stall: 'C',
     art: { draw: 'nails' },
-    mission: 'ตามหาตัวตนที่ซ่อนอยู่! เลือกภารกิจจากร้านค้าหรือเวิร์กชอป ทำให้สำเร็จ แล้วรับ Hidden Treat พร้อม QR ลับ',
+    mission: 'พูดคุยกับพี่ๆ Workshop เพื่อหา QR Code',
     where: 'ร้านค้า & เวิร์กชอปในงาน',
   },
   {

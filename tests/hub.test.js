@@ -248,3 +248,14 @@ test('checkpoint 8 is the mystery box with 3 hints, shown one at a time and kept
   assert.equal(s.hint(3), false);
   assert.equal(s.hints, 3);
 });
+
+test('checkpoint timer (spiders, 5 minutes): started once by the player, counts down, kept', () => {
+  assert.equal(CHECKPOINTS[1].timer, 5);
+  const be = memory();
+  const s = createStore(be);
+  assert.equal(s.timerLeft('cp2', 5, 1000), null);
+  assert.equal(s.startTimer('cp2', 1000), true);
+  assert.equal(s.startTimer('cp2', 9000), false);
+  assert.equal(createStore(be).timerLeft('cp2', 5, 61000), 4 * 60000);
+  assert.equal(s.timerLeft('cp2', 5, 1000 + 6 * 60000), 0);
+});

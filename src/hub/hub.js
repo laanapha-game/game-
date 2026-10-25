@@ -651,6 +651,11 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     if (st === 'timeout') return 'หมดเวลาแล้ว...';
     if (st === 'idle') return 'สแกน QR ที่โต๊ะลงทะเบียน';
     const nx = nextCp();
+    if (nx?.timer) {
+      const left = store.timerLeft(nx.id, nx.timer);
+      if (left > 0) return `เหลือเวลา ${fmtTime(left)}`;
+      if (left === 0) return 'หมดเวลา! ไปรับ QR';
+    }
     return nx ? `ต่อไป: ${nx.name}` : 'ครบ 8 ดวงแล้ว!';
   }
 
@@ -1025,6 +1030,26 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       box(14, y, 152, 18, COL.black, COL.green);
       ctx.drawImage(checkIcon, 20, y + 5);
       thai(`ผ่านเมื่อ ${d.getDate()}/${d.getMonth() + 1} · ${pad(d.getHours())}:${pad(d.getMinutes())} น.`, 94, y - 2, COL.green, 12);
+    } else if (cp.timer) {
+      // the checkpoint's own timer (spiders: 5 minutes), started when the player is ready
+      const left = store.timerLeft(cp.id, cp.timer);
+      const R = { x: 14, y, w: 152, h: 18 };
+      if (left === null) {
+        bigButton(R, `เริ่มจับเวลา ${cp.timer} นาที`, pressed === 'timer', t, clockIcon);
+        hit('timer', R, () => {
+          audio.sfx('meter_full');
+          buzz([30, 40, 60]);
+          store.startTimer(cp.id);
+        });
+      } else if (left > 0) {
+        box(14, y, 152, 18, COL.black, Math.floor(t * 2) % 2 && left < 60000 ? COL.magenta : COL.yellow);
+        ctx.drawImage(clockIcon, 20, y + 4);
+        thai('เหลือเวลา', 34, y - 2, COL.white, 12, 'l');
+        bigText(K, fmtTime(left), 160, y + 2, left < 60000 ? COL.magenta : COL.yellow, 'r');
+      } else {
+        box(14, y, 152, 18, COL.black, COL.magenta);
+        thai('หมดเวลา! รับ QR Code กับสตาฟ', 90, y - 2, COL.magenta, 12);
+      }
     } else {
       box(14, y, 152, 18, COL.black, COL.magenta);
       thai('ทำภารกิจแล้วสแกน QR', 90, y - 2, COL.magenta, 12);
@@ -1096,8 +1121,14 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
       const y = Math.round(p.y + p.vy * kr + 160 * kr * kr);
       if (y < H) rect(x, y, p.w, Math.floor(kr * 10 + p.x) % 2 ? 2 : 1, p.c);
     });
-    thaiS(cp.hints ? 'เจอกล่องปริศนาแล้ว!' : 'ยินดีด้วย! คุณเจอมันแล้ว', 90, 12, COL.yellow, 14);
-    thai(`คุณมาถึง CHECKPOINT ${i + 1} แล้ว`, 90, 32, COL.white, 12);
+    if (cp.id === START_ID) {
+      // registration (owner, 25 Oct): not "you found it" but "you are registered", then the reward
+      thaiS('คุณได้ Regist เพื่อเริ่มเกม', 90, 10, COL.yellow, 14);
+      thaiS('เรียบร้อยแล้ว!', 90, 30, COL.white, 13);
+    } else {
+      thaiS(cp.hints ? 'เจอกล่องปริศนาแล้ว!' : 'ยินดีด้วย! คุณเจอมันแล้ว', 90, 12, COL.yellow, 14);
+      thai(`คุณมาถึง CHECKPOINT ${i + 1} แล้ว`, 90, 32, COL.white, 12);
+    }
     if (a) {
       const s = a.sticker;
       const bounce = kr < 0.25 ? Math.round((1 - kr / 0.25) * -14) : kr < 0.4 ? -Math.round(Math.sin(((kr - 0.25) / 0.15) * Math.PI) * 4) : Math.round(Math.sin(t * 3) * 1.5);
@@ -1173,6 +1204,8 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
             if (complete) setTimeout(() => open('reward'), 500);
             else if (nextCp()?.hints && CHECKPOINTS.indexOf(nextCp()) === CHECKPOINTS.findIndex((c) => c.id === id) + 1)
               setTimeout(() => open('mystery', { id: nextCp().id }), 450); // owner, 25 Oct: after 7, the mystery box
+            else if (nextCp()?.timer && store.timerLeft(nextCp().id, nextCp().timer) === null)
+              setTimeout(() => open('detail', { id: nextCp().id }), 450); // the spiders: instructions + start the timer
             else say(nextCp() ? `ต่อไป: ${nextCp().name}` : 'ครบ 8 ดวงแล้ว!', 3500);
           },
         };
@@ -1600,9 +1633,19 @@ export function createHub({ G, store, onEnter, onExit, onBack, onNeedCharacter }
     else thai(toast.s, 90, y - 1, COL.white, 12);
   }
 
+  let timerRang = null;
   /** Clock sounds and the end of the hunt. */
   function tickClock() {
     const st = store.status();
+    const nx = nextCp();
+    if (nx?.timer && store.timerLeft(nx.id, nx.timer) === 0 && timerRang !== nx.id) {
+      timerRang = nx.id;
+      if (Date.now() - store.state.timers[nx.id] < nx.timer * 60000 + 5000) {
+        audio.sfx('scene3_chime');
+        buzz([200, 100, 200]);
+        showToast('หมดเวลา! รับ QR Code กับสตาฟ', 3500);
+      }
+    }
     if (st === 'running') {
       const left = store.timeLeft();
       const sec = Math.ceil(left / 1000);

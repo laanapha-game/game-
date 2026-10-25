@@ -16,7 +16,7 @@ export const STORAGE_KEY = 'laanapha.stickers.v2';
 export const CHARACTER_IDS = ['nuannapa', 'ramwong', 'pumpkin', 'vampire', 'slasher', 'onryo', 'mahidol', 'silpakorn'];
 
 export function emptyState() {
-  return { v: 1, character: null, name: '', unlocked: false, stamps: {}, claimedAt: null, startedAt: null, finishedAt: null, seenHelp: false, entered: false, seed: null, hints: 0 };
+  return { v: 1, character: null, name: '', unlocked: false, stamps: {}, claimedAt: null, startedAt: null, finishedAt: null, seenHelp: false, entered: false, seed: null, hints: 0, timers: {} };
 }
 
 function sanitize(s) {
@@ -31,6 +31,8 @@ function sanitize(s) {
   out.seenHelp = !!s.seenHelp;
   out.entered = !!s.entered;
   if (validSeed(s.seed)) out.seed = s.seed;
+  if (s.timers && typeof s.timers === 'object')
+    for (const cp of CHECKPOINTS) if (typeof s.timers[cp.id] === 'number') out.timers[cp.id] = s.timers[cp.id];
   if (Number.isInteger(s.hints) && s.hints > 0) out.hints = Math.min(s.hints, 9);
   if (typeof s.finishedAt === 'number') out.finishedAt = s.finishedAt;
   if (typeof s.name === 'string') out.name = s.name.slice(0, 24);
@@ -164,6 +166,19 @@ export function createStore(backend = storage(), opts = {}) {
     timeUsed(now = Date.now()) {
       if (!state.startedAt) return 0;
       return Math.max(0, Math.min(this.limitMs(), (state.finishedAt || now) - state.startedAt));
+    },
+    /** A checkpoint's own timer (e.g. 5 minutes for the spiders): started by the player. */
+    startTimer(id, now = Date.now()) {
+      if (!state.timers) state.timers = {};
+      if (state.timers[id]) return false;
+      state.timers[id] = now;
+      persist();
+      return true;
+    },
+    /** ms left on a checkpoint timer, or null when it was not started. */
+    timerLeft(id, minutes, now = Date.now()) {
+      const t0 = state.timers?.[id];
+      return t0 ? Math.max(0, t0 + minutes * 60000 - now) : null;
     },
     /** Mystery box hints shown so far; hint() shows one more (up to `max`). */
     get hints() {
